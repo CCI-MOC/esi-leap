@@ -8,16 +8,12 @@ import esi_leap.conf
 from esi_leap import version
 from esi_leap.common.i18n import _
 from esi_leap.common import service
-
-#from ironic.db import migration
+from esi_leap.db import migration
 
 
 CONF = esi_leap.conf.CONF
 
 class DBCommand(object):
-
-    def version(self):
-        print(migration.version())
 
     def create_schema(self):
         migration.create_schema()
@@ -25,11 +21,6 @@ class DBCommand(object):
 
 def add_command_parsers(subparsers):
     command_object = DBCommand()
-
-    parser = subparsers.add_parser(
-        'version',
-        help=_("Print the current version information and exit."))
-    parser.set_defaults(func=command_object.version)
 
     parser = subparsers.add_parser(
         'create_schema',
@@ -46,7 +37,7 @@ def main():
     CONF.register_cli_opt(command_opt)
 
     valid_commands = set([
-        'version', 'create_schema',
+        'create_schema',
     ])
 
     service.prepare_service(sys.argv)
