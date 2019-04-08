@@ -106,7 +106,7 @@ def policy_create(context, values):
 def policy_update(context, policy_uuid, values):
     policy_ref = policy_get(context, policy_uuid)
     policy_ref.update(values)
-
+    policy_ref.save(get_session())
     return policy_ref
 
 
@@ -140,7 +140,7 @@ def applied_policy_create(context, values):
 def applied_policy_update(context, node_uuid, policy_uuid, values):
     applied_policy_ref = applied_policy_get(context, node_uuid, policy_uuid)
     applied_policy_ref.update(values)
-
+    applied_policy_ref.save(get_session())
     return applied_policy_ref
 
 
@@ -176,7 +176,7 @@ def lease_request_create(context, values):
 def lease_request_update(context, request_uuid, values):
     lease_request_ref = lease_request_get(context, request_uuid)
     lease_request_ref.update(values)
-
+    lease_request_ref.save(get_session())
     return lease_request_ref
 
 
@@ -217,7 +217,7 @@ def leased_node_create(context, values):
 def leased_node_update(context, node_uuid, values):
     leased_node_ref = leased_node_get(context, node_uuid)
     leased_node_ref.update(values)
-
+    leased_node_ref.save(get_session())
     return leased_node_ref
 
 
