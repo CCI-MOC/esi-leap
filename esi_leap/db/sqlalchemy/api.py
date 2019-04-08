@@ -147,7 +147,7 @@ def lease_request_update(context, request_uuid, values):
 
 
 def lease_request_destroy(context, request_uuid):
-    query.filter_by(uuid=request_uuid).delete()
+    model_query(context, models.LeaseRequest, get_session()).filter_by(uuid=request_uuid).delete()
 
 
 # Policy Node
@@ -200,4 +200,4 @@ def policy_node_update(context, node_uuid, values):
 
 
 def policy_node_destroy(context, node_uuid):
-    query.filter_by(node_uuid=node_uuid).delete()
+    model_query(context, models.PolicyNode, get_session()).filter_by(node_uuid=node_uuid).delete()
