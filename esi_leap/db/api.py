@@ -104,34 +104,6 @@ def policy_destroy(context, policy_uuid):
     IMPL.policy_destroy(context, policy_uuid)
 
 
-# Applied Policy
-@to_dict
-def applied_policy_get(context, node_uuid, policy_uuid):
-    return IMPL.applied_policy_get(context, node_uuid, policy_uuid)
-
-
-@to_dict
-def applied_policy_get_all(context):
-    return IMPL.applied_policy_get_all(context)
-
-
-@to_dict
-def applied_policy_get_all_by_project_id(context, project_id):
-    return IMPL.applied_policy_get_all_by_project_id(context, project_id)
-
-
-def applied_policy_create(context, values):
-    return IMPL.applied_policy_create(context, values)
-
-
-def applied_policy_update(context, node_uuid, policy_uuid, values):
-    return IMPL.applied_policy_update(context, node_uuid, policy_uuid, values)
-
-
-def applied_policy_destroy(context, node_uuid, policy_uuid):
-    IMPL.applied_policy_destroy(context, node_uuid, policy_uuid)
-
-
 # Lease Request
 @to_dict
 def lease_request_get(context, request_uuid):
@@ -160,34 +132,44 @@ def lease_request_destroy(context, request_uuid):
     return IMPL.lease_request_destroy(context, request_uuid)
 
 
-# Leased Node
+# Policy Node
 @to_dict
-def leased_node_get(context, node_uuid):
-    return IMPL.leased_node_get(context, node_uuid)
-
-
-@to_dict
-def leased_node_get_all(context):
-    return IMPL.leased_node_get_all(context)
+def policy_node_get(context, node_uuid):
+    return IMPL.policy_node_get(context, node_uuid)
 
 
 @to_dict
-def leased_node_get_all_by_request_uuid(context, request_uuid):
-    return IMPL.leased_node_get_all_by_request_uuid(context, request_uuid)
+def policy_node_get_all(context):
+    return IMPL.policy_node_get_all(context)
 
 
 @to_dict
-def leased_node_get_all_by_project_id(context, project_id):
-    return IMPL.leased_node_get_all_by_project_id(context, project_id)
+def policy_node_get_all_by_project_id(context, project_id):
+    return IMPL.policy_node_get_all_by_project_id(context, project_id)
 
 
-def leased_node_create(context, values):
-    return IMPL.leased_node_create(context, values)
+@to_dict
+def policy_node_get_all_by_request_project_id(context, project_id):
+    return IMPL.policy_node_get_all_by_request_project_id(context, project_id)
 
 
-def leased_node_update(context, node_uuid, values):
-    return IMPL.leased_node_update(context, node_uuid, values)
+@to_dict
+def policy_node_get_all_by_policy_uuid(context, policy_uuid):
+    return IMPL.policy_node_get_all_by_policy_uuid(context, policy_uuid)
 
 
-def leased_node_destroy(context, node_uuid):
-    IMPL.leased_node_destroy(context, node_uuid)
+@to_dict
+def policy_node_get_all_by_request_uuid(context, request_uuid):
+    return IMPL.policy_node_get_all_by_policy_uuid(context, request_uuid)
+
+
+def policy_node_create(context, values):
+    return IMPL.policy_node_create(context, values)
+
+
+def policy_node_update(context, node_uuid, values):
+    return IMPL.policy_node_update(context, node_uuid, values)
+
+
+def policy_node_destroy(context, node_uuid):
+    IMPL.policy_node_destroy(context, node_uuid)

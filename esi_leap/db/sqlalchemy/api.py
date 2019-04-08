@@ -114,41 +114,6 @@ def policy_destroy(context, policy_uuid):
     model_query(context, models.Policy, get_session()).filter_by(uuid=policy_uuid).delete()
 
 
-# Applied Policy
-def applied_policy_get(context, node_uuid, policy_uuid):
-    query = model_query(context, models.AppliedPolicy, get_session())
-    return query.filter_by(node_uuid=node_uuid).filter_by(policy_uuid=policy_uuid).first()
-
-
-def applied_policy_get_all(context):
-    query = model_query(context, models.AppliedPolicy, get_session())
-    return query.all()
-
-
-def applied_policy_get_all_by_project_id(context, project_id):
-    query = (model_query(context, models.AppliedPolicy,
-                         get_session()).filter_by(models.AppliedPolicy.policy.has(project_id=project_id)))
-    return query.all()
-
-
-def applied_policy_create(context, values):
-    applied_policy_ref = models.Policy()
-    applied_policy_ref.update(values)
-    applied_policy_ref.save(get_session())
-    return applied_policy_ref
-
-
-def applied_policy_update(context, node_uuid, policy_uuid, values):
-    applied_policy_ref = applied_policy_get(context, node_uuid, policy_uuid)
-    applied_policy_ref.update(values)
-    applied_policy_ref.save(get_session())
-    return applied_policy_ref
-
-
-def applied_policy_destroy(context, node_uuid, policy_uuid):
-    query.filter_by(node_uuid=node_uuid).filter_by(policy_uuid=policy_uuid).delete()
-
-
 # Lease Request
 def lease_request_get(context, request_uuid):
     query = model_query(context, models.LeaseRequest, get_session())
@@ -185,42 +150,54 @@ def lease_request_destroy(context, request_uuid):
     query.filter_by(uuid=request_uuid).delete()
 
 
-# Leased Node
-def leased_node_get(context, node_uuid):
-    query = model_query(context, models.LeasedNode, get_session())
+# Policy Node
+def policy_node_get(context, node_uuid):
+    query = model_query(context, models.PolicyNode, get_session())
     return query.filter_by(node_uuid=node_uuid).first()
 
 
-def leased_node_get_all(context):
-    query = model_query(context, models.LeasedNode, get_session())
+def policy_node_get_all(context):
+    query = model_query(context, models.PolicyNode, get_session())
     return query.all()
 
 
-def leased_node_get_all_by_request_uuid(context, request_uuid):
-    query = (model_query(context, models.LeasedNode,
-                         get_session()).filter_by(request_uuid=request_id))
+def policy_node_get_all_by_project_id(context, project_id):
+    query = (model_query(context, model.PolicyNode,
+                         get_session()).filter_by(models.PolicyNode.policy.has(project_id=project_id)))
     return query.all()
 
 
-def leased_node_get_all_by_project_id(context, project_id):
-    query = (model_query(context, models.LeasedNode,
-                         get_session()).filter_by(models.LeasedNode.lease_request.has(project_id=project_id)))
+def policy_node_get_all_by_request_project_id(context, project_id):
+    query = (model_query(context, model.PolicyNode,
+                         get_session()).filter_by(models.PolicyNode.lease_request.has(project_id=project_id)))
     return query.all()
 
 
-def leased_node_create(context, values):
-    leased_node_ref = models.LeasedNode()
-    leased_node_ref.update(values)
-    leased_node_ref.save(get_session())
-    return leased_node_ref
+def policy_node_get_all_by_policy_uuid(context, policy_uuid):
+    query = (model_query(context, models.PolicyNode,
+                         get_session()).filter_by(policy_uuid=policy_uuid))
+    return query.all()
 
 
-def leased_node_update(context, node_uuid, values):
-    leased_node_ref = leased_node_get(context, node_uuid)
-    leased_node_ref.update(values)
-    leased_node_ref.save(get_session())
-    return leased_node_ref
+def policy_node_get_all_by_request_uuid(context, request_uuid):
+    query = (model_query(context, models.PolicyNode,
+                         get_session()).filter_by(lease_request_uuid=request_uuid))
+    return query.all()
 
 
-def leased_node_destroy(context, node_uuid):
+def policy_node_create(context, values):
+    policy_node_ref = models.PolicyNode()
+    policy_node_ref.update(values)
+    policy_node_ref.save(get_session())
+    return policy_node_ref
+
+
+def policy_node_update(context, node_uuid, values):
+    policy_node_ref = policy_node_get(context, node_uuid)
+    policy_node_ref.update(values)
+    policy_node_ref.save(get_session())
+    return policy_node_ref
+
+
+def policy_node_destroy(context, node_uuid):
     query.filter_by(node_uuid=node_uuid).delete()

@@ -25,32 +25,11 @@ class Policy(Base):
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
-    uuid = Column(String(36), nullable=False)
+    uuid = Column(String(36), nullable=False, unique=True)
     project_id = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
     max_time_for_lease = Column(Integer, default=0)
     extendible = Column(Boolean, default=False)
-
-
-class AppliedPolicy(Base):
-    """Represents a policy applied to a node."""
-
-    __tablename__ = 'applied_policies'
-    __table_args__ = (
-        Index('policy_uuid_idx', 'policy_uuid'),
-    )
-
-    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
-    node_uuid = Column(String(36), nullable=False)
-    policy_uuid = Column(String(36),
-                         ForeignKey('policies.uuid'),
-                         nullable=False)
-    expiration_date = Column(DateTime)
-
-    policy = orm.relationship(Policy,
-                              backref=orm.backref('applied_nodes'),
-                              foreign_keys=policy_uuid,
-                              primaryjoin=policy_uuid == Policy.uuid)
 
 
 class LeaseRequest(Base):
@@ -63,7 +42,7 @@ class LeaseRequest(Base):
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
-    uuid = Column(String(36), nullable=True)
+    uuid = Column(String(36), nullable=True, unique=True)
     project_id = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
     node_properties = Column(db_types.JsonEncodedDict)
@@ -76,23 +55,32 @@ class LeaseRequest(Base):
     expiration_date = Column(DateTime)
 
 
-class LeasedNode(Base):
-    """Represents a leased node."""
+class PolicyNode(Base):
+    """Represents a node that has a policy applied to it."""
 
-    __tablename__ = 'leased_nodes'
+    __tablename__ = 'policy_nodes'
     __table_args__ = (
         Index('node_uuid_idx', 'node_uuid'),
-        Index('request_uuid_idx', 'request_uuid'),
+        Index('policy_uuid_idx', 'policy_uuid'),
+        Index('lease_request_uuid_idx', 'lease_request_uuid'),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
-    node_uuid = Column(String(36), nullable=False)
-    request_uuid = Column(String(36),
-                          ForeignKey('lease_requests.uuid'),
-                          nullable=False)
+    node_uuid = Column(String(36), nullable=False, unique=True)
+    policy_uuid = Column(String(36),
+                         ForeignKey('policies.uuid'),
+                         nullable=False)
     expiration_date = Column(DateTime)
+    lease_request_uuid = Column(String(36),
+                          ForeignKey('lease_requests.uuid'),
+                                nullable=True)
+    lease_expiration_date = Column(DateTime)
 
+    policy = orm.relationship(Policy,
+                              backref=orm.backref('applied_nodes'),
+                              foreign_keys=policy_uuid,
+                              primaryjoin=policy_uuid == Policy.uuid)
     lease_request = orm.relationship(LeaseRequest,
                                      backref=orm.backref('leases'),
-                                     foreign_keys=request_uuid,
-                                     primaryjoin=request_uuid == LeaseRequest.uuid)
+                                     foreign_keys=lease_request_uuid,
+                                     primaryjoin=lease_request_uuid == LeaseRequest.uuid)
