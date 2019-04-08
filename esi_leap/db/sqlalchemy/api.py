@@ -111,7 +111,7 @@ def policy_update(context, policy_uuid, values):
 
 
 def policy_destroy(context, policy_uuid):
-    policy_get(context, policy_uuid).delete()
+    model_query(context, models.Policy, get_session()).filter_by(uuid=policy_uuid).delete()
 
 
 # Applied Policy
@@ -137,6 +137,7 @@ def applied_policy_create(context, values):
     applied_policy_ref.save(get_session())
     return applied_policy_ref
 
+
 def applied_policy_update(context, node_uuid, policy_uuid, values):
     applied_policy_ref = applied_policy_get(context, node_uuid, policy_uuid)
     applied_policy_ref.update(values)
@@ -145,7 +146,7 @@ def applied_policy_update(context, node_uuid, policy_uuid, values):
 
 
 def applied_policy_destroy(context, node_uuid, policy_uuid):
-    applied_policy_get(context, node_uuid, policy_uuid).delete()
+    query.filter_by(node_uuid=node_uuid).filter_by(policy_uuid=policy_uuid).delete()
 
 
 # Lease Request
@@ -181,7 +182,7 @@ def lease_request_update(context, request_uuid, values):
 
 
 def lease_request_destroy(context, request_uuid):
-    lease_request_get(context, request_uuid).delete()
+    query.filter_by(uuid=request_uuid).delete()
 
 
 # Leased Node
@@ -222,4 +223,4 @@ def leased_node_update(context, node_uuid, values):
 
 
 def leased_node_destroy(context, node_uuid):
-    leased_node_get(context, node_uuid).delete()
+    query.filter_by(node_uuid=node_uuid).delete()
