@@ -181,7 +181,7 @@ def policy_node_get_all_by_policy_uuid(context, policy_uuid):
 
 def policy_node_get_all_by_request_uuid(context, request_uuid):
     query = (model_query(context, models.PolicyNode,
-                         get_session()).filter_by(lease_request_uuid=request_uuid))
+                         get_session()).filter_by(request_uuid=request_uuid))
     return query.all()
 
 

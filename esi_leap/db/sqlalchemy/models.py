@@ -62,7 +62,7 @@ class PolicyNode(Base):
     __table_args__ = (
         Index('node_uuid_idx', 'node_uuid'),
         Index('policy_uuid_idx', 'policy_uuid'),
-        Index('lease_request_uuid_idx', 'lease_request_uuid'),
+        Index('request_uuid_idx', 'request_uuid'),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
@@ -71,9 +71,9 @@ class PolicyNode(Base):
                          ForeignKey('policies.uuid'),
                          nullable=False)
     expiration_date = Column(DateTime)
-    lease_request_uuid = Column(String(36),
+    request_uuid = Column(String(36),
                           ForeignKey('lease_requests.uuid'),
-                                nullable=True)
+                          nullable=True)
     lease_expiration_date = Column(DateTime)
 
     policy = orm.relationship(Policy,
@@ -82,5 +82,5 @@ class PolicyNode(Base):
                               primaryjoin=policy_uuid == Policy.uuid)
     lease_request = orm.relationship(LeaseRequest,
                                      backref=orm.backref('leases'),
-                                     foreign_keys=lease_request_uuid,
-                                     primaryjoin=lease_request_uuid == LeaseRequest.uuid)
+                                     foreign_keys=request_uuid,
+                                     primaryjoin=request_uuid == LeaseRequest.uuid)
