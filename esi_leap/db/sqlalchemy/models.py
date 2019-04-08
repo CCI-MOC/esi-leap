@@ -45,14 +45,14 @@ class LeaseRequest(Base):
     uuid = Column(String(36), nullable=True, unique=True)
     project_id = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
-    node_properties = Column(db_types.JsonEncodedDict)
+    node_properties = Column(db_types.JsonEncodedDict, nullable=True)
     min_nodes = Column(Integer, default=0)
     max_nodes = Column(Integer, default=0)
     lease_time = Column(Integer, default=0)
-    status = Column(String(15), nullable=False)
-    cancel_date = Column(DateTime)
-    fulfilled_date = Column(DateTime)
-    expiration_date = Column(DateTime)
+    status = Column(String(15), nullable=False, default='pending')
+    cancel_date = Column(DateTime, nullable=True)
+    fulfilled_date = Column(DateTime, nullable=True)
+    expiration_date = Column(DateTime, nullable=True)
 
 
 class PolicyNode(Base):
