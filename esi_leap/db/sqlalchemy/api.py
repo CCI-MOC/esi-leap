@@ -163,13 +163,13 @@ def policy_node_get_all(context):
 
 def policy_node_get_all_by_project_id(context, project_id):
     query = (model_query(context, models.PolicyNode,
-                         get_session()).filter_by(models.PolicyNode.policy.has(project_id=project_id)))
+                         get_session()).filter(models.PolicyNode.policy.has(project_id=project_id)))
     return query.all()
 
 
 def policy_node_get_all_by_request_project_id(context, project_id):
     query = (model_query(context, models.PolicyNode,
-                         get_session()).filter_by(models.PolicyNode.lease_request.has(project_id=project_id)))
+                         get_session()).filter(models.PolicyNode.lease_request.has(project_id=project_id)))
     return query.all()
 
 
