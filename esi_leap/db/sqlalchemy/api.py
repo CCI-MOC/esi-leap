@@ -162,13 +162,13 @@ def policy_node_get_all(context):
 
 
 def policy_node_get_all_by_project_id(context, project_id):
-    query = (model_query(context, model.PolicyNode,
+    query = (model_query(context, models.PolicyNode,
                          get_session()).filter_by(models.PolicyNode.policy.has(project_id=project_id)))
     return query.all()
 
 
 def policy_node_get_all_by_request_project_id(context, project_id):
-    query = (model_query(context, model.PolicyNode,
+    query = (model_query(context, models.PolicyNode,
                          get_session()).filter_by(models.PolicyNode.lease_request.has(project_id=project_id)))
     return query.all()
 
@@ -183,6 +183,10 @@ def policy_node_get_all_by_request_uuid(context, request_uuid):
     query = (model_query(context, models.PolicyNode,
                          get_session()).filter_by(request_uuid=request_uuid))
     return query.all()
+
+
+def policy_node_get_available(context):
+    return policy_node_get_all_by_request_uuid(context, None)
 
 
 def policy_node_create(context, values):

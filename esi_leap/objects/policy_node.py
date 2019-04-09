@@ -55,6 +55,12 @@ class PolicyNode(base.ESILEAPObject):
         return cls._from_db_object_list(context, db_policy_nodes)
 
 
+    @classmethod
+    def get_available(cls, context):
+        db_policy_nodes = cls.dbapi.policy_node_get_available(context)
+        return cls._from_db_object_list(context, db_policy_nodes)
+
+
     def create(self, context=None):
         updates = self.obj_get_changes()
         db_policy_node = self.dbapi.policy_node_create(context, updates)

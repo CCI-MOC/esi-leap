@@ -163,6 +163,11 @@ def policy_node_get_all_by_request_uuid(context, request_uuid):
     return IMPL.policy_node_get_all_by_policy_uuid(context, request_uuid)
 
 
+@to_dict
+def policy_node_get_available(context):
+    return IMPL.policy_node_get_available(context)
+
+
 def policy_node_create(context, values):
     return IMPL.policy_node_create(context, values)
 
