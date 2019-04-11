@@ -1,7 +1,7 @@
 import sys
 
 from oslo_config import cfg
-from oslo_db import exception as common_db_exc
+from oslo_db import exception as db_exception
 from oslo_db.sqlalchemy import session as db_session
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -10,15 +10,21 @@ import sqlalchemy as sa
 from sqlalchemy.sql.expression import asc
 from sqlalchemy.sql.expression import desc
 
-from blazar.db import exceptions as db_exc
-from blazar.db.sqlalchemy import facade_wrapper
+from esi_leap.common import exception
 from esi_leap.db.sqlalchemy import models
 
 
+CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
+_engine_facade = None
 
-get_engine = facade_wrapper.get_engine
-get_session = facade_wrapper.get_session
+
+def get_session():
+    global _engine_facade
+    if not _engine_facade:
+        _engine_facade = db_session.EngineFacade.from_config(CONF)
+
+    return _engine_facade.get_session()
 
 
 def get_backend():
@@ -81,7 +87,10 @@ class InequalityCondition(object):
 # Policy
 def policy_get(context, policy_uuid):
     query = model_query(context, models.Policy, get_session())
-    return query.filter_by(uuid=policy_uuid).first()
+    result = query.filter_by(uuid=policy_uuid).first()
+    if not result:
+        raise exception.PolicyNotFound(policy_uuid=policy_uuid)
+    return result
 
 
 def policy_get_all(context):
@@ -117,7 +126,10 @@ def policy_destroy(context, policy_uuid):
 # Lease Request
 def lease_request_get(context, request_uuid):
     query = model_query(context, models.LeaseRequest, get_session())
-    return query.filter_by(uuid=request_uuid).first()
+    result = query.filter_by(uuid=request_uuid).first()
+    if not result:
+        raise exception.LeaseRequestNotFound(request_uuid=request_uuid)
+    return result
 
 
 def lease_request_get_all(context):
@@ -153,7 +165,10 @@ def lease_request_destroy(context, request_uuid):
 # Policy Node
 def policy_node_get(context, node_uuid):
     query = model_query(context, models.PolicyNode, get_session())
-    return query.filter_by(node_uuid=node_uuid).first()
+    result = query.filter_by(node_uuid=node_uuid).first()
+    if not result:
+        raise exception.NodeNotFound(node_uuid=node_uuid)
+    return result
 
 
 def policy_node_get_all(context):
@@ -192,7 +207,10 @@ def policy_node_get_available(context):
 def policy_node_create(context, values):
     policy_node_ref = models.PolicyNode()
     policy_node_ref.update(values)
-    policy_node_ref.save(get_session())
+    try:
+        policy_node_ref.save(get_session())
+    except db_exception.DBDuplicateEntry:
+        raise exception.NodeExists(node_uuid=values.get('node_uuid'))
     return policy_node_ref
 
 
