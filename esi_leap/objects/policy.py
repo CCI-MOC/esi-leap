@@ -1,4 +1,3 @@
-from oslo_utils import uuidutils
 from oslo_versionedobjects import base as versioned_objects_base
 
 from esi_leap.db import api as dbapi
@@ -40,10 +39,6 @@ class Policy(base.ESILEAPObject):
 
     def create(self, context=None):
         updates = self.obj_get_changes()
-        if 'uuid' not in updates:
-            updates['uuid'] = uuidutils.generate_uuid()
-            self.uuid = updates['uuid']
-
         db_policy = self.dbapi.policy_create(context, updates)
         self._from_db_object(context, self, db_policy)
 

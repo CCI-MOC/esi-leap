@@ -90,12 +90,16 @@ def policy_get(context, policy_uuid):
     result = query.filter_by(uuid=policy_uuid).first()
     if not result:
         raise exception.PolicyNotFound(policy_uuid=policy_uuid)
+    if context.project_id != result.project_id:
+        raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
     return result
 
 
 def policy_get_all(context):
-    query = model_query(context, models.Policy, get_session())
-    return query.all()
+    # always scope this to project for now   
+    #query = model_query(context, models.Policy, get_session())
+    #return query.all()
+    return policy_get_all_by_project_id(context, context.project_id)
 
 
 def policy_get_all_by_project_id(context, project_id):
@@ -106,7 +110,8 @@ def policy_get_all_by_project_id(context, project_id):
 
 def policy_create(context, values):
     policy_ref = models.Policy()
-    policy_ref['uuid'] = uuidutils.generate_uuid()
+    values['uuid'] = uuidutils.generate_uuid()
+    values['project_id'] = context.project_id
     policy_ref.update(values)
     policy_ref.save(get_session())
     return policy_ref
@@ -114,12 +119,21 @@ def policy_create(context, values):
 
 def policy_update(context, policy_uuid, values):
     policy_ref = policy_get(context, policy_uuid)
+    if context.project_id != policy_ref.project_id:
+        raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
+    values.pop('uuid', None)
+    values.pop('project_id', None)
     policy_ref.update(values)
     policy_ref.save(get_session())
     return policy_ref
 
 
 def policy_destroy(context, policy_uuid):
+    policy_ref = policy_get(context, policy_uuid)
+    if not policy_ref:
+        raise exception.PolicyNotFound(policy_uuid=policy_uuid)
+    if context.project_id != policy_ref.project_id:
+        raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
     model_query(context, models.Policy, get_session()).filter_by(uuid=policy_uuid).delete()
 
 
@@ -129,12 +143,16 @@ def lease_request_get(context, request_uuid):
     result = query.filter_by(uuid=request_uuid).first()
     if not result:
         raise exception.LeaseRequestNotFound(request_uuid=request_uuid)
+    if context.project_id != result.project_id:
+        raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
     return result
 
 
 def lease_request_get_all(context):
-    query = model_query(context, models.LeaseRequest, get_session())
-    return query.all()
+    # always scope this to project for now   
+    #query = model_query(context, models.LeaseRequest, get_session())
+    #return query.all()
+    return lease_request_get_all_by_project_id(context, context.project_id)
 
 
 def lease_request_get_all_by_project_id(context, project_id):
@@ -145,7 +163,8 @@ def lease_request_get_all_by_project_id(context, project_id):
 
 def lease_request_create(context, values):
     lease_request_ref = models.LeaseRequest()
-    lease_request_ref['uuid'] = uuidutils.generate_uuid()
+    values['uuid'] = uuidutils.generate_uuid()
+    values['project_id'] = context.project_id
     lease_request_ref.update(values)
     lease_request_ref.save(get_session())
     return lease_request_ref
@@ -153,12 +172,21 @@ def lease_request_create(context, values):
 
 def lease_request_update(context, request_uuid, values):
     lease_request_ref = lease_request_get(context, request_uuid)
+    if context.project_id != lease_request_ref.project_id:
+        raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
+    values.pop('uuid', None)
+    values.pop('project_id', None)
     lease_request_ref.update(values)
     lease_request_ref.save(get_session())
     return lease_request_ref
 
 
 def lease_request_destroy(context, request_uuid):
+    lease_request_ref = lease_request_get(context, request_uuid)
+    if not lease_request_ref:
+        raise exception.LeaseRequestNotFound(request_uuid=request_uuid)
+    if context.project_id != lease_request_ref.project_id:
+        raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
     model_query(context, models.LeaseRequest, get_session()).filter_by(uuid=request_uuid).delete()
 
 
