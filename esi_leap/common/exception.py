@@ -26,12 +26,6 @@ class ESILeapException(Exception):
         super(ESILeapException, self).__init__(message)
 
 
-class PolicyNoPermission(ESILeapException):
-    msg_fmt = _("You do not have permissions on policy %(policy_uuid)s.")
-
-class PolicyNotFound(ESILeapException):
-    msg_fmt = _("Policy %(policy_uuid)s not found.")
-
 class LeaseRequestNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on lease request %(request_uuid)s.")
 
@@ -43,3 +37,10 @@ class NodeExists(ESILeapException):
 
 class NodeNotFound(ESILeapException):
     msg_fmt = _("Node %(node_uuid)s not found.")
+
+class PolicyNoPermission(ESILeapException):
+    msg_fmt = _("You do not have permissions on policy %(policy_uuid)s.")
+
+class PolicyNotFound(ESILeapException):
+    msg_fmt = _("Policy %(policy_uuid)s not found.")
+
