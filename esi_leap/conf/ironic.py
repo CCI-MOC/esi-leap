@@ -3,15 +3,19 @@ import copy
 from keystoneauth1 import loading
 from oslo_config import cfg
 
+
 opts = []
+ironic_group = cfg.OptGroup(
+    'ironic',
+    title='Ironic Options')
 
 def register_opts(conf):
-    conf.register_opts(opts, group='ironic')
-    loading.register_session_conf_options(conf, 'ironic')
-    loading.register_auth_conf_options(conf, 'ironic')
-    loading.register_adapter_conf_options(conf, 'ironic')
-    conf.set_default('valid_interfaces', ['internal', 'public'], group='ironic')
-    conf.set_default('service_type', 'baremetal', group='ironic')
+    conf.register_opts(opts, group=ironic_group)
+    loading.register_session_conf_options(conf, ironic_group)
+    loading.register_auth_conf_options(conf, ironic_group)
+    loading.register_adapter_conf_options(conf, ironic_group)
+    conf.set_default('valid_interfaces', ['internal', 'public'], group=ironic_group)
+    conf.set_default('service_type', 'baremetal', group=ironic_group)
 
 
 def list_opts():

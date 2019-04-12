@@ -5,6 +5,4 @@ from esi_leap.conf import ironic
 CONF = cfg.CONF
 
 CONF.register_group(cfg.OptGroup(name='database'))
-
 ironic.register_opts(CONF)
-
