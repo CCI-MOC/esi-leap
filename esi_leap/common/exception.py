@@ -35,6 +35,9 @@ class LeaseRequestNotFound(ESILeapException):
 class NodeExists(ESILeapException):
     msg_fmt = _("Node %(node_uuid)s already exists.")
 
+class NodeNoPermission(ESILeapException):
+    msg_fmt = _("You do not have permissions on node %(node_uuid)s.")
+
 class NodeNotFound(ESILeapException):
     msg_fmt = _("Node %(node_uuid)s not found.")
 

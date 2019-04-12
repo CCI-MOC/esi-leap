@@ -34,3 +34,7 @@ def get_ironic_client():
     _cached_ironic_client = cli
 
     return cli
+
+def get_node_project_owner(node_uuid):
+    node = get_ironic_client().node.get(node_uuid)
+    return node.properties.get('project_owner', None)

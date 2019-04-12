@@ -11,6 +11,7 @@ from sqlalchemy.sql.expression import asc
 from sqlalchemy.sql.expression import desc
 
 from esi_leap.common import exception
+from esi_leap.common import ironic
 from esi_leap.db.sqlalchemy import models
 
 
@@ -233,16 +234,23 @@ def policy_node_get_available(context):
 
 
 def policy_node_create(context, values):
+    node_uuid = values.get('node_uuid')
+    if ironic.get_node_project_owner(node_uuid) != context.project_id:
+        raise exception.NodeNoPermission(node_uuid=node_uuid)
+
     policy_node_ref = models.PolicyNode()
     policy_node_ref.update(values)
     try:
         policy_node_ref.save(get_session())
     except db_exception.DBDuplicateEntry:
-        raise exception.NodeExists(node_uuid=values.get('node_uuid'))
+        raise exception.NodeExists(node_uuid=node_uuid)
     return policy_node_ref
 
 
 def policy_node_update(context, node_uuid, values):
+    if ironic.get_node_project_owner(node_uuid) != context.project_id:
+        raise exception.NodeNoPermission(node_uuid=node_uuid)
+
     policy_node_ref = policy_node_get(context, node_uuid)
     policy_node_ref.update(values)
     policy_node_ref.save(get_session())
@@ -250,4 +258,7 @@ def policy_node_update(context, node_uuid, values):
 
 
 def policy_node_destroy(context, node_uuid):
+    if ironic.get_node_project_owner(node_uuid) != context.project_id:
+        raise exception.NodeNoPermission(node_uuid=node_uuid)
+
     model_query(context, models.PolicyNode, get_session()).filter_by(node_uuid=node_uuid).delete()
