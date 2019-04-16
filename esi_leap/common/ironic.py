@@ -35,6 +35,6 @@ def get_ironic_client():
 
     return cli
 
-def get_node_project_owner(node_uuid):
+def get_node_project_owner_id(node_uuid):
     node = get_ironic_client().node.get(node_uuid)
-    return node.properties.get('project_owner', None)
+    return node.properties.get('project_owner_id', None)

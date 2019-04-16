@@ -235,7 +235,7 @@ def policy_node_get_available(context):
 
 def policy_node_create(context, values):
     node_uuid = values.get('node_uuid')
-    if ironic.get_node_project_owner(node_uuid) != context.project_id:
+    if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
         raise exception.NodeNoPermission(node_uuid=node_uuid)
 
     policy_node_ref = models.PolicyNode()
@@ -248,7 +248,7 @@ def policy_node_create(context, values):
 
 
 def policy_node_update(context, node_uuid, values):
-    if ironic.get_node_project_owner(node_uuid) != context.project_id:
+    if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
         raise exception.NodeNoPermission(node_uuid=node_uuid)
 
     policy_node_ref = policy_node_get(context, node_uuid)
@@ -258,7 +258,7 @@ def policy_node_update(context, node_uuid, values):
 
 
 def policy_node_destroy(context, node_uuid):
-    if ironic.get_node_project_owner(node_uuid) != context.project_id:
+    if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
         raise exception.NodeNoPermission(node_uuid=node_uuid)
 
     model_query(context, models.PolicyNode, get_session()).filter_by(node_uuid=node_uuid).delete()
