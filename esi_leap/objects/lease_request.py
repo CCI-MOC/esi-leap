@@ -14,7 +14,7 @@ class LeaseRequest(base.ESILEAPObject):
         'uuid': fields.UUIDField(),
         'project_id': fields.StringField(),
         'name': fields.StringField(),
-        'node_properties': fields.DictOfStringsField(nullable=True),
+        'node_properties': fields.FlexibleDictField(nullable=True),
         'min_nodes': fields.IntegerField(default=0),
         'max_nodes': fields.IntegerField(default=0),
         'lease_time': fields.IntegerField(default=0),
