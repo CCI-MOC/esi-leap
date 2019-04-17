@@ -38,3 +38,11 @@ def get_ironic_client():
 def get_node_project_owner_id(node_uuid):
     node = get_ironic_client().node.get(node_uuid)
     return node.properties.get('project_owner_id', None)
+
+def set_node_project_id(node_uuid, project_id):
+    patch = {
+        "op": "add",
+        "path": "/properties/project_id",
+        "value": project_id,
+    }
+    get_ironic_client().node.update(node_uuid, [patch])

@@ -1,8 +1,13 @@
+import datetime
+
 from oslo_versionedobjects import base as versioned_objects_base
 
+from esi_leap.common import exception
+from esi_leap.common import ironic
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 from esi_leap.objects import fields
+from esi_leap.objects import policy_node
 
 
 @versioned_objects_base.VersionedObjectRegistry.register
@@ -58,3 +63,39 @@ class LeaseRequest(base.ESILEAPObject):
         updates = self.obj_get_changes()
         db_lease_request = self.dbapi.lease_request_update(context, self.uuid, updates)
         self._from_db_object(context, self, db_lease_request)
+
+
+    # TODO: should probably be separated out somewhere else
+    # TODO: this may need to be run as an admin user
+    def fulfill(self, context=None):
+        # TODO: we probably only want to fulfill one request at a time?
+
+        if self.status != 'pending':
+            raise exception.LeaseRequestWrongFulfillStatus(request_uuid=self.uuid, status=self.status)
+
+        # for now, only match node_uuids
+        # TODO: match based on node properties
+        node_uuids = self.node_properties.get('node_uuids', [])
+        nodes = []
+        for node_uuid in node_uuids:
+            node = policy_node.PolicyNode.get(context, node_uuid)
+            if node == None or node.request_uuid != None:
+                raise exception.LeaseRequestNodeUnavailable(request_uuid=self.uuid)
+            nodes.append(node)
+
+        # nodes are all available, so claim them
+        # TODO: should be done in a single transaction
+        fulfilled_date = datetime.datetime.utcnow()
+        expiration_date = fulfilled_date + datetime.timedelta(seconds=self.lease_time)
+        for node in nodes:
+            node.request_uuid = self.uuid
+            node.lease_expiration_date = expiration_date
+            node.save(context)
+            ironic.set_node_project_id(node.node_uuid, context.project_id)
+
+        # TODO: verify claim succeeded
+
+        self.fulfilled_date = fulfilled_date
+        self.expiration_date = expiration_date
+        self.status = 'fulfilled'
+        self.save(context)
