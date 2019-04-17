@@ -81,6 +81,7 @@ class LeaseRequest(base.ESILEAPObject):
             node = policy_node.PolicyNode.get(context, node_uuid)
             if node == None or node.request_uuid != None:
                 raise exception.LeaseRequestNodeUnavailable(request_uuid=self.uuid)
+            # TODO: also check ironic node to see if project_id is set
             nodes.append(node)
 
         # nodes are all available, so claim them
