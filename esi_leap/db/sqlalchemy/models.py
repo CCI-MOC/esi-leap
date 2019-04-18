@@ -6,6 +6,8 @@ from sqlalchemy import orm
 from sqlalchemy import Column, ForeignKey, DateTime
 from sqlalchemy import Boolean, Index, Integer, String
 
+from esi_leap.common import statuses
+
 
 class ESILEAPBase(models.TimestampMixin, models.ModelBase):
 
@@ -49,7 +51,7 @@ class LeaseRequest(Base):
     min_nodes = Column(Integer, default=0)
     max_nodes = Column(Integer, default=0)
     lease_time = Column(Integer, default=0)
-    status = Column(String(15), nullable=False, default='pending')
+    status = Column(String(15), nullable=False, default=statuses.PENDING)
     cancel_date = Column(DateTime, nullable=True)
     fulfilled_date = Column(DateTime, nullable=True)
     expiration_date = Column(DateTime, nullable=True)

@@ -4,6 +4,7 @@ from oslo_versionedobjects import base as versioned_objects_base
 
 from esi_leap.common import exception
 from esi_leap.common import ironic
+from esi_leap.common import statuses
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 from esi_leap.objects import fields
@@ -65,7 +66,7 @@ class LeaseRequest(base.ESILEAPObject):
     def fulfill(self, context=None):
         # TODO: we probably only want to fulfill one request at a time?
 
-        if self.status != 'pending':
+        if self.status != statuses.PENDING:
             raise exception.LeaseRequestWrongFulfillStatus(
                 request_uuid=self.uuid, status=self.status)
 
@@ -96,5 +97,5 @@ class LeaseRequest(base.ESILEAPObject):
 
         self.fulfilled_date = fulfilled_date
         self.expiration_date = expiration_date
-        self.status = 'fulfilled'
+        self.status = statuses.FULFILLED
         self.save(context)
