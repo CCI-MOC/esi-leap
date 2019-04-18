@@ -70,6 +70,15 @@ class LeaseRequest(base.ESILEAPObject):
             raise exception.LeaseRequestWrongFulfillStatus(
                 request_uuid=self.uuid, status=self.status)
 
+        # check actual status
+        actual_status = self._get_actual_status(context)
+        if actual_status != self.status:
+            raise exception.LeaseRequestIncorrectStatus(
+                request_uuid=self.uuid,
+                status=self.status,
+                actual_status=actual_status
+            )
+
         # for now, only match node_uuids
         # TODO: match based on node properties
         node_uuids = self.node_properties.get('node_uuids', [])
@@ -93,9 +102,38 @@ class LeaseRequest(base.ESILEAPObject):
             node.save(context)
             ironic.set_node_project_id(node.node_uuid, context.project_id)
 
-        # TODO: verify claim succeeded
+        post_actual_status = self._get_actual_status(context)
+        if post_actual_status in [statuses.DEGRADED, statuses.FULFILLED]:
+            # at least some nodes have been assigned, so start the timer
+            self.fulfilled_date = fulfilled_date
+            self.expiration_date = expiration_date
+            self.status = post_actual_status
+            self.save(context)
+        else:
+            raise exception.LeaseRequestUnfulfilled(request_uuid=self.uuid)
 
-        self.fulfilled_date = fulfilled_date
-        self.expiration_date = expiration_date
-        self.status = statuses.FULFILLED
-        self.save(context)
+    def _get_expected_node_count(self):
+        # TODO: add nodes from node_properties
+        return len(self.node_properties.get('node_uuids', []))
+
+    def _get_actual_status(self, context=None):
+        # check if lease request has any nodes
+        nodes = policy_node.PolicyNode.get_all_by_request_uuid(
+            context, self.uuid)
+
+        if len(nodes) > 0:
+            # request has been at least partially fulfilled, and is not expired
+            if self._get_expected_node_count() == len(nodes):
+                return statuses.FULFILLED
+            return statuses.DEGRADED
+        else:
+            # request is either pending or completed
+            if self.cancel_date is not None:
+                return statuses.CANCELLED
+            elif self.expiration_date is not None:
+                return statuses.EXPIRED
+            elif self.fulfilled_date is None:
+                return statuses.PENDING
+            else:
+                # request is fulfilled but has no nodes
+                return statuses.DEGRADED

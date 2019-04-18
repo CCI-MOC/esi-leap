@@ -26,6 +26,11 @@ class ESILeapException(Exception):
         super(ESILeapException, self).__init__(message)
 
 
+class LeaseRequestIncorrectStatus(ESILeapException):
+    msg_fmt = _("Lease request %(request_uuid)s has a status of %(status)s "
+                ", but should have a status of %(actual_status)s.")
+
+
 class LeaseRequestNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on "
                 "lease request %(request_uuid)s.")
@@ -38,6 +43,11 @@ class LeaseRequestNodeUnavailable(ESILeapException):
 
 class LeaseRequestNotFound(ESILeapException):
     msg_fmt = _("Lease request %(request_uuid)s not found.")
+
+
+class LeaseRequestUnfulfilled(ESILeapException):
+    msg_fmt = _("Lease request %(request_uuid)s was fulfilled, "
+                "but no nodes were assigned.")
 
 
 class LeaseRequestWrongFulfillStatus(ESILeapException):
