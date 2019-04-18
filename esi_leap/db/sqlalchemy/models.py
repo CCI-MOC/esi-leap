@@ -1,10 +1,10 @@
 from oslo_db.sqlalchemy import models
 from oslo_db.sqlalchemy import types as db_types
 
-from sqlalchemy import (Column, DateTime, Index, Integer, String)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import orm
-from sqlalchemy import ForeignKey, DateTime, Boolean, Text, Float
+from sqlalchemy import Column, ForeignKey, DateTime
+from sqlalchemy import Boolean, Index, Integer, String
 
 
 class ESILEAPBase(models.TimestampMixin, models.ModelBase):
@@ -80,7 +80,8 @@ class PolicyNode(Base):
                               backref=orm.backref('applied_nodes'),
                               foreign_keys=policy_uuid,
                               primaryjoin=policy_uuid == Policy.uuid)
-    lease_request = orm.relationship(LeaseRequest,
-                                     backref=orm.backref('leases'),
-                                     foreign_keys=request_uuid,
-                                     primaryjoin=request_uuid == LeaseRequest.uuid)
+    lease_request = orm.relationship(
+        LeaseRequest,
+        backref=orm.backref('leases'),
+        foreign_keys=request_uuid,
+        primaryjoin=request_uuid == LeaseRequest.uuid)

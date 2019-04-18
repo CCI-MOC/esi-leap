@@ -29,41 +29,36 @@ class LeaseRequest(base.ESILEAPObject):
         'expiration_date': fields.DateTimeField(nullable=True),
     }
 
-
     @classmethod
     def get(cls, context, request_uuid):
         db_lease_request = cls.dbapi.lease_request_get(context, request_uuid)
         return cls._from_db_object(context, cls(), db_lease_request)
-
 
     @classmethod
     def get_all(cls, context):
         db_lease_requests = cls.dbapi.lease_request_get_all(context)
         return cls._from_db_object_list(context, db_lease_requests)
 
-
     @classmethod
     def get_all_by_project_id(cls, context, project_id):
-        db_lease_requests = cls.dbapi.lease_request_get_all_by_project_id(context, project_id)
+        db_lease_requests = cls.dbapi.lease_request_get_all_by_project_id(
+            context, project_id)
         return cls._from_db_object_list(context, db_lease_requests)
-
 
     def create(self, context=None):
         updates = self.obj_get_changes()
         db_lease_request = self.dbapi.lease_request_create(context, updates)
         self._from_db_object(context, self, db_lease_request)
 
-
     def destroy(self, context=None):
         self.dbapi.lease_request_destroy(context, self.uuid)
         self.obj_reset_changes()
 
-
     def save(self, context=None):
         updates = self.obj_get_changes()
-        db_lease_request = self.dbapi.lease_request_update(context, self.uuid, updates)
+        db_lease_request = self.dbapi.lease_request_update(
+            context, self.uuid, updates)
         self._from_db_object(context, self, db_lease_request)
-
 
     # TODO: should probably be separated out somewhere else
     # TODO: this may need to be run as an admin user
@@ -71,7 +66,8 @@ class LeaseRequest(base.ESILEAPObject):
         # TODO: we probably only want to fulfill one request at a time?
 
         if self.status != 'pending':
-            raise exception.LeaseRequestWrongFulfillStatus(request_uuid=self.uuid, status=self.status)
+            raise exception.LeaseRequestWrongFulfillStatus(
+                request_uuid=self.uuid, status=self.status)
 
         # for now, only match node_uuids
         # TODO: match based on node properties
@@ -79,15 +75,17 @@ class LeaseRequest(base.ESILEAPObject):
         nodes = []
         for node_uuid in node_uuids:
             node = policy_node.PolicyNode.get(context, node_uuid)
-            if node == None or node.request_uuid != None:
-                raise exception.LeaseRequestNodeUnavailable(request_uuid=self.uuid)
+            if node is None or node.request_uuid is not None:
+                raise exception.LeaseRequestNodeUnavailable(
+                    request_uuid=self.uuid)
             # TODO: also check ironic node to see if project_id is set
             nodes.append(node)
 
         # nodes are all available, so claim them
         # TODO: should be done in a single transaction
         fulfilled_date = datetime.datetime.utcnow()
-        expiration_date = fulfilled_date + datetime.timedelta(seconds=self.lease_time)
+        expiration_date = fulfilled_date + datetime.timedelta(
+            seconds=self.lease_time)
         for node in nodes:
             node.request_uuid = self.uuid
             node.lease_expiration_date = expiration_date

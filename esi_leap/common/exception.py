@@ -27,29 +27,39 @@ class ESILeapException(Exception):
 
 
 class LeaseRequestNoPermission(ESILeapException):
-    msg_fmt = _("You do not have permissions on lease request %(request_uuid)s.")
+    msg_fmt = _("You do not have permissions on "
+                "lease request %(request_uuid)s.")
+
 
 class LeaseRequestNodeUnavailable(ESILeapException):
-    msg_fmt = _("Lease request %(request_uuid)s cannot be fulfilled, as nodes are unavailable.")
+    msg_fmt = _("Lease request %(request_uuid)s cannot be fulfilled, "
+                "as nodes are unavailable.")
+
 
 class LeaseRequestNotFound(ESILeapException):
     msg_fmt = _("Lease request %(request_uuid)s not found.")
 
+
 class LeaseRequestWrongFulfillStatus(ESILeapException):
-    msg_fmt = _("Lease request %(request_uuid)s must have a status of pending to be fulfilled, but it has a status of %(status)s.")
+    msg_fmt = _("Lease request %(request_uuid)s must have a status of "
+                "pending to be fulfilled, but it has a status of %(status)s.")
+
 
 class NodeExists(ESILeapException):
     msg_fmt = _("Node %(node_uuid)s already exists.")
 
+
 class NodeNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on node %(node_uuid)s.")
+
 
 class NodeNotFound(ESILeapException):
     msg_fmt = _("Node %(node_uuid)s not found.")
 
+
 class PolicyNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on policy %(policy_uuid)s.")
 
+
 class PolicyNotFound(ESILeapException):
     msg_fmt = _("Policy %(policy_uuid)s not found.")
-

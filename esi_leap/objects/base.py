@@ -1,11 +1,11 @@
 from oslo_log import log
 from oslo_versionedobjects import base as object_base
 
-from esi_leap import objects
 from esi_leap.objects import fields as object_fields
 
 
 LOG = log.getLogger(__name__)
+
 
 class ESILEAPObject(object_base.VersionedObject):
     OBJ_SERIAL_NAMESPACE = 'esi_leap_object'
@@ -23,7 +23,6 @@ class ESILEAPObject(object_base.VersionedObject):
             obj.obj_reset_changes()
         obj._context = context
         return obj
-
 
     @classmethod
     def _from_db_object_list(cls, context, db_objs):

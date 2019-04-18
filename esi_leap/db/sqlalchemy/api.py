@@ -7,8 +7,6 @@ from oslo_log import log as logging
 from oslo_utils import uuidutils
 
 import sqlalchemy as sa
-from sqlalchemy.sql.expression import asc
-from sqlalchemy.sql.expression import desc
 
 from esi_leap.common import exception
 from esi_leap.common import ironic
@@ -97,9 +95,9 @@ def policy_get(context, policy_uuid):
 
 
 def policy_get_all(context):
-    # always scope this to project for now   
-    #query = model_query(context, models.Policy, get_session())
-    #return query.all()
+    # always scope this to project for now
+    # query = model_query(context, models.Policy, get_session())
+    # return query.all()
     return policy_get_all_by_project_id(context, context.project_id)
 
 
@@ -135,7 +133,10 @@ def policy_destroy(context, policy_uuid):
         raise exception.PolicyNotFound(policy_uuid=policy_uuid)
     if context.project_id != policy_ref.project_id:
         raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
-    model_query(context, models.Policy, get_session()).filter_by(uuid=policy_uuid).delete()
+    model_query(
+        context,
+        models.Policy,
+        get_session()).filter_by(uuid=policy_uuid).delete()
 
 
 # Lease Request
@@ -150,9 +151,9 @@ def lease_request_get(context, request_uuid):
 
 
 def lease_request_get_all(context):
-    # always scope this to project for now   
-    #query = model_query(context, models.LeaseRequest, get_session())
-    #return query.all()
+    # always scope this to project for now
+    # query = model_query(context, models.LeaseRequest, get_session())
+    # return query.all()
     return lease_request_get_all_by_project_id(context, context.project_id)
 
 
@@ -188,7 +189,10 @@ def lease_request_destroy(context, request_uuid):
         raise exception.LeaseRequestNotFound(request_uuid=request_uuid)
     if context.project_id != lease_request_ref.project_id:
         raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
-    model_query(context, models.LeaseRequest, get_session()).filter_by(uuid=request_uuid).delete()
+    model_query(
+        context,
+        models.LeaseRequest,
+        get_session()).filter_by(uuid=request_uuid).delete()
 
 
 # Policy Node
@@ -206,14 +210,20 @@ def policy_node_get_all(context):
 
 
 def policy_node_get_all_by_project_id(context, project_id):
-    query = (model_query(context, models.PolicyNode,
-                         get_session()).filter(models.PolicyNode.policy.has(project_id=project_id)))
+    query = (model_query(
+        context,
+        models.PolicyNode,
+        get_session()).filter(
+            models.PolicyNode.policy.has(project_id=project_id)))
     return query.all()
 
 
 def policy_node_get_all_by_request_project_id(context, project_id):
-    query = (model_query(context, models.PolicyNode,
-                         get_session()).filter(models.PolicyNode.lease_request.has(project_id=project_id)))
+    query = (model_query(
+        context,
+        models.PolicyNode,
+        get_session()).filter(
+            models.PolicyNode.lease_request.has(project_id=project_id)))
     return query.all()
 
 
@@ -261,4 +271,5 @@ def policy_node_destroy(context, node_uuid):
     if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
         raise exception.NodeNoPermission(node_uuid=node_uuid)
 
-    model_query(context, models.PolicyNode, get_session()).filter_by(node_uuid=node_uuid).delete()
+    model_query(context, models.PolicyNode,
+                get_session()).filter_by(node_uuid=node_uuid).delete()

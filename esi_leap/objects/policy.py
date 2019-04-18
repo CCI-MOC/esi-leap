@@ -18,35 +18,30 @@ class Policy(base.ESILEAPObject):
         'extendible': fields.BooleanField(default=False),
     }
 
-
     @classmethod
     def get(cls, context, policy_uuid):
         db_policy = cls.dbapi.policy_get(context, policy_uuid)
         return cls._from_db_object(context, cls(), db_policy)
-
 
     @classmethod
     def get_all(cls, context):
         db_policies = cls.dbapi.policy_get_all(context)
         return cls._from_db_object_list(context, db_policies)
 
-
     @classmethod
     def get_all_by_project_id(cls, context, project_id):
-        db_policies = cls.dbapi.policy_get_all_by_project_id(context, project_id)
+        db_policies = cls.dbapi.policy_get_all_by_project_id(
+            context, project_id)
         return cls._from_db_object_list(context, db_policies)
-
 
     def create(self, context=None):
         updates = self.obj_get_changes()
         db_policy = self.dbapi.policy_create(context, updates)
         self._from_db_object(context, self, db_policy)
 
-
     def destroy(self, context=None):
         self.dbapi.policy_destroy(context, self.uuid)
         self.obj_reset_changes()
-
 
     def save(self, context=None):
         updates = self.obj_get_changes()

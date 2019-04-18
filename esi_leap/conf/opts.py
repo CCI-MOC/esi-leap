@@ -1,7 +1,3 @@
-import itertools
-
-from oslo_log import log
-
 import esi_leap.conf
 
 _opts = [

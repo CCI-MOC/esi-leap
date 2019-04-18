@@ -5,13 +5,13 @@ import sys
 from oslo_config import cfg
 
 import esi_leap.conf
-from esi_leap import version
 from esi_leap.common.i18n import _
 from esi_leap.common import service
 from esi_leap.db import migration
 
 
 CONF = esi_leap.conf.CONF
+
 
 class DBCommand(object):
 
@@ -35,10 +35,6 @@ def main():
                                     handler=add_command_parsers)
 
     CONF.register_cli_opt(command_opt)
-
-    valid_commands = set([
-        'create_schema',
-    ])
 
     service.prepare_service(sys.argv)
     CONF.command.func()

@@ -8,6 +8,7 @@ from esi_leap import version
 
 CONF = esi_leap.conf.CONF
 
+
 def prepare_service(argv=None, default_config_files=None):
     argv = [] if argv is None else argv
     log.register_options(CONF)
