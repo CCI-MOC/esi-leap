@@ -3,7 +3,6 @@ import datetime
 from oslo_versionedobjects import base as versioned_objects_base
 
 from esi_leap.common import exception
-from esi_leap.common import ironic
 from esi_leap.common import statuses
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
@@ -63,7 +62,7 @@ class LeaseRequest(base.ESILEAPObject):
 
     # TODO: should probably be separated out somewhere else
     # TODO: this may need to be run as an admin user
-    def fulfill(self, context=None):
+    def fulfill(self, context):
         # TODO: we probably only want to fulfill one request at a time?
 
         if self.status != statuses.PENDING:
@@ -85,8 +84,7 @@ class LeaseRequest(base.ESILEAPObject):
         nodes = []
         for node_uuid in node_uuids:
             node = policy_node.PolicyNode.get(context, node_uuid)
-            if node is None or node.request_uuid is not None or \
-               ironic.get_node_project_id(node_uuid) is not None:
+            if node is None or not node.is_available():
                 raise exception.LeaseRequestNodeUnavailable(
                     request_uuid=self.uuid)
             nodes.append(node)
@@ -97,10 +95,7 @@ class LeaseRequest(base.ESILEAPObject):
         expiration_date = fulfilled_date + datetime.timedelta(
             seconds=self.lease_time)
         for node in nodes:
-            node.request_uuid = self.uuid
-            node.lease_expiration_date = expiration_date
-            node.save(context)
-            ironic.set_node_project_id(node.node_uuid, context.project_id)
+            node.assign_node(context, self.uuid, expiration_date)
 
         post_actual_status = self._get_actual_status(context)
         if post_actual_status in [statuses.DEGRADED, statuses.FULFILLED]:
@@ -112,7 +107,7 @@ class LeaseRequest(base.ESILEAPObject):
         else:
             raise exception.LeaseRequestUnfulfilled(request_uuid=self.uuid)
 
-    def expire(self, context=None):
+    def expire(self, context):
         # if we call this method, assume that we always want to remove any
         # associated nodes
         nodes = policy_node.PolicyNode.get_all_by_request_uuid(
@@ -120,10 +115,7 @@ class LeaseRequest(base.ESILEAPObject):
 
         # TODO: should be done in a single transaction
         for node in nodes:
-            node.request_uuid = None
-            node.lease_expiration_date = None
-            node.save(context)
-            ironic.set_node_project_id(node.node_uuid, None)
+            node.unassign_node(context)
 
         # check that there are no nodes left
         post_nodes = policy_node.PolicyNode.get_all_by_request_uuid(

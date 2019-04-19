@@ -1,5 +1,6 @@
 from oslo_versionedobjects import base as versioned_objects_base
 
+from esi_leap.common import ironic
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 from esi_leap.objects import fields
@@ -71,3 +72,19 @@ class PolicyNode(base.ESILEAPObject):
         db_policy_node = self.dbapi.policy_node_update(
             context, self.node_uuid, updates)
         self._from_db_object(context, self, db_policy_node)
+
+    def is_available(self):
+        return (self.request_uuid is None and \
+                ironic.get_node_project_id(self.node_uuid) is None)
+
+    def assign_node(self, context, request_uuid, expiration_date):
+        self.request_uuid = request_uuid
+        self.lease_expiration_date = expiration_date
+        self.save(context)
+        ironic.set_node_project_id(self.node_uuid, context.project_id)
+
+    def unassign_node(self, context):
+        self.request_uuid = None
+        self.lease_expiration_date = None
+        self.save(context)
+        ironic.set_node_project_id(self.node_uuid, None)
