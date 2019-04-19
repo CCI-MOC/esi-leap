@@ -112,6 +112,30 @@ class LeaseRequest(base.ESILEAPObject):
         else:
             raise exception.LeaseRequestUnfulfilled(request_uuid=self.uuid)
 
+    def expire(self, context=None):
+        # if we call this method, assume that we always want to remove any
+        # associated nodes
+        nodes = policy_node.PolicyNode.get_all_by_request_uuid(
+            context, self.uuid)
+
+        # TODO: should be done in a single transaction
+        for node in nodes:
+            node.request_uuid = None
+            node.lease_expiration_date = None
+            node.save(context)
+            ironic.set_node_project_id(node.node_uuid, None)
+
+        # check that there are no nodes left
+        post_nodes = policy_node.PolicyNode.get_all_by_request_uuid(
+            context, self.uuid)
+
+        if len(post_nodes) > 0:
+            raise exception.LeaseRequestNodeUnexpired(
+                request_uuid=self.uuid)
+
+        self.status = statuses.EXPIRED
+        self.save(context)
+
     def _get_expected_node_count(self):
         # TODO: add nodes from node_properties
         return len(self.node_properties.get('node_uuids', []))

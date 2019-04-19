@@ -45,6 +45,11 @@ class LeaseRequestNotFound(ESILeapException):
     msg_fmt = _("Lease request %(request_uuid)s not found.")
 
 
+class LeaseRequestUnexpired(ESILeapException):
+    msg_fmt = _("Lease request %(request_uuid)s was expired, "
+                "but nodes are still assigned.")
+
+
 class LeaseRequestUnfulfilled(ESILeapException):
     msg_fmt = _("Lease request %(request_uuid)s was fulfilled, "
                 "but no nodes were assigned.")
