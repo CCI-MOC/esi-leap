@@ -74,7 +74,7 @@ class PolicyNode(base.ESILEAPObject):
         self._from_db_object(context, self, db_policy_node)
 
     def is_available(self):
-        return (self.request_uuid is None and \
+        return (self.request_uuid is None and
                 ironic.get_node_project_id(self.node_uuid) is None)
 
     def assign_node(self, context, request_uuid, expiration_date):
