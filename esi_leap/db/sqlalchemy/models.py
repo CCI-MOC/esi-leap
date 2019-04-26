@@ -13,6 +13,12 @@ class ESILEAPBase(models.TimestampMixin, models.ModelBase):
 
     metadata = None
 
+    def to_dict(self):
+        d = {}
+        for c in self.__table__.columns:
+            d[c.name] = self[c.name]
+        return d
+
 
 Base = declarative_base(cls=ESILEAPBase)
 
