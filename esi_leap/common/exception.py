@@ -90,3 +90,7 @@ class PolicyNoPermission(ESILeapException):
 
 class PolicyNotFound(ESILeapException):
     msg_fmt = _("Policy %(policy_uuid)s not found.")
+
+
+class ProjectNoPermission(ESILeapException):
+    msg_fmt = _("You do not have permissions on project %(project_id)s.")

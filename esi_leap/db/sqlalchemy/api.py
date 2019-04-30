@@ -101,19 +101,25 @@ def policy_get(context, policy_uuid):
     result = query.filter_by(uuid=policy_uuid).first()
     if not result:
         raise exception.PolicyNotFound(policy_uuid=policy_uuid)
-    if context.project_id != result.project_id:
-        raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
+    if not context.is_admin:
+        if context.project_id != result.project_id:
+            raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
     return result
 
 
 def policy_get_all(context):
-    # always scope this to project for now
-    # query = model_query(context, models.Policy, get_session())
-    # return query.all()
-    return policy_get_all_by_project_id(context, context.project_id)
+    if not context.is_admin:
+        return policy_get_all_by_project_id(context, context.project_id)
+
+    query = model_query(context, models.Policy, get_session())
+    return query.all()
 
 
 def policy_get_all_by_project_id(context, project_id):
+    if not context.is_admin:
+        if context.project_id != project_id:
+            raise exception.ProjectNoPermission(project_id=project_id)
+
     query = (model_query(context, models.Policy,
                          get_session()).filter_by(project_id=project_id))
     return query.all()
@@ -130,8 +136,9 @@ def policy_create(context, values):
 
 def policy_update(context, policy_uuid, values):
     policy_ref = policy_get(context, policy_uuid)
-    if context.project_id != policy_ref.project_id:
-        raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
+    if not context.is_admin:
+        if context.project_id != policy_ref.project_id:
+            raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
     values.pop('uuid', None)
     values.pop('project_id', None)
     policy_ref.update(values)
@@ -143,8 +150,9 @@ def policy_destroy(context, policy_uuid):
     policy_ref = policy_get(context, policy_uuid)
     if not policy_ref:
         raise exception.PolicyNotFound(policy_uuid=policy_uuid)
-    if context.project_id != policy_ref.project_id:
-        raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
+    if not context.is_admin:
+        if context.project_id != policy_ref.project_id:
+            raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
     model_query(
         context,
         models.Policy,
@@ -157,19 +165,24 @@ def lease_request_get(context, request_uuid):
     result = query.filter_by(uuid=request_uuid).first()
     if not result:
         raise exception.LeaseRequestNotFound(request_uuid=request_uuid)
-    if context.project_id != result.project_id:
-        raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
+    if not context.is_admin:
+        if context.project_id != result.project_id:
+            raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
     return result
 
 
 def lease_request_get_all(context):
-    # always scope this to project for now
-    # query = model_query(context, models.LeaseRequest, get_session())
-    # return query.all()
-    return lease_request_get_all_by_project_id(context, context.project_id)
+    if not context.is_admin:
+        return lease_request_get_all_by_project_id(context, context.project_id)
+    query = model_query(context, models.LeaseRequest, get_session())
+    return query.all()
 
 
 def lease_request_get_all_by_project_id(context, project_id):
+    if not context.is_admin:
+        if context.project_id != project_id:
+            raise exception.ProjectNoPermission(project_id=project_id)
+
     query = (model_query(context, models.LeaseRequest,
                          get_session()).filter_by(project_id=project_id))
     return query.all()
@@ -178,6 +191,8 @@ def lease_request_get_all_by_project_id(context, project_id):
 def lease_request_get_all_by_status(context, status):
     query = (model_query(context, models.LeaseRequest,
                          get_session()).filter_by(status=status))
+    if not context.is_admin:
+        query.filter_by(project_id=context.project_id)
     return query.all()
 
 
@@ -192,8 +207,9 @@ def lease_request_create(context, values):
 
 def lease_request_update(context, request_uuid, values):
     lease_request_ref = lease_request_get(context, request_uuid)
-    if context.project_id != lease_request_ref.project_id:
-        raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
+    if not context.is_admin:
+        if context.project_id != lease_request_ref.project_id:
+            raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
     values.pop('uuid', None)
     values.pop('project_id', None)
     lease_request_ref.update(values)
@@ -205,8 +221,9 @@ def lease_request_destroy(context, request_uuid):
     lease_request_ref = lease_request_get(context, request_uuid)
     if not lease_request_ref:
         raise exception.LeaseRequestNotFound(request_uuid=request_uuid)
-    if context.project_id != lease_request_ref.project_id:
-        raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
+    if not context.is_admin:
+        if context.project_id != lease_request_ref.project_id:
+            raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
     model_query(
         context,
         models.LeaseRequest,
@@ -276,8 +293,9 @@ def policy_node_create(context, values):
 
 
 def policy_node_update(context, node_uuid, values):
-    if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
-        raise exception.NodeNoPermission(node_uuid=node_uuid)
+    if not context.is_admin:
+        if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
+            raise exception.NodeNoPermission(node_uuid=node_uuid)
 
     policy_node_ref = policy_node_get(context, node_uuid)
     policy_node_ref.update(values)
@@ -286,8 +304,9 @@ def policy_node_update(context, node_uuid, values):
 
 
 def policy_node_destroy(context, node_uuid):
-    if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
-        raise exception.NodeNoPermission(node_uuid=node_uuid)
+    if not context.is_admin:
+        if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
+            raise exception.NodeNoPermission(node_uuid=node_uuid)
 
     model_query(context, models.PolicyNode,
                 get_session()).filter_by(node_uuid=node_uuid).delete()
