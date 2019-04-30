@@ -57,6 +57,12 @@ class LeaseRequest(base.ESILEAPObject):
             context, project_id)
         return cls._from_db_object_list(context, db_lease_requests)
 
+    @classmethod
+    def get_all_by_status(cls, context, status):
+        db_lease_requests = cls.dbapi.lease_request_get_all_by_status(
+            context, status)
+        return cls._from_db_object_list(context, db_lease_requests)
+
     def create(self, context=None):
         updates = self.obj_get_changes()
         db_lease_request = self.dbapi.lease_request_create(context, updates)

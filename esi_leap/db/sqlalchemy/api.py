@@ -175,6 +175,12 @@ def lease_request_get_all_by_project_id(context, project_id):
     return query.all()
 
 
+def lease_request_get_all_by_status(context, status):
+    query = (model_query(context, models.LeaseRequest,
+                         get_session()).filter_by(status=status))
+    return query.all()
+
+
 def lease_request_create(context, values):
     lease_request_ref = models.LeaseRequest()
     values['uuid'] = uuidutils.generate_uuid()

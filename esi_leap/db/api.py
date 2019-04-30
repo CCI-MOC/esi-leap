@@ -132,6 +132,11 @@ def lease_request_get_all_by_project_id(context, project_id):
     return IMPL.lease_request_get_all_by_project_id(context, project_id)
 
 
+@to_dict
+def lease_request_get_all_by_status(context, status):
+    return IMPL.lease_request_get_all_by_status(context, status)
+
+
 def lease_request_create(context, values):
     return IMPL.lease_request_create(context, values)
 

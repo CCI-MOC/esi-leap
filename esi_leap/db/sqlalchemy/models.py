@@ -59,6 +59,7 @@ class LeaseRequest(Base):
     __table_args__ = (
         Index('project_id_idx', 'project_id'),
         Index('uuid_idx', 'uuid'),
+        Index('status_idx', 'status'),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
