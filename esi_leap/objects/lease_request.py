@@ -134,7 +134,7 @@ class LeaseRequest(base.ESILEAPObject):
         else:
             raise exception.LeaseRequestUnfulfilled(request_uuid=self.uuid)
 
-    def expire(self, context):
+    def expire_or_cancel(self, context, target_status=statuses.EXPIRED):
         # if we call this method, assume that we always want to remove any
         # associated nodes
         nodes = policy_node.PolicyNode.get_all_by_request_uuid(
@@ -154,9 +154,9 @@ class LeaseRequest(base.ESILEAPObject):
             raise exception.LeaseRequestNodeUnexpired(
                 request_uuid=self.uuid)
 
-        self.status = statuses.EXPIRED
+        self.status = target_status
         self.save(context)
-        LOG.info("Lease %s successfully expired", self.uuid)
+        LOG.info("Lease %s successfully %s", self.uuid, target_status)
 
     def _get_expected_node_count(self):
         # TODO: add nodes from node_properties
@@ -174,9 +174,10 @@ class LeaseRequest(base.ESILEAPObject):
             return statuses.DEGRADED
         else:
             # request is either pending or completed
-            if self.cancel_date is not None:
+            if self.cancel_date and self.cancel_date <= timeutils.utcnow():
                 return statuses.CANCELLED
-            elif self.expiration_date is not None:
+            elif self.expiration_date and \
+                self.expiration_date <= timeutils.utcnow():
                 return statuses.EXPIRED
             elif self.fulfilled_date is None:
                 return statuses.PENDING
