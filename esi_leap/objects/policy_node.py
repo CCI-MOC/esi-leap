@@ -89,11 +89,11 @@ class PolicyNode(base.ESILEAPObject):
         return (self.request_uuid is None and
                 ironic.get_node_project_id(self.node_uuid) is None)
 
-    def assign_node(self, context, request_uuid, expiration_date):
-        self.request_uuid = request_uuid
+    def assign_node(self, context, request, expiration_date):
+        self.request_uuid = request.uuid
         self.lease_expiration_date = expiration_date
         self.save(context)
-        ironic.set_node_project_id(self.node_uuid, context.project_id)
+        ironic.set_node_project_id(self.node_uuid, request.project_id)
 
     def unassign_node(self, context):
         self.request_uuid = None

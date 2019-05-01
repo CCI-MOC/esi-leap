@@ -12,6 +12,8 @@
 
 import datetime
 
+from oslo_log import log as logging
+from oslo_utils import timeutils
 from oslo_versionedobjects import base as versioned_objects_base
 
 from esi_leap.common import exception
@@ -20,6 +22,9 @@ from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 from esi_leap.objects import fields
 from esi_leap.objects import policy_node
+
+
+LOG = logging.getLogger(__name__)
 
 
 @versioned_objects_base.VersionedObjectRegistry.register
@@ -103,17 +108,19 @@ class LeaseRequest(base.ESILEAPObject):
         for node_uuid in node_uuids:
             node = policy_node.PolicyNode.get(context, node_uuid)
             if node is None or not node.is_available():
-                raise exception.LeaseRequestNodeUnavailable(
-                    request_uuid=self.uuid)
+                LOG.debug("Node %s is unavailable; lease cannot be fulfilled", node.node_uuid)
+                return
             nodes.append(node)
 
         # nodes are all available, so claim them
         # TODO: should be done in a single transaction
-        fulfilled_date = datetime.datetime.utcnow()
+        LOG.debug("Nodes are available; attempting to fulfill lease")
+        fulfilled_date = timeutils.utcnow()
         expiration_date = fulfilled_date + datetime.timedelta(
             seconds=self.lease_time)
         for node in nodes:
-            node.assign_node(context, self.uuid, expiration_date)
+            node.assign_node(context, self, expiration_date)
+            LOG.debug("Node %s assigned to lease %s", node.node_uuid, self.uuid)
 
         post_actual_status = self._get_actual_status(context)
         if post_actual_status in [statuses.DEGRADED, statuses.FULFILLED]:
@@ -122,6 +129,7 @@ class LeaseRequest(base.ESILEAPObject):
             self.expiration_date = expiration_date
             self.status = post_actual_status
             self.save(context)
+            LOG.debug("Lease %s fulfilled", self.uuid)
         else:
             raise exception.LeaseRequestUnfulfilled(request_uuid=self.uuid)
 
