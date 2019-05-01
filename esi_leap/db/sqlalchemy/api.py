@@ -281,7 +281,7 @@ def policy_node_get_available(context):
 def policy_node_get_leased(context):
     query = (model_query(context, models.PolicyNode,
                          get_session()).filter(
-                             models.PolicyNode.request_uuid != None))
+                             models.PolicyNode.request_uuid is not None))
     return query.all()
 
 

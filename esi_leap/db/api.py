@@ -184,6 +184,7 @@ def policy_node_get_all_by_request_uuid(context, request_uuid):
 def policy_node_get_available(context):
     return IMPL.policy_node_get_available(context)
 
+
 @to_dict
 def policy_node_get_leased(context):
     return IMPL.policy_node_get_leased(context)
