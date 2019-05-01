@@ -278,6 +278,13 @@ def policy_node_get_available(context):
     return policy_node_get_all_by_request_uuid(context, None)
 
 
+def policy_node_get_leased(context):
+    query = (model_query(context, models.PolicyNode,
+                         get_session()).filter(
+                             models.PolicyNode.request_uuid != None))
+    return query.all()
+
+
 def policy_node_create(context, values):
     node_uuid = values.get('node_uuid')
     if ironic.get_node_project_owner_id(node_uuid) != context.project_id:

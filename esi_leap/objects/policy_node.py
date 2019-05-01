@@ -70,12 +70,18 @@ class PolicyNode(base.ESILEAPObject):
         db_policy_nodes = cls.dbapi.policy_node_get_available(context)
         return cls._from_db_object_list(context, db_policy_nodes)
 
+    @classmethod
+    def get_leased(cls, context):
+        db_policy_nodes = cls.dbapi.policy_node_get_leased(context)
+        return cls._from_db_object_list(context, db_policy_nodes)
+
     def create(self, context=None):
         updates = self.obj_get_changes()
         db_policy_node = self.dbapi.policy_node_create(context, updates)
         self._from_db_object(context, self, db_policy_node)
 
     def destroy(self, context=None):
+        self.unassign_node(context)
         self.dbapi.policy_node_destroy(context, self.node_uuid)
         self.obj_reset_changes()
 
