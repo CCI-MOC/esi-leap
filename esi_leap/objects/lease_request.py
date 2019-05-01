@@ -108,7 +108,8 @@ class LeaseRequest(base.ESILEAPObject):
         for node_uuid in node_uuids:
             node = policy_node.PolicyNode.get(context, node_uuid)
             if node is None or not node.is_available():
-                LOG.info("Node %s is unavailable; lease cannot be fulfilled", node.node_uuid)
+                LOG.info("Node %s is unavailable; lease cannot be fulfilled",
+                         node.node_uuid)
                 return
             nodes.append(node)
 
