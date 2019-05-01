@@ -21,7 +21,8 @@ class BooleanField(object_fields.BooleanField):
 
 
 class DateTimeField(object_fields.DateTimeField):
-    pass
+    def __init__(self, **kwargs):
+        super(DateTimeField, self).__init__(False, **kwargs)
 
 
 # FlexibleDict borrowed from Ironic
