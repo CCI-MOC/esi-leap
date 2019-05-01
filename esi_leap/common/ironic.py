@@ -50,6 +50,8 @@ def get_node_project_id(node_uuid):
 
 def set_node_project_id(node_uuid, project_id):
     if project_id is None:
+        if not get_node_project_id(node_uuid):
+            return
         patch = {
             "op": "remove",
             "path": "/properties/project_id",
