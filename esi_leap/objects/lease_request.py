@@ -130,7 +130,7 @@ class LeaseRequest(base.ESILEAPObject):
             self.expiration_date = expiration_date
             self.status = post_actual_status
             self.save(context)
-            LOG.info("Lease %s fulfilled", self.uuid)
+            LOG.info("Lease %s successfully fulfilled", self.uuid)
         else:
             raise exception.LeaseRequestUnfulfilled(request_uuid=self.uuid)
 
@@ -143,6 +143,8 @@ class LeaseRequest(base.ESILEAPObject):
         # TODO: should be done in a single transaction
         for node in nodes:
             node.unassign_node(context)
+            LOG.info("Node %s removed from lease %s",
+                     node.node_uuid, self.uuid)
 
         # check that there are no nodes left
         post_nodes = policy_node.PolicyNode.get_all_by_request_uuid(
@@ -154,6 +156,7 @@ class LeaseRequest(base.ESILEAPObject):
 
         self.status = statuses.EXPIRED
         self.save(context)
+        LOG.info("Lease %s successfully expired", self.uuid)
 
     def _get_expected_node_count(self):
         # TODO: add nodes from node_properties
