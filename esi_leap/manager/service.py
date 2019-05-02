@@ -51,12 +51,10 @@ class ManagerService(service.Service):
         self.tg.add_thread(self._server.start)
         LOG.info("Starting _fulfill_leases periodic job")
         self.tg.add_timer(300, self._fulfill_leases)
-        LOG.info("Starting _expire_or_cancel_leases periodic job")
-        self.tg.add_timer(60, self._expire_or_cancel_leases)
-        LOG.info("Starting _expire_policy_node_leases periodic job")
-        self.tg.add_timer(60, self._expire_policy_node_leases)
-        LOG.info("Starting _expire_policy_nodes periodic job")
-        self.tg.add_timer(60, self._expire_policy_nodes)
+        LOG.info("Starting _monitor_leases periodic job")
+        self.tg.add_timer(60, self._monitor_leases)
+        LOG.info("Starting _monitor_policy_nodes periodic job")
+        self.tg.add_timer(60, self._monitor_policy_nodes)
 
     def stop(self):
         super(ManagerService, self).stop()
@@ -71,8 +69,8 @@ class ManagerService(service.Service):
             LOG.info("Trying to fulfill lease %s", lease.uuid)
             lease.fulfill(self._context)
 
-    def _expire_or_cancel_leases(self):
-        LOG.info("Running _expire_or_cancel_leases")
+    def _monitor_leases(self):
+        LOG.info("Checking for cancelled leases")
         pending_leases = lease_request.LeaseRequest.get_all_by_status(
             self._context, statuses.PENDING)
         for lease in pending_leases:
@@ -80,6 +78,7 @@ class ManagerService(service.Service):
                 LOG.info("Cancelling lease %s", lease.uuid)
                 lease.expire_or_cancel(self._context, statuses.CANCELLED)
 
+        LOG.info("Checking for expired leases")
         fulfilled_leases = lease_request.LeaseRequest.get_all_by_status(
             self._context, statuses.FULFILLED)
         expired_leases = lease_request.LeaseRequest.get_all_by_status(
@@ -90,8 +89,16 @@ class ManagerService(service.Service):
                 LOG.info("Expiring lease %s", lease.uuid)
                 lease.expire_or_cancel(self._context)
 
-    def _expire_policy_node_leases(self):
-        LOG.info("Running _expire_policy_node_leases")
+    def _monitor_policy_nodes(self):
+        LOG.info("Checking for expired policy nodes")
+        nodes = policy_node.PolicyNode.get_all(self._context)
+        for node in nodes:
+            if node.expiration_date and \
+               node.expiration_date <= timeutils.utcnow():
+                LOG.info("Expiring node %s", node.node_uuid)
+                node.destroy(self._context)
+
+        LOG.info("Checking for expired policy node leases")
         nodes = policy_node.PolicyNode.get_leased(self._context)
         for node in nodes:
             if node.lease_expiration_date and \
@@ -99,15 +106,6 @@ class ManagerService(service.Service):
                 LOG.info("Unassigning node %s from lease %s",
                          node.node_uuid, node.request_uuid)
                 node.unassign_node(self._context)
-
-    def _expire_policy_nodes(self):
-        LOG.info("Running _expire_policy_nodes")
-        nodes = policy_node.PolicyNode.get_all(self._context)
-        for node in nodes:
-            if node.expiration_date and \
-               node.expiration_date <= timeutils.utcnow():
-                LOG.info("Expiring node %s", node.node_uuid)
-                node.destroy(self._context)
 
 
 class ManagerEndpoint(object):
