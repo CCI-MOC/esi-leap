@@ -10,15 +10,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import esi_leap.conf
+from oslo_config import cfg
 
-_opts = [
-    ('DEFAULT', esi_leap.conf.netconf.opts),
-    ('api', esi_leap.conf.api.opts),
-    ('ironic', esi_leap.conf.ironic.list_opts()),
-    ('pecan', esi_leap.conf.pecan.opts),
+
+opts = [
+    cfg.HostAddressOpt('host_ip',
+                       default='0.0.0.0'),
+    cfg.PortOpt('port',
+                default=7777),
+    cfg.IntOpt('max_limit',
+               default=1000),
+    cfg.StrOpt('public_endpoint'),
+    cfg.IntOpt('api_workers'),
+    cfg.BoolOpt('enable_ssl_api',
+                default=False),
 ]
 
+api_group = cfg.OptGroup(
+    'api',
+    title='API Options')
 
-def list_opts():
-    return _opts
+
+def register_opts(conf):
+    conf.register_opts(opts, group=api_group)

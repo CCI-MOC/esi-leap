@@ -10,15 +10,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import esi_leap.conf
+from oslo_config import cfg
 
-_opts = [
-    ('DEFAULT', esi_leap.conf.netconf.opts),
-    ('api', esi_leap.conf.api.opts),
-    ('ironic', esi_leap.conf.ironic.list_opts()),
-    ('pecan', esi_leap.conf.pecan.opts),
+
+opts = [
+    cfg.StrOpt('root',
+               default='esi_leap.api.controllers.root.RootController'),
+    cfg.ListOpt('modules',
+                default=["esi_leap.api"]),
+    cfg.BoolOpt('debug',
+                default=False),
+    cfg.BoolOpt('auth_enable',
+                default=True)
 ]
 
+pecan_group = cfg.OptGroup(
+    'pecan',
+    title='Pecan Options')
 
-def list_opts():
-    return _opts
+
+def register_opts(conf):
+    conf.register_opts(opts, group=pecan_group)

@@ -10,15 +10,25 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import esi_leap.conf
+import pecan
+from pecan import rest
+from wsme import types as wtypes
+import wsmeext.pecan as wsme_pecan
 
-_opts = [
-    ('DEFAULT', esi_leap.conf.netconf.opts),
-    ('api', esi_leap.conf.api.opts),
-    ('ironic', esi_leap.conf.ironic.list_opts()),
-    ('pecan', esi_leap.conf.pecan.opts),
-]
+from esi_leap.api.controllers import types
+from esi_leap.objects import policy
 
 
-def list_opts():
-    return _opts
+class Policy(wtypes.Base):
+    id = wtypes.text
+    uuid = wtypes.text
+    name = wtypes.text
+    max_time_for_lease = wtypes.text
+    extendible = wtypes.text
+
+
+class PoliciesController(rest.RestController):
+
+    @wsme_pecan.wsexpose(Policy, wtypes.text)
+    def get(self, policy_uuid):
+        return policy.Policy.get(pecan.request.context, policy_uuid)

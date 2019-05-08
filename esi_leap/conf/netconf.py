@@ -23,7 +23,3 @@ opts = [
 
 def register_opts(conf):
     conf.register_opts(opts)
-
-
-def list_opts():
-    return {'DEFAULT': opts}

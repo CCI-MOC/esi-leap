@@ -10,15 +10,22 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import sys
+
+from oslo_service import service
+
+from esi_leap.api import service as wsgi_service
+from esi_leap.common import service as esi_leap_service
 import esi_leap.conf
 
-_opts = [
-    ('DEFAULT', esi_leap.conf.netconf.opts),
-    ('api', esi_leap.conf.api.opts),
-    ('ironic', esi_leap.conf.ironic.list_opts()),
-    ('pecan', esi_leap.conf.pecan.opts),
-]
+
+CONF = esi_leap.conf.CONF
 
 
-def list_opts():
-    return _opts
+def main():
+    esi_leap_service.prepare_service(sys.argv)
+    # Build and start the WSGI app
+    launcher = service.ProcessLauncher(CONF, restart_method='mutate')
+    server = wsgi_service.WSGIService('esi_leap_api')
+    launcher.launch_service(server, workers=server.workers)
+    launcher.wait()
