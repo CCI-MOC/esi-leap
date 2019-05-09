@@ -12,6 +12,7 @@
 
 import pecan
 from pecan import rest
+import wsme
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
@@ -20,15 +21,30 @@ from esi_leap.objects import policy
 
 
 class Policy(wtypes.Base):
-    id = wtypes.text
-    uuid = wtypes.text
-    name = wtypes.text
-    max_time_for_lease = wtypes.text
-    extendible = wtypes.text
+    id = wsme.wsattr(int)
+    uuid = wsme.wsattr(wtypes.text)
+    name = wsme.wsattr(wtypes.text)
+    max_time_for_lease = wsme.wsattr(int)
+    extendible = wsme.wsattr(bool)
+
+
+class PolicyCollection(types.Collection):
+    policies = [Policy]
+
+    def __init__(self, **kwargs):
+        self._type = 'policies'
 
 
 class PoliciesController(rest.RestController):
 
     @wsme_pecan.wsexpose(Policy, wtypes.text)
-    def get(self, policy_uuid):
-        return policy.Policy.get(pecan.request.context, policy_uuid)
+    def get_one(self, policy_uuid):
+        p = policy.Policy.get(pecan.request.context, policy_uuid)
+        return Policy(**p.to_dict())
+
+    @wsme_pecan.wsexpose(PolicyCollection)
+    def get_all(self):
+        policy_collection = PolicyCollection()
+        policies = policy.Policy.get_all(pecan.request.context)
+        policy_collection.policies = [Policy(**p.to_dict()) for p in policies]
+        return policy_collection
