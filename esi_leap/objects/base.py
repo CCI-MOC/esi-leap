@@ -40,3 +40,14 @@ class ESILEAPObject(object_base.VersionedObject):
     def _from_db_object_list(cls, context, db_objs):
         return [cls._from_db_object(context, cls(), db_obj)
                 for db_obj in db_objs]
+
+    def to_dict(self):
+        def _attr_as_dict(field):
+            attr = getattr(self, field)
+            if isinstance(attr, ESILEAPObject):
+                attr = attr.as_dict()
+            return attr
+
+        return dict((k, getattr(self, k))
+                    for k in self.fields
+                    if self.obj_attr_is_set(k))
