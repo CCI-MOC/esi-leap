@@ -25,6 +25,7 @@ class ContextHook(hooks.PecanHook):
     def before(self, state):
         ctx = context.RequestContext.from_environ(state.request.environ)
         ctx.is_admin = True
+        ctx.project_id = '01d6f6ff2f5c408999e02f6649c8c88e'
         state.request.context = ctx
 
     def after(self, state):
