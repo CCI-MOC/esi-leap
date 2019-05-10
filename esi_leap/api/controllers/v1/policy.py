@@ -16,16 +16,22 @@ import wsme
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
 from esi_leap.objects import policy
 
 
-class Policy(wtypes.Base):
+class Policy(base.ESILEAPBase):
     id = wsme.wsattr(int)
     uuid = wsme.wsattr(wtypes.text)
     name = wsme.wsattr(wtypes.text)
     max_time_for_lease = wsme.wsattr(int)
     extendible = wsme.wsattr(bool)
+
+    def __init__(self, **kwargs):
+        self.fields = policy.Policy.fields
+        for field in self.fields:
+            setattr(self, field, kwargs.get(field, wtypes.Unset))
 
 
 class PolicyCollection(types.Collection):
@@ -48,3 +54,14 @@ class PoliciesController(rest.RestController):
         policies = policy.Policy.get_all(pecan.request.context)
         policy_collection.policies = [Policy(**p.to_dict()) for p in policies]
         return policy_collection
+
+    @wsme_pecan.wsexpose(Policy, body=Policy)
+    def post(self, new_policy):
+        p = policy.Policy(**new_policy.to_dict())
+        p.create(pecan.request.context)
+        return Policy(**p.to_dict())
+
+    @wsme_pecan.wsexpose(Policy, wtypes.text)
+    def delete(self, policy_uuid):
+        p = policy.Policy.get(pecan.request.context, policy_uuid)
+        p.destroy(pecan.request.context)
