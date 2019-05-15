@@ -10,8 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from keystonemiddleware import auth_token
 from oslo_context import context
-import oslo_middleware.cors as cors_middleware
 import pecan
 from pecan import hooks
 
@@ -24,8 +24,6 @@ CONF = esi_leap.conf.CONF
 class ContextHook(hooks.PecanHook):
     def before(self, state):
         ctx = context.RequestContext.from_environ(state.request.environ)
-        ctx.is_admin = True
-        ctx.project_id = '01d6f6ff2f5c408999e02f6649c8c88e'
         state.request.context = ctx
 
     def after(self, state):
@@ -59,6 +57,4 @@ def setup_app(config=None):
         force_canonical=getattr(config.app, 'force_canonical', True),
     )
 
-    # Create a CORS wrapper, and attach mistral-specific defaults that must be
-    # included in all CORS responses.
-    return cors_middleware.CORS(app, CONF)
+    return auth_token.AuthProtocol(app, dict(CONF.keystone_authtoken))
