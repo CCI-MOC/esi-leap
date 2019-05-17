@@ -16,9 +16,9 @@ import sys
 
 from oslo_config import cfg
 
-import esi_leap.conf
 from esi_leap.common.i18n import _
 from esi_leap.common import service
+import esi_leap.conf
 from esi_leap.db import migration
 
 

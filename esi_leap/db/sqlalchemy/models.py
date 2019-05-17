@@ -15,7 +15,7 @@ from oslo_db.sqlalchemy import types as db_types
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import orm
-from sqlalchemy import Column, ForeignKey, DateTime
+from sqlalchemy import Column, DateTime, ForeignKey
 from sqlalchemy import Boolean, Index, Integer, String
 
 from esi_leap.common import statuses
