@@ -10,9 +10,31 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-# borrowed from Ironic
+# Borrowed from Ironic
 
+import json
 from wsme import types as wtypes
+
+
+class JsonType(wtypes.UserType):
+    """A simple JSON type."""
+
+    basetype = wtypes.text
+    name = 'json'
+
+    def __str__(self):
+        # These are the json serializable native types
+        return ' | '.join(map(str, (wtypes.text, int, float,
+                                    bool, list, dict, None)))
+
+    @staticmethod
+    def validate(value):
+        json.dumps(value)
+        return value
+
+    @staticmethod
+    def frombasetype(value):
+        return JsonType.validate(value)
 
 
 class Collection(wtypes.Base):
@@ -44,3 +66,6 @@ class Collection(wtypes.Base):
         }
 
         return next_link
+
+
+jsontype = JsonType()
