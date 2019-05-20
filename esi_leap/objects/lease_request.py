@@ -104,28 +104,30 @@ class LeaseRequest(base.ESILEAPObject):
         # for now, only match node_uuids
         # TODO: match based on node properties
         node_uuids = self.node_properties.get('node_uuids', [])
-        nodes = []
+        resources = []
         for node_uuid in node_uuids:
-            node = leasable_resource.LeasableResource.get(context, node_uuid)
-            if node is None or not node.is_available():
-                LOG.info("Node %s is unavailable; lease cannot be fulfilled",
-                         node.node_uuid)
+            resource = leasable_resource.LeasableResource.get(
+                context, 'ironic_node', node_uuid)
+            if resource is None or not resource.is_available():
+                LOG.info("%s %s is unavailable; lease cannot be fulfilled",
+                         resource.resource_type, resource.resource_uuid)
                 return
-            nodes.append(node)
+            resources.append(resource)
 
-        # nodes are all available, so claim them
+        # resources are all available, so claim them
         # TODO: should be done in a single transaction
-        LOG.info("Nodes are available; attempting to fulfill lease")
+        LOG.info("Resources are available; attempting to fulfill lease")
         fulfilled_date = timeutils.utcnow()
         expiration_date = fulfilled_date + datetime.timedelta(
             seconds=self.lease_time)
-        for node in nodes:
-            node.assign(context, self, expiration_date)
-            LOG.info("Node %s assigned to lease %s", node.node_uuid, self.uuid)
+        for resource in resources:
+            resource.assign(context, self, expiration_date)
+            LOG.info("%s %s assigned to lease %s", resource.resource_type,
+                     resource.resource_uuid, self.uuid)
 
         post_actual_status = self._get_actual_status(context)
         if post_actual_status in [statuses.DEGRADED, statuses.FULFILLED]:
-            # at least some nodes have been assigned, so start the timer
+            # at least some resources have been assigned, so start the timer
             self.fulfilled_date = fulfilled_date
             self.expiration_date = expiration_date
             self.status = post_actual_status
@@ -136,23 +138,23 @@ class LeaseRequest(base.ESILEAPObject):
 
     def expire_or_cancel(self, context, target_status=statuses.EXPIRED):
         # if we call this method, assume that we always want to remove any
-        # associated nodes
-        nodes = leasable_resource.LeasableResource.get_all_by_request_uuid(
+        # associated resources
+        resources = leasable_resource.LeasableResource.get_all_by_request_uuid(
             context, self.uuid)
 
         # TODO: should be done in a single transaction
-        for node in nodes:
-            node.unassign(context)
-            LOG.info("Node %s removed from lease %s",
-                     node.node_uuid, self.uuid)
+        for resource in resources:
+            resource.unassign(context)
+            LOG.info("%s %s removed from lease %s",
+                     resource.resource_type, resource.resource_uuid, self.uuid)
 
-        # check that there are no nodes left
-        post_nodes = leasable_resource. \
+        # check that there are no resources left
+        post_resources = leasable_resource. \
             LeasableResource.get_all_by_request_uuid(
                 context, self.uuid)
 
-        if len(post_nodes) > 0:
-            raise exception.LeaseRequestNodeUnexpired(
+        if len(post_resources) > 0:
+            raise exception.LeaseRequestUnexpired(
                 request_uuid=self.uuid)
 
         self.status = target_status
@@ -164,13 +166,13 @@ class LeaseRequest(base.ESILEAPObject):
         return len(self.node_properties.get('node_uuids', []))
 
     def _get_actual_status(self, context=None):
-        # check if lease request has any nodes
-        nodes = leasable_resource.LeasableResource.get_all_by_request_uuid(
+        # check if lease request has any resources
+        resources = leasable_resource.LeasableResource.get_all_by_request_uuid(
             context, self.uuid)
 
-        if len(nodes) > 0:
+        if len(resources) > 0:
             # request has been at least partially fulfilled, and is not expired
-            if self._get_expected_node_count() == len(nodes):
+            if self._get_expected_node_count() == len(resources):
                 return statuses.FULFILLED
             return statuses.DEGRADED
         else:
@@ -183,5 +185,5 @@ class LeaseRequest(base.ESILEAPObject):
             elif self.fulfilled_date is None:
                 return statuses.PENDING
             else:
-                # request is fulfilled but has no nodes
+                # request is fulfilled but has no resources
                 return statuses.DEGRADED

@@ -231,11 +231,13 @@ def lease_request_destroy(context, request_uuid):
 
 
 # Policy Node
-def leasable_resource_get(context, node_uuid):
+def leasable_resource_get(context, resource_type, resource_uuid):
     query = model_query(context, models.LeasableResource, get_session())
-    result = query.filter_by(node_uuid=node_uuid).first()
+    result = query.filter_by(
+        resource_type=resource_type, resource_uuid=resource_uuid).first()
     if not result:
-        raise exception.NodeNotFound(node_uuid=node_uuid)
+        raise exception.ResourceNotFound(
+            resource_type=resource_type, resource_uuid=resource_uuid)
     return result
 
 
@@ -286,34 +288,43 @@ def leasable_resource_get_leased(context):
 
 
 def leasable_resource_create(context, values):
-    node_uuid = values.get('node_uuid')
-    if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
-        raise exception.NodeNoPermission(node_uuid=node_uuid)
+    resource_type = values.get('resource_type')
+    resource_uuid = values.get('resource_uuid')
+    if ironic.get_node_project_owner_id(resource_uuid) != context.project_id:
+        raise exception.ResourceNoPermission(
+            resource_type=resource_type, resource_uuid=resource_uuid)
 
     leasable_resource_ref = models.LeasableResource()
     leasable_resource_ref.update(values)
     try:
         leasable_resource_ref.save(get_session())
     except db_exception.DBDuplicateEntry:
-        raise exception.NodeExists(node_uuid=node_uuid)
+        raise exception.ResourceExists(
+            resource_type=resource_type, resource_uuid=resource_uuid)
     return leasable_resource_ref
 
 
-def leasable_resource_update(context, node_uuid, values):
+def leasable_resource_update(context, resource_type, resource_uuid, values):
     if not context.is_admin:
-        if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
-            raise exception.NodeNoPermission(node_uuid=node_uuid)
+        if ironic.get_node_project_owner_id(resource_uuid) \
+           != context.project_id:
+            raise exception.ResourceNoPermission(
+                resource_type=resource_type, resource_uuid=resource_uuid)
 
-    leasable_resource_ref = leasable_resource_get(context, node_uuid)
+    leasable_resource_ref = leasable_resource_get(
+        context, resource_type, resource_uuid)
     leasable_resource_ref.update(values)
     leasable_resource_ref.save(get_session())
     return leasable_resource_ref
 
 
-def leasable_resource_destroy(context, node_uuid):
+def leasable_resource_destroy(context, resource_type, resource_uuid):
     if not context.is_admin:
-        if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
-            raise exception.NodeNoPermission(node_uuid=node_uuid)
-
+        if ironic.get_node_project_owner_id(resource_uuid) \
+           != context.project_id:
+            raise exception.ResourceNoPermission(
+                resource_type=resource_type, resource_uuid=resource_uuid)
     model_query(context, models.LeasableResource,
-                get_session()).filter_by(node_uuid=node_uuid).delete()
+                get_session()).filter_by(
+                    resource_type=resource_type,
+                    resource_uuid=resource_uuid).delete()

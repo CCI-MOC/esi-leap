@@ -151,8 +151,8 @@ def lease_request_destroy(context, request_uuid):
 
 # Policy Node
 @to_dict
-def leasable_resource_get(context, node_uuid):
-    return IMPL.leasable_resource_get(context, node_uuid)
+def leasable_resource_get(context, resource_type, resource_uuid):
+    return IMPL.leasable_resource_get(context, resource_type, resource_uuid)
 
 
 @to_dict
@@ -195,9 +195,10 @@ def leasable_resource_create(context, values):
     return IMPL.leasable_resource_create(context, values)
 
 
-def leasable_resource_update(context, node_uuid, values):
-    return IMPL.leasable_resource_update(context, node_uuid, values)
+def leasable_resource_update(context, resource_type, resource_uuid, values):
+    return IMPL.leasable_resource_update(
+        context, resource_type, resource_uuid, values)
 
 
-def leasable_resource_destroy(context, node_uuid):
-    IMPL.leasable_resource_destroy(context, node_uuid)
+def leasable_resource_destroy(context, resource_type, resource_uuid):
+    IMPL.leasable_resource_destroy(context, resource_type, resource_uuid)

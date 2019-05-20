@@ -95,7 +95,8 @@ class ManagerService(service.Service):
         for resource in resources:
             if resource.expiration_date and \
                resource.expiration_date <= timeutils.utcnow():
-                LOG.info("Expiring node %s", resource.node_uuid)
+                LOG.info("Expiring resource %s %s",
+                         resource.resource_type, resource.resource_uuid)
                 resource.destroy(self._context)
 
         LOG.info("Checking for expired leasable_resource leases")
@@ -104,8 +105,10 @@ class ManagerService(service.Service):
         for resource in resources:
             if resource.lease_expiration_date and \
                resource.lease_expiration_date <= timeutils.utcnow():
-                LOG.info("Unassigning node %s from lease %s",
-                         resource.resource_uuid, resource.request_uuid)
+                LOG.info("Unassigning %s %s from lease %s",
+                         resource.resource_type,
+                         resource.resource_uuid,
+                         resource.request_uuid)
                 resource.unassign(self._context)
 
 

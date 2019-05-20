@@ -24,7 +24,8 @@ class LeasableResource(base.ESILEAPObject):
 
     fields = {
         'id': fields.IntegerField(),
-        'node_uuid': fields.UUIDField(),
+        'resource_type': fields.StringField(),
+        'resource_uuid': fields.UUIDField(),
         'policy_uuid': fields.UUIDField(),
         'expiration_date': fields.DateTimeField(nullable=True),
         'request_uuid': fields.UUIDField(nullable=True),
@@ -32,8 +33,9 @@ class LeasableResource(base.ESILEAPObject):
     }
 
     @classmethod
-    def get(cls, context, node_uuid):
-        db_resource = cls.dbapi.leasable_resource_get(context, node_uuid)
+    def get(cls, context, resource_type, resource_uuid):
+        db_resource = cls.dbapi.leasable_resource_get(
+            context, resource_type, resource_uuid)
         return cls._from_db_object(context, cls(), db_resource)
 
     @classmethod
@@ -83,27 +85,28 @@ class LeasableResource(base.ESILEAPObject):
 
     def destroy(self, context=None):
         self.unassign(context)
-        self.dbapi.leasable_resource_destroy(context, self.node_uuid)
+        self.dbapi.leasable_resource_destroy(
+            context, self.resource_type, self.resource_uuid)
         self.obj_reset_changes()
 
     def save(self, context=None):
         updates = self.obj_get_changes()
         db_resource = self.dbapi.leasable_resource_update(
-            context, self.node_uuid, updates)
+            context, self.resource_type, self.resource_uuid, updates)
         self._from_db_object(context, self, db_resource)
 
     def is_available(self):
         return (self.request_uuid is None and
-                ironic.get_node_project_id(self.node_uuid) is None)
+                ironic.get_node_project_id(self.resource_uuid) is None)
 
     def assign(self, context, request, expiration_date):
         self.request_uuid = request.uuid
         self.lease_expiration_date = expiration_date
         self.save(context)
-        ironic.set_node_project_id(self.node_uuid, request.project_id)
+        ironic.set_node_project_id(self.resource_uuid, request.project_id)
 
     def unassign(self, context):
         self.request_uuid = None
         self.lease_expiration_date = None
         self.save(context)
-        ironic.set_node_project_id(self.node_uuid, None)
+        ironic.set_node_project_id(self.resource_uuid, None)

@@ -81,13 +81,14 @@ class LeasableResource(Base):
 
     __tablename__ = 'leasable_resources'
     __table_args__ = (
-        Index('node_uuid_idx', 'node_uuid'),
+        Index('resource_idx', 'resource_type', 'resource_uuid'),
         Index('policy_uuid_idx', 'policy_uuid'),
         Index('request_uuid_idx', 'request_uuid'),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
-    node_uuid = Column(String(36), nullable=False, unique=True)
+    resource_type = Column(String(36), nullable=False)
+    resource_uuid = Column(String(36), nullable=False, unique=True)
     policy_uuid = Column(String(36),
                          ForeignKey('policies.uuid'),
                          nullable=False)
@@ -98,7 +99,7 @@ class LeasableResource(Base):
     lease_expiration_date = Column(DateTime)
 
     policy = orm.relationship(Policy,
-                              backref=orm.backref('applied_nodes'),
+                              backref=orm.backref('applied_resources'),
                               foreign_keys=policy_uuid,
                               primaryjoin=policy_uuid == Policy.uuid)
     lease_request = orm.relationship(

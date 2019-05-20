@@ -48,9 +48,9 @@ class LeaseRequestNoPermission(ESILeapException):
                 "lease request %(request_uuid)s.")
 
 
-class LeaseRequestNodeUnavailable(ESILeapException):
+class LeaseRequestResourceUnavailable(ESILeapException):
     msg_fmt = _("Lease request %(request_uuid)s cannot be fulfilled, "
-                "as nodes are unavailable.")
+                "as resource are unavailable.")
 
 
 class LeaseRequestNotFound(ESILeapException):
@@ -59,29 +59,17 @@ class LeaseRequestNotFound(ESILeapException):
 
 class LeaseRequestUnexpired(ESILeapException):
     msg_fmt = _("Lease request %(request_uuid)s was expired, "
-                "but nodes are still assigned.")
+                "but resources are still assigned.")
 
 
 class LeaseRequestUnfulfilled(ESILeapException):
     msg_fmt = _("Lease request %(request_uuid)s was fulfilled, "
-                "but no nodes were assigned.")
+                "but no resources were assigned.")
 
 
 class LeaseRequestWrongFulfillStatus(ESILeapException):
     msg_fmt = _("Lease request %(request_uuid)s must have a status of "
                 "pending to be fulfilled, but it has a status of %(status)s.")
-
-
-class NodeExists(ESILeapException):
-    msg_fmt = _("Node %(node_uuid)s already exists.")
-
-
-class NodeNoPermission(ESILeapException):
-    msg_fmt = _("You do not have permissions on node %(node_uuid)s.")
-
-
-class NodeNotFound(ESILeapException):
-    msg_fmt = _("Node %(node_uuid)s not found.")
 
 
 class PolicyNoPermission(ESILeapException):
@@ -94,3 +82,16 @@ class PolicyNotFound(ESILeapException):
 
 class ProjectNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on project %(project_id)s.")
+
+
+class ResourceExists(ESILeapException):
+    msg_fmt = _("%(resource_type)s %(resource_uuid)s already exists.")
+
+
+class ResourceNoPermission(ESILeapException):
+    msg_fmt = _("You do not have permissions on "
+                "%(resource_type)s %(resource_uuid)s.")
+
+
+class ResourceNotFound(ESILeapException):
+    msg_fmt = _("%(resource_type)s %(resource_uuid)s not found.")
