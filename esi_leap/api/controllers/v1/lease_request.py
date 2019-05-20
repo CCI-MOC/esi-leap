@@ -27,9 +27,7 @@ class LeaseRequest(base.ESILEAPBase):
     id = wsme.wsattr(int)
     uuid = wsme.wsattr(wtypes.text)
     name = wsme.wsattr(wtypes.text)
-    node_properties = {wtypes.text: types.jsontype}
-    min_nodes = wsme.wsattr(int)
-    max_nodes = wsme.wsattr(int)
+    resource_properties = {wtypes.text: types.jsontype}
     lease_time = wsme.wsattr(int)
     status = wsme.wsattr(wtypes.text)
     cancel_date = wsme.wsattr(datetime.datetime)

@@ -36,9 +36,7 @@ class LeaseRequest(base.ESILEAPObject):
         'uuid': fields.UUIDField(),
         'project_id': fields.StringField(),
         'name': fields.StringField(),
-        'node_properties': fields.FlexibleDictField(nullable=True),
-        'min_nodes': fields.IntegerField(default=0),
-        'max_nodes': fields.IntegerField(default=0),
+        'resource_properties': fields.FlexibleDictField(nullable=True),
         'lease_time': fields.IntegerField(default=0),
         'status': fields.StringField(),
         'cancel_date': fields.DateTimeField(nullable=True),
@@ -101,21 +99,23 @@ class LeaseRequest(base.ESILEAPObject):
                 actual_status=actual_status
             )
 
-        # for now, only match node_uuids
-        # TODO: match based on node properties
-        node_uuids = self.node_properties.get('node_uuids', [])
         resources = []
-        for node_uuid in node_uuids:
-            resource = leasable_resource.LeasableResource.get(
-                context, 'ironic_node', node_uuid)
-            if resource is None or not resource.is_available():
-                LOG.info("%s %s is unavailable; lease cannot be fulfilled",
-                         resource.resource_type, resource.resource_uuid)
-                return
-            resources.append(resource)
+        for resource_type, resource_properties in \
+            self.resource_properties.items():
+            # for now, only match resource_uuids
+            # TODO: match based on resource properties
+            resource_uuids = resource_properties.get('resource_uuids', [])
+            for resource_uuid in resource_uuids:
+                resource = leasable_resource.LeasableResource.get(
+                    context, resource_type, resource_uuid)
+                if resource is None or not resource.is_available():
+                    LOG.info("%s %s is unavailable; lease cannot be fulfilled",
+                             resource.resource_type, resource.resource_uuid)
+                    return
+                    resources.append(resource)
 
         # resources are all available, so claim them
-        # TODO: should be done in a single transaction
+        # TODO: should be done in a single transaction with above
         LOG.info("Resources are available; attempting to fulfill lease")
         fulfilled_date = timeutils.utcnow()
         expiration_date = fulfilled_date + datetime.timedelta(
@@ -161,9 +161,14 @@ class LeaseRequest(base.ESILEAPObject):
         self.save(context)
         LOG.info("Lease %s successfully %s", self.uuid, target_status)
 
-    def _get_expected_node_count(self):
-        # TODO: add nodes from node_properties
-        return len(self.node_properties.get('node_uuids', []))
+    def _get_expected_resource_count(self):
+        # TODO: add resources from resource_properties
+        # TODO: different resource types?
+        count = 0
+        for resource_type, resource_properties in \
+            self.resource_properties.items():
+            count += len(resource_properties.get('resource_uuids', []))
+        return count
 
     def _get_actual_status(self, context=None):
         # check if lease request has any resources
@@ -172,7 +177,7 @@ class LeaseRequest(base.ESILEAPObject):
 
         if len(resources) > 0:
             # request has been at least partially fulfilled, and is not expired
-            if self._get_expected_node_count() == len(resources):
+            if self._get_expected_resources_count() == len(resources):
                 return statuses.FULFILLED
             return statuses.DEGRADED
         else:

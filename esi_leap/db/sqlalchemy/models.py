@@ -36,7 +36,7 @@ Base = declarative_base(cls=ESILEAPBase)
 
 
 class Policy(Base):
-    """Represents a policy that can be applied to a node."""
+    """Represents a policy that can be applied to a resource."""
 
     __tablename__ = 'policies'
     __table_args__ = (
@@ -66,9 +66,7 @@ class LeaseRequest(Base):
     uuid = Column(String(36), nullable=True, unique=True)
     project_id = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
-    node_properties = Column(db_types.JsonEncodedDict, nullable=True)
-    min_nodes = Column(Integer, default=0)
-    max_nodes = Column(Integer, default=0)
+    resource_properties = Column(db_types.JsonEncodedDict, nullable=True)
     lease_time = Column(Integer, default=0)
     status = Column(String(15), nullable=False, default=statuses.PENDING)
     cancel_date = Column(DateTime, nullable=True)
