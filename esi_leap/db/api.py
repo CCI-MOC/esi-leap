@@ -149,7 +149,7 @@ def lease_request_destroy(context, request_uuid):
     return IMPL.lease_request_destroy(context, request_uuid)
 
 
-# Policy Node
+# Leasable Resource
 @to_dict
 def leasable_resource_get(context, resource_type, resource_uuid):
     return IMPL.leasable_resource_get(context, resource_type, resource_uuid)

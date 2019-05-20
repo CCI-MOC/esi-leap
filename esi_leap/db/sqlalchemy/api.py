@@ -230,7 +230,7 @@ def lease_request_destroy(context, request_uuid):
         get_session()).filter_by(uuid=request_uuid).delete()
 
 
-# Policy Node
+# Leasable Resource
 def leasable_resource_get(context, resource_type, resource_uuid):
     query = model_query(context, models.LeasableResource, get_session())
     result = query.filter_by(
