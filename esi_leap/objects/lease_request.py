@@ -21,7 +21,7 @@ from esi_leap.common import statuses
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 from esi_leap.objects import fields
-from esi_leap.objects import policy_node
+from esi_leap.objects import leasable_resource
 
 
 LOG = logging.getLogger(__name__)
@@ -106,7 +106,7 @@ class LeaseRequest(base.ESILEAPObject):
         node_uuids = self.node_properties.get('node_uuids', [])
         nodes = []
         for node_uuid in node_uuids:
-            node = policy_node.PolicyNode.get(context, node_uuid)
+            node = leasable_resource.LeasableResource.get(context, node_uuid)
             if node is None or not node.is_available():
                 LOG.info("Node %s is unavailable; lease cannot be fulfilled",
                          node.node_uuid)
@@ -120,7 +120,7 @@ class LeaseRequest(base.ESILEAPObject):
         expiration_date = fulfilled_date + datetime.timedelta(
             seconds=self.lease_time)
         for node in nodes:
-            node.assign_node(context, self, expiration_date)
+            node.assign(context, self, expiration_date)
             LOG.info("Node %s assigned to lease %s", node.node_uuid, self.uuid)
 
         post_actual_status = self._get_actual_status(context)
@@ -137,18 +137,19 @@ class LeaseRequest(base.ESILEAPObject):
     def expire_or_cancel(self, context, target_status=statuses.EXPIRED):
         # if we call this method, assume that we always want to remove any
         # associated nodes
-        nodes = policy_node.PolicyNode.get_all_by_request_uuid(
+        nodes = leasable_resource.LeasableResource.get_all_by_request_uuid(
             context, self.uuid)
 
         # TODO: should be done in a single transaction
         for node in nodes:
-            node.unassign_node(context)
+            node.unassign(context)
             LOG.info("Node %s removed from lease %s",
                      node.node_uuid, self.uuid)
 
         # check that there are no nodes left
-        post_nodes = policy_node.PolicyNode.get_all_by_request_uuid(
-            context, self.uuid)
+        post_nodes = leasable_resource. \
+            LeasableResource.get_all_by_request_uuid(
+                context, self.uuid)
 
         if len(post_nodes) > 0:
             raise exception.LeaseRequestNodeUnexpired(
@@ -164,7 +165,7 @@ class LeaseRequest(base.ESILEAPObject):
 
     def _get_actual_status(self, context=None):
         # check if lease request has any nodes
-        nodes = policy_node.PolicyNode.get_all_by_request_uuid(
+        nodes = leasable_resource.LeasableResource.get_all_by_request_uuid(
             context, self.uuid)
 
         if len(nodes) > 0:

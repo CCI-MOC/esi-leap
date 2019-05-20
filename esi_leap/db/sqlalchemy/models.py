@@ -76,10 +76,10 @@ class LeaseRequest(Base):
     expiration_date = Column(DateTime, nullable=True)
 
 
-class PolicyNode(Base):
-    """Represents a node that has a policy applied to it."""
+class LeasableResource(Base):
+    """Represents a leasable resource that has a policy applied to it."""
 
-    __tablename__ = 'policy_nodes'
+    __tablename__ = 'leasable_resources'
     __table_args__ = (
         Index('node_uuid_idx', 'node_uuid'),
         Index('policy_uuid_idx', 'policy_uuid'),

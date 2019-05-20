@@ -19,7 +19,7 @@ from esi_leap.objects import fields
 
 
 @versioned_objects_base.VersionedObjectRegistry.register
-class PolicyNode(base.ESILEAPObject):
+class LeasableResource(base.ESILEAPObject):
     dbapi = dbapi.get_instance()
 
     fields = {
@@ -33,75 +33,76 @@ class PolicyNode(base.ESILEAPObject):
 
     @classmethod
     def get(cls, context, node_uuid):
-        db_policy_node = cls.dbapi.policy_node_get(context, node_uuid)
-        return cls._from_db_object(context, cls(), db_policy_node)
+        db_resource = cls.dbapi.leasable_resource_get(context, node_uuid)
+        return cls._from_db_object(context, cls(), db_resource)
 
     @classmethod
     def get_all(cls, context):
-        db_policy_nodes = cls.dbapi.policy_node_get_all(context)
-        return cls._from_db_object_list(context, db_policy_nodes)
+        db_resources = cls.dbapi.leasable_resource_get_all(context)
+        return cls._from_db_object_list(context, db_resources)
 
     @classmethod
     def get_all_by_project_id(cls, context, project_id):
-        db_policy_nodes = cls.dbapi.policy_node_get_all_by_project_id(
+        db_resources = cls.dbapi.leasable_resource_get_all_by_project_id(
             context, project_id)
-        return cls._from_db_object_list(context, db_policy_nodes)
+        return cls._from_db_object_list(context, db_resources)
 
     @classmethod
     def get_all_by_request_project_id(cls, context, project_id):
-        db_policy_nodes = cls.dbapi.policy_node_get_all_by_request_project_id(
-            context, project_id)
-        return cls._from_db_object_list(context, db_policy_nodes)
+        db_resources = cls.dbapi. \
+            leasable_resource_get_all_by_request_project_id(
+                context, project_id)
+        return cls._from_db_object_list(context, db_resources)
 
     @classmethod
     def get_all_by_policy_uuid(cls, context, policy_uuid):
-        db_policy_nodes = cls.dbapi.policy_node_get_all_by_policy_uuid(
+        db_resources = cls.dbapi.leasable_resource_get_all_by_policy_uuid(
             context, policy_uuid)
-        return cls._from_db_object_list(context, db_policy_nodes)
+        return cls._from_db_object_list(context, db_resources)
 
     @classmethod
     def get_all_by_request_uuid(cls, context, request_uuid):
-        db_policy_nodes = cls.dbapi.policy_node_get_all_by_request_uuid(
+        db_resources = cls.dbapi.leasable_resource_get_all_by_request_uuid(
             context, request_uuid)
-        return cls._from_db_object_list(context, db_policy_nodes)
+        return cls._from_db_object_list(context, db_resources)
 
     @classmethod
     def get_available(cls, context):
-        db_policy_nodes = cls.dbapi.policy_node_get_available(context)
-        return cls._from_db_object_list(context, db_policy_nodes)
+        db_resources = cls.dbapi.leasable_resource_get_available(context)
+        return cls._from_db_object_list(context, db_resources)
 
     @classmethod
     def get_leased(cls, context):
-        db_policy_nodes = cls.dbapi.policy_node_get_leased(context)
-        return cls._from_db_object_list(context, db_policy_nodes)
+        db_resources = cls.dbapi.leasable_resource_get_leased(context)
+        return cls._from_db_object_list(context, db_resources)
 
     def create(self, context=None):
         updates = self.obj_get_changes()
-        db_policy_node = self.dbapi.policy_node_create(context, updates)
-        self._from_db_object(context, self, db_policy_node)
+        db_resource = self.dbapi.leasable_resource_create(context, updates)
+        self._from_db_object(context, self, db_resource)
 
     def destroy(self, context=None):
-        self.unassign_node(context)
-        self.dbapi.policy_node_destroy(context, self.node_uuid)
+        self.unassign(context)
+        self.dbapi.leasable_resource_destroy(context, self.node_uuid)
         self.obj_reset_changes()
 
     def save(self, context=None):
         updates = self.obj_get_changes()
-        db_policy_node = self.dbapi.policy_node_update(
+        db_resource = self.dbapi.leasable_resource_update(
             context, self.node_uuid, updates)
-        self._from_db_object(context, self, db_policy_node)
+        self._from_db_object(context, self, db_resource)
 
     def is_available(self):
         return (self.request_uuid is None and
                 ironic.get_node_project_id(self.node_uuid) is None)
 
-    def assign_node(self, context, request, expiration_date):
+    def assign(self, context, request, expiration_date):
         self.request_uuid = request.uuid
         self.lease_expiration_date = expiration_date
         self.save(context)
         ironic.set_node_project_id(self.node_uuid, request.project_id)
 
-    def unassign_node(self, context):
+    def unassign(self, context):
         self.request_uuid = None
         self.lease_expiration_date = None
         self.save(context)

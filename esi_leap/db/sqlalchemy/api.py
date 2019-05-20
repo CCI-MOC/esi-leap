@@ -231,89 +231,89 @@ def lease_request_destroy(context, request_uuid):
 
 
 # Policy Node
-def policy_node_get(context, node_uuid):
-    query = model_query(context, models.PolicyNode, get_session())
+def leasable_resource_get(context, node_uuid):
+    query = model_query(context, models.LeasableResource, get_session())
     result = query.filter_by(node_uuid=node_uuid).first()
     if not result:
         raise exception.NodeNotFound(node_uuid=node_uuid)
     return result
 
 
-def policy_node_get_all(context):
-    query = model_query(context, models.PolicyNode, get_session())
+def leasable_resource_get_all(context):
+    query = model_query(context, models.LeasableResource, get_session())
     return query.all()
 
 
-def policy_node_get_all_by_project_id(context, project_id):
+def leasable_resource_get_all_by_project_id(context, project_id):
     query = (model_query(
         context,
-        models.PolicyNode,
+        models.LeasableResource,
         get_session()).filter(
-            models.PolicyNode.policy.has(project_id=project_id)))
+            models.LeasableResource.policy.has(project_id=project_id)))
     return query.all()
 
 
-def policy_node_get_all_by_request_project_id(context, project_id):
+def leasable_resource_get_all_by_request_project_id(context, project_id):
     query = (model_query(
         context,
-        models.PolicyNode,
+        models.LeasableResource,
         get_session()).filter(
-            models.PolicyNode.lease_request.has(project_id=project_id)))
+            models.LeasableResource.lease_request.has(project_id=project_id)))
     return query.all()
 
 
-def policy_node_get_all_by_policy_uuid(context, policy_uuid):
-    query = (model_query(context, models.PolicyNode,
+def leasable_resource_get_all_by_policy_uuid(context, policy_uuid):
+    query = (model_query(context, models.LeasableResource,
                          get_session()).filter_by(policy_uuid=policy_uuid))
     return query.all()
 
 
-def policy_node_get_all_by_request_uuid(context, request_uuid):
-    query = (model_query(context, models.PolicyNode,
+def leasable_resource_get_all_by_request_uuid(context, request_uuid):
+    query = (model_query(context, models.LeasableResource,
                          get_session()).filter_by(request_uuid=request_uuid))
     return query.all()
 
 
-def policy_node_get_available(context):
-    return policy_node_get_all_by_request_uuid(context, None)
+def leasable_resource_get_available(context):
+    return leasable_resource_get_all_by_request_uuid(context, None)
 
 
-def policy_node_get_leased(context):
-    query = (model_query(context, models.PolicyNode,
+def leasable_resource_get_leased(context):
+    query = (model_query(context, models.LeasableResource,
                          get_session()).filter(
-                             models.PolicyNode.request_uuid is not None))
+                             models.LeasableResource.request_uuid is not None))
     return query.all()
 
 
-def policy_node_create(context, values):
+def leasable_resource_create(context, values):
     node_uuid = values.get('node_uuid')
     if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
         raise exception.NodeNoPermission(node_uuid=node_uuid)
 
-    policy_node_ref = models.PolicyNode()
-    policy_node_ref.update(values)
+    leasable_resource_ref = models.LeasableResource()
+    leasable_resource_ref.update(values)
     try:
-        policy_node_ref.save(get_session())
+        leasable_resource_ref.save(get_session())
     except db_exception.DBDuplicateEntry:
         raise exception.NodeExists(node_uuid=node_uuid)
-    return policy_node_ref
+    return leasable_resource_ref
 
 
-def policy_node_update(context, node_uuid, values):
+def leasable_resource_update(context, node_uuid, values):
     if not context.is_admin:
         if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
             raise exception.NodeNoPermission(node_uuid=node_uuid)
 
-    policy_node_ref = policy_node_get(context, node_uuid)
-    policy_node_ref.update(values)
-    policy_node_ref.save(get_session())
-    return policy_node_ref
+    leasable_resource_ref = leasable_resource_get(context, node_uuid)
+    leasable_resource_ref.update(values)
+    leasable_resource_ref.save(get_session())
+    return leasable_resource_ref
 
 
-def policy_node_destroy(context, node_uuid):
+def leasable_resource_destroy(context, node_uuid):
     if not context.is_admin:
         if ironic.get_node_project_owner_id(node_uuid) != context.project_id:
             raise exception.NodeNoPermission(node_uuid=node_uuid)
 
-    model_query(context, models.PolicyNode,
+    model_query(context, models.LeasableResource,
                 get_session()).filter_by(node_uuid=node_uuid).delete()

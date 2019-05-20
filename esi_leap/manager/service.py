@@ -20,8 +20,8 @@ from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.db import api as db_api
 from esi_leap.manager import utils
+from esi_leap.objects import leasable_resource
 from esi_leap.objects import lease_request
-from esi_leap.objects import policy_node
 
 
 CONF = esi_leap.conf.CONF
@@ -53,8 +53,8 @@ class ManagerService(service.Service):
         self.tg.add_timer(300, self._fulfill_leases)
         LOG.info("Starting _monitor_leases periodic job")
         self.tg.add_timer(60, self._monitor_leases)
-        LOG.info("Starting _monitor_policy_nodes periodic job")
-        self.tg.add_timer(60, self._monitor_policy_nodes)
+        LOG.info("Starting _monitor_leasable_resources periodic job")
+        self.tg.add_timer(60, self._monitor_leasable_resources)
 
     def stop(self):
         super(ManagerService, self).stop()
@@ -89,23 +89,24 @@ class ManagerService(service.Service):
                 LOG.info("Expiring lease %s", lease.uuid)
                 lease.expire_or_cancel(self._context)
 
-    def _monitor_policy_nodes(self):
-        LOG.info("Checking for expired policy nodes")
-        nodes = policy_node.PolicyNode.get_all(self._context)
-        for node in nodes:
-            if node.expiration_date and \
-               node.expiration_date <= timeutils.utcnow():
-                LOG.info("Expiring node %s", node.node_uuid)
-                node.destroy(self._context)
+    def _monitor_leasable_resources(self):
+        LOG.info("Checking for expired leasable resources")
+        resources = leasable_resource.LeasableResource.get_all(self._context)
+        for resource in resources:
+            if resource.expiration_date and \
+               resource.expiration_date <= timeutils.utcnow():
+                LOG.info("Expiring node %s", resource.node_uuid)
+                resource.destroy(self._context)
 
-        LOG.info("Checking for expired policy node leases")
-        nodes = policy_node.PolicyNode.get_leased(self._context)
-        for node in nodes:
-            if node.lease_expiration_date and \
-               node.lease_expiration_date <= timeutils.utcnow():
+        LOG.info("Checking for expired leasable_resource leases")
+        resources = leasable_resource.LeasableResource.get_leased(
+            self._context)
+        for resource in resources:
+            if resource.lease_expiration_date and \
+               resource.lease_expiration_date <= timeutils.utcnow():
                 LOG.info("Unassigning node %s from lease %s",
-                         node.node_uuid, node.request_uuid)
-                node.unassign_node(self._context)
+                         resource.resource_uuid, resource.request_uuid)
+                resource.unassign(self._context)
 
 
 class ManagerEndpoint(object):

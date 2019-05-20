@@ -151,52 +151,53 @@ def lease_request_destroy(context, request_uuid):
 
 # Policy Node
 @to_dict
-def policy_node_get(context, node_uuid):
-    return IMPL.policy_node_get(context, node_uuid)
+def leasable_resource_get(context, node_uuid):
+    return IMPL.leasable_resource_get(context, node_uuid)
 
 
 @to_dict
-def policy_node_get_all(context):
-    return IMPL.policy_node_get_all(context)
+def leasable_resource_get_all(context):
+    return IMPL.leasable_resource_get_all(context)
 
 
 @to_dict
-def policy_node_get_all_by_project_id(context, project_id):
-    return IMPL.policy_node_get_all_by_project_id(context, project_id)
+def leasable_resource_get_all_by_project_id(context, project_id):
+    return IMPL.leasable_resource_get_all_by_project_id(context, project_id)
 
 
 @to_dict
-def policy_node_get_all_by_request_project_id(context, project_id):
-    return IMPL.policy_node_get_all_by_request_project_id(context, project_id)
+def leasable_resource_get_all_by_request_project_id(context, project_id):
+    return IMPL.leasable_resource_get_all_by_request_project_id(
+        context, project_id)
 
 
 @to_dict
-def policy_node_get_all_by_policy_uuid(context, policy_uuid):
-    return IMPL.policy_node_get_all_by_policy_uuid(context, policy_uuid)
+def leasable_resource_get_all_by_policy_uuid(context, policy_uuid):
+    return IMPL.leasable_resource_get_all_by_policy_uuid(context, policy_uuid)
 
 
 @to_dict
-def policy_node_get_all_by_request_uuid(context, request_uuid):
-    return IMPL.policy_node_get_all_by_policy_uuid(context, request_uuid)
+def leasable_resource_get_all_by_request_uuid(context, request_uuid):
+    return IMPL.leasable_resource_get_all_by_policy_uuid(context, request_uuid)
 
 
 @to_dict
-def policy_node_get_available(context):
-    return IMPL.policy_node_get_available(context)
+def leasable_resource_get_available(context):
+    return IMPL.leasable_resource_get_available(context)
 
 
 @to_dict
-def policy_node_get_leased(context):
-    return IMPL.policy_node_get_leased(context)
+def leasable_resource_get_leased(context):
+    return IMPL.leasable_resource_get_leased(context)
 
 
-def policy_node_create(context, values):
-    return IMPL.policy_node_create(context, values)
+def leasable_resource_create(context, values):
+    return IMPL.leasable_resource_create(context, values)
 
 
-def policy_node_update(context, node_uuid, values):
-    return IMPL.policy_node_update(context, node_uuid, values)
+def leasable_resource_update(context, node_uuid, values):
+    return IMPL.leasable_resource_update(context, node_uuid, values)
 
 
-def policy_node_destroy(context, node_uuid):
-    IMPL.policy_node_destroy(context, node_uuid)
+def leasable_resource_destroy(context, node_uuid):
+    IMPL.leasable_resource_destroy(context, node_uuid)
