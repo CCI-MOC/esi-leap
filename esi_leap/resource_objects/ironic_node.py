@@ -38,28 +38,32 @@ def get_ironic_client():
     return cli
 
 
-def get_node_project_owner_id(node_uuid):
-    node = get_ironic_client().node.get(node_uuid)
-    return node.properties.get('project_owner_id', None)
+class IronicNode(object):
 
+    def __init__(self, uuid):
+        self._uuid = uuid
 
-def get_node_project_id(node_uuid):
-    node = get_ironic_client().node.get(node_uuid)
-    return node.properties.get('project_id', None)
+    def get_project_id(self):
+        node = get_ironic_client().node.get(self._uuid)
+        return node.properties.get('project_id', None)
 
+    def set_project_id(self, project_id):
+        if project_id is None:
+            if not self.get_project_id():
+                return
+            patch = {
+                "op": "remove",
+                "path": "/properties/project_id",
+            }
+        else:
+            patch = {
+                "op": "add",
+                "path": "/properties/project_id",
+                "value": project_id,
+            }
+        get_ironic_client().node.update(self._uuid, [patch])
 
-def set_node_project_id(node_uuid, project_id):
-    if project_id is None:
-        if not get_node_project_id(node_uuid):
-            return
-        patch = {
-            "op": "remove",
-            "path": "/properties/project_id",
-        }
-    else:
-        patch = {
-            "op": "add",
-            "path": "/properties/project_id",
-            "value": project_id,
-        }
-    get_ironic_client().node.update(node_uuid, [patch])
+    def is_resource_admin(self, project_id):
+        node = get_ironic_client().node.get(self._uuid)
+        project_owner_id = node.properties.get('project_owner_id', None)
+        return (project_owner_id == project_id)

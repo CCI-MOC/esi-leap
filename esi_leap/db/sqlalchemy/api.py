@@ -22,7 +22,7 @@ import sqlalchemy as sa
 
 from esi_leap.common import exception
 from esi_leap.db.sqlalchemy import models
-from esi_leap.objects import resource_object
+from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 
 CONF = cfg.CONF
@@ -290,7 +290,8 @@ def leasable_resource_get_leased(context):
 def leasable_resource_create(context, values):
     resource_type = values.get('resource_type')
     resource_uuid = values.get('resource_uuid')
-    resource = resource_object.ResourceObject(resource_type, resource_uuid)
+    resource = ro_factory.ResourceObjectFactory.get_resource_object(
+        resource_type, resource_uuid)
     if not resource.is_resource_admin(context.project_id):
         raise exception.ResourceNoPermission(
             resource_type=resource_type, resource_uuid=resource_uuid)
@@ -307,7 +308,8 @@ def leasable_resource_create(context, values):
 
 def leasable_resource_update(context, resource_type, resource_uuid, values):
     if not context.is_admin:
-        resource = resource_object.ResourceObject(resource_type, resource_uuid)
+        resource = ro_factory.ResourceObjectFactory.get_resource_object(
+            resource_type, resource_uuid)
         if not resource.is_resource_admin(context.project_id):
             raise exception.ResourceNoPermission(
                 resource_type=resource_type, resource_uuid=resource_uuid)
@@ -321,7 +323,8 @@ def leasable_resource_update(context, resource_type, resource_uuid, values):
 
 def leasable_resource_destroy(context, resource_type, resource_uuid):
     if not context.is_admin:
-        resource = resource_object.ResourceObject(resource_type, resource_uuid)
+        resource = ro_factory.ResourceObjectFactory.get_resource_object(
+            resource_type, resource_uuid)
         if not resource.is_resource_admin(context.project_id):
             raise exception.ResourceNoPermission(
                 resource_type=resource_type, resource_uuid=resource_uuid)

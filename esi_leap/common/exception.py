@@ -95,3 +95,7 @@ class ResourceNoPermission(ESILeapException):
 
 class ResourceNotFound(ESILeapException):
     msg_fmt = _("%(resource_type)s %(resource_uuid)s not found.")
+
+
+class ResourceTypeUnknown(ESILeapException):
+    msg_fmt = _("%(resource_type)s resource type unknown.")

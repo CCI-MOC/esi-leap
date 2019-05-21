@@ -15,7 +15,7 @@ from oslo_versionedobjects import base as versioned_objects_base
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 from esi_leap.objects import fields
-from esi_leap.objects import resource_object
+from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 
 @versioned_objects_base.VersionedObjectRegistry.register
@@ -96,7 +96,7 @@ class LeasableResource(base.ESILEAPObject):
         self._from_db_object(context, self, db_resource)
 
     def resource_object(self):
-        return resource_object.ResourceObject(
+        return ro_factory.ResourceObjectFactory.get_resource_object(
             self.resource_type, self.resource_uuid)
 
     def is_available(self):

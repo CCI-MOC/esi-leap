@@ -10,21 +10,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from esi_leap.common import ironic
 
+class DummyNode(object):
 
-class ResourceObject(object):
-
-    def __init__(self, resource_type, resource_uuid):
-        self._resource_type = resource_type
-        self._resource_uuid = resource_uuid
+    def __init__(self, uuid):
+        self._uuid = uuid
 
     def get_project_id(self):
-        return ironic.get_node_project_id(self._resource_uuid)
+        return 1
 
     def set_project_id(self, project_id):
-        ironic.set_node_project_id(self._resource_uuid, project_id)
+        return 1
 
     def is_resource_admin(self, project_id):
-        return (ironic.get_node_project_owner_id(self._resource_uuid)
-                == project_id)
+        return True
