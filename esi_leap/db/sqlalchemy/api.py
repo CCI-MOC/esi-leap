@@ -21,8 +21,8 @@ from oslo_utils import uuidutils
 import sqlalchemy as sa
 
 from esi_leap.common import exception
-from esi_leap.common import ironic
 from esi_leap.db.sqlalchemy import models
+from esi_leap.objects import resource_object
 
 
 CONF = cfg.CONF
@@ -290,7 +290,8 @@ def leasable_resource_get_leased(context):
 def leasable_resource_create(context, values):
     resource_type = values.get('resource_type')
     resource_uuid = values.get('resource_uuid')
-    if ironic.get_node_project_owner_id(resource_uuid) != context.project_id:
+    resource = resource_object.ResourceObject(resource_type, resource_uuid)
+    if not resource.is_resource_admin(context.project_id):
         raise exception.ResourceNoPermission(
             resource_type=resource_type, resource_uuid=resource_uuid)
 
@@ -306,8 +307,8 @@ def leasable_resource_create(context, values):
 
 def leasable_resource_update(context, resource_type, resource_uuid, values):
     if not context.is_admin:
-        if ironic.get_node_project_owner_id(resource_uuid) \
-           != context.project_id:
+        resource = resource_object.ResourceObject(resource_type, resource_uuid)
+        if not resource.is_resource_admin(context.project_id):
             raise exception.ResourceNoPermission(
                 resource_type=resource_type, resource_uuid=resource_uuid)
 
@@ -320,8 +321,8 @@ def leasable_resource_update(context, resource_type, resource_uuid, values):
 
 def leasable_resource_destroy(context, resource_type, resource_uuid):
     if not context.is_admin:
-        if ironic.get_node_project_owner_id(resource_uuid) \
-           != context.project_id:
+        resource = resource_object.ResourceObject(resource_type, resource_uuid)
+        if not resource.is_resource_admin(context.project_id):
             raise exception.ResourceNoPermission(
                 resource_type=resource_type, resource_uuid=resource_uuid)
     model_query(context, models.LeasableResource,

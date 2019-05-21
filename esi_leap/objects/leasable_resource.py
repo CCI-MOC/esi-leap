@@ -12,10 +12,10 @@
 
 from oslo_versionedobjects import base as versioned_objects_base
 
-from esi_leap.common import ironic
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 from esi_leap.objects import fields
+from esi_leap.objects import resource_object
 
 
 @versioned_objects_base.VersionedObjectRegistry.register
@@ -95,18 +95,21 @@ class LeasableResource(base.ESILEAPObject):
             context, self.resource_type, self.resource_uuid, updates)
         self._from_db_object(context, self, db_resource)
 
+    def resource_object(self):
+        return resource_object.ResourceObject(self.resource_type, self.resource_uuid)
+
     def is_available(self):
         return (self.request_uuid is None and
-                ironic.get_node_project_id(self.resource_uuid) is None)
+                self.resource_object().get_project_id() is None)
 
     def assign(self, context, request, expiration_date):
         self.request_uuid = request.uuid
         self.lease_expiration_date = expiration_date
         self.save(context)
-        ironic.set_node_project_id(self.resource_uuid, request.project_id)
+        self.resource_object().set_project_id(request.project_id)
 
     def unassign(self, context):
         self.request_uuid = None
         self.lease_expiration_date = None
         self.save(context)
-        ironic.set_node_project_id(self.resource_uuid, None)
+        self.resource_object().set_project_id(None)
