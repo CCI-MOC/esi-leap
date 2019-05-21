@@ -96,7 +96,8 @@ class LeasableResource(base.ESILEAPObject):
         self._from_db_object(context, self, db_resource)
 
     def resource_object(self):
-        return resource_object.ResourceObject(self.resource_type, self.resource_uuid)
+        return resource_object.ResourceObject(
+            self.resource_type, self.resource_uuid)
 
     def is_available(self):
         return (self.request_uuid is None and
