@@ -10,16 +10,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import esi_leap.conf
+from oslo_config import cfg
 
-_opts = [
-    ('DEFAULT', esi_leap.conf.netconf.opts),
-    ('api', esi_leap.conf.api.opts),
-    ('dummy_node', esi_leap.conf.dummy_node.opts),
-    ('ironic', esi_leap.conf.ironic.list_opts()),
-    ('pecan', esi_leap.conf.pecan.opts),
+
+opts = [
+    cfg.StrOpt('dummy_node_dir',
+               default='/tmp/nodes'),
 ]
 
+dummy_node_group = cfg.OptGroup(
+    'dummy_node',
+    title='Dummy Node Options')
 
-def list_opts():
-    return _opts
+
+def register_opts(conf):
+    conf.register_opts(opts, group=dummy_node_group)

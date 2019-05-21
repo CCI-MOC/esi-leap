@@ -10,17 +10,38 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import json
+
+import esi_leap.conf
+
+
+CONF = esi_leap.conf.CONF
+DUMMY_NODE_DIR = CONF.dummy_node.dummy_node_dir
+
 
 class DummyNode(object):
 
     def __init__(self, uuid):
         self._uuid = uuid
+        self._path = DUMMY_NODE_DIR + "/" + uuid
 
     def get_project_id(self):
-        return 1
+        with open(self._path) as node_file:
+            node_dict = json.load(node_file)
+        return node_dict.get("project_id", None)
 
     def set_project_id(self, project_id):
-        return 1
+        with open(self._path) as node_file:
+            node_dict = json.load(node_file)
+        if project_id is None:
+            node_dict.pop("project_id", None)
+        else:
+            node_dict["project_id"] = project_id
+        with open(self._path, 'w') as node_file:
+            json.dump(node_dict, node_file)
 
     def is_resource_admin(self, project_id):
-        return True
+        with open(self._path) as node_file:
+            node_dict = json.load(node_file)
+        project_owner_id = node_dict.get("project_owner_id", None)
+        return (project_owner_id == project_id)

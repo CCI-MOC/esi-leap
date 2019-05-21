@@ -25,7 +25,7 @@ class LeasableResource(base.ESILEAPObject):
     fields = {
         'id': fields.IntegerField(),
         'resource_type': fields.StringField(),
-        'resource_uuid': fields.UUIDField(),
+        'resource_uuid': fields.StringField(),
         'policy_uuid': fields.UUIDField(),
         'expiration_date': fields.DateTimeField(nullable=True),
         'request_uuid': fields.UUIDField(nullable=True),
