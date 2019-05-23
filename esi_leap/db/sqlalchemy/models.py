@@ -79,7 +79,8 @@ class LeasableResource(Base):
 
     __tablename__ = 'leasable_resources'
     __table_args__ = (
-        Index('leasable_resource_resource_idx', 'resource_type', 'resource_uuid'),
+        Index('leasable_resource_resource_idx', 'resource_type',
+              'resource_uuid'),
         Index('leasable_resource_policy_uuid_idx', 'policy_uuid'),
         Index('leasable_resource_request_uuid_idx', 'request_uuid'),
     )
