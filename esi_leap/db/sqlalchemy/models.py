@@ -40,8 +40,8 @@ class Policy(Base):
 
     __tablename__ = 'policies'
     __table_args__ = (
-        Index('project_id_idx', 'project_id'),
-        Index('uuid_idx', 'uuid'),
+        Index('policy_project_id_idx', 'project_id'),
+        Index('policy_uuid_idx', 'uuid'),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
@@ -57,9 +57,9 @@ class LeaseRequest(Base):
 
     __tablename__ = 'lease_requests'
     __table_args__ = (
-        Index('project_id_idx', 'project_id'),
-        Index('uuid_idx', 'uuid'),
-        Index('status_idx', 'status'),
+        Index('lease_request_project_id_idx', 'project_id'),
+        Index('lease_request_uuid_idx', 'uuid'),
+        Index('lease_request_status_idx', 'status'),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
@@ -79,9 +79,9 @@ class LeasableResource(Base):
 
     __tablename__ = 'leasable_resources'
     __table_args__ = (
-        Index('resource_idx', 'resource_type', 'resource_uuid'),
-        Index('policy_uuid_idx', 'policy_uuid'),
-        Index('request_uuid_idx', 'request_uuid'),
+        Index('leasable_resource_resource_idx', 'resource_type', 'resource_uuid'),
+        Index('leasable_resource_policy_uuid_idx', 'policy_uuid'),
+        Index('leasable_resource_request_uuid_idx', 'request_uuid'),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
