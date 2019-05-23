@@ -10,13 +10,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslotest import base
-
 from esi_leap.objects import fields
+from esi_leap.tests import base
 
 
 # FlexibleDict borrowed from Ironic
-class TestFlexibleDictField(base.BaseTestCase):
+class TestFlexibleDictField(base.TestCase):
 
     def setUp(self):
         super(TestFlexibleDictField, self).setUp()
