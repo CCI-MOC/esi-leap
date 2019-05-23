@@ -38,9 +38,28 @@ def get_session():
     return _engine_facade.get_session()
 
 
+def reset_facade():
+    global _engine_facade
+    _engine_facade = None
+
+
 def get_backend():
     """The backend is this module itself."""
     return sys.modules[__name__]
+
+
+def setup_db():
+    engine = db_session.EngineFacade(CONF.database.connection,
+                                     sqlite_fk=True).get_engine()
+    models.Base.metadata.create_all(engine)
+    return True
+
+
+def drop_db():
+    engine = db_session.EngineFacade(CONF.database.connection,
+                                     sqlite_fk=True).get_engine()
+    models.Base.metadata.drop_all(engine)
+    return True
 
 
 def model_query(context, model, session=None):
