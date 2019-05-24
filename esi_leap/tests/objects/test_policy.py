@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
 import mock
 
 from esi_leap.objects import policy
@@ -45,3 +46,73 @@ class TestPolicyObject(base.DBTestCase):
 
             mock_policy_get.assert_called_once_with(self.context, policy_uuid)
             self.assertEqual(self.context, p._context)
+
+    def test_get_all(self):
+        with mock.patch.object(self.db_api, 'policy_get_all',
+                               autospec=True) as mock_policy_get_all:
+            mock_policy_get_all.return_value = [self.fake_policy]
+
+            policies = policy.Policy.get_all(self.context)
+
+            mock_policy_get_all.assert_called_once_with(self.context)
+            self.assertEqual(len(policies), 1)
+            self.assertIsInstance(policies[0], policy.Policy)
+            self.assertEqual(self.context, policies[0]._context)
+
+    def test_get_all_by_project_id(self):
+        project_id = self.fake_policy['project_id']
+        with mock.patch.object(
+                self.db_api,
+                'policy_get_all_by_project_id',
+                autospec=True) as mock_policy_get_all_by_project_id:
+            mock_policy_get_all_by_project_id.return_value = [self.fake_policy]
+            policies = policy.Policy.get_all_by_project_id(
+                self.context, project_id)
+
+            mock_policy_get_all_by_project_id.assert_called_once_with(
+                self.context, project_id)
+            self.assertEqual(len(policies), 1)
+            self.assertIsInstance(policies[0], policy.Policy)
+            self.assertEqual(self.context, policies[0]._context)
+
+    def test_create(self):
+        p = policy.Policy(self.context, **self.fake_policy)
+        with mock.patch.object(self.db_api, 'policy_create',
+                               autospec=True) as mock_policy_create:
+            mock_policy_create.return_value = get_test_policy()
+
+            p.create(self.context)
+
+            mock_policy_create.assert_called_once_with(self.context,
+                                                       get_test_policy())
+
+    def test_destroy(self):
+        p = policy.Policy(self.context, **self.fake_policy)
+        with mock.patch.object(self.db_api, 'policy_destroy',
+                               autospec=True) as mock_policy_destroy:
+
+            p.destroy(self.context)
+
+            mock_policy_destroy.assert_called_once_with(
+                self.context, p.uuid)
+
+    def test_save(self):
+        p = policy.Policy(self.context, **self.fake_policy)
+        new_name = "test-policy-update"
+        updated_at = datetime.datetime(2006, 12, 11, 0, 0)
+        with mock.patch.object(self.db_api, 'policy_update',
+                               autospec=True) as mock_policy_update:
+            updated_policy = get_test_policy()
+            updated_policy['name'] = new_name
+            updated_policy['updated_at'] = updated_at
+            mock_policy_update.return_value = updated_policy
+
+            p.name = new_name
+            p.save(self.context)
+
+            updated_values = get_test_policy()
+            updated_values['name'] = new_name
+            mock_policy_update.assert_called_once_with(
+                self.context, p.uuid, updated_values)
+            self.assertEqual(self.context, p._context)
+            self.assertEqual(updated_at, p.updated_at)
