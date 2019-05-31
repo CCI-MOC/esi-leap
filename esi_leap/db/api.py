@@ -88,34 +88,6 @@ def to_dict(func):
     return decorator
 
 
-# Policy
-@to_dict
-def policy_get(context, policy_uuid):
-    return IMPL.policy_get(context, policy_uuid)
-
-
-@to_dict
-def policy_get_all(context):
-    return IMPL.policy_get_all(context)
-
-
-@to_dict
-def policy_get_all_by_project_id(context, project_id):
-    return IMPL.policy_get_all_by_project_id(context, project_id)
-
-
-def policy_create(context, values):
-    return IMPL.policy_create(context, values)
-
-
-def policy_update(context, policy_uuid, values):
-    return IMPL.policy_update(context, policy_uuid, values)
-
-
-def policy_destroy(context, policy_uuid):
-    IMPL.policy_destroy(context, policy_uuid)
-
-
 # Lease Request
 @to_dict
 def lease_request_get(context, request_uuid):
@@ -169,16 +141,6 @@ def leasable_resource_get_all_by_project_id(context, project_id):
 def leasable_resource_get_all_by_request_project_id(context, project_id):
     return IMPL.leasable_resource_get_all_by_request_project_id(
         context, project_id)
-
-
-@to_dict
-def leasable_resource_get_all_by_policy_uuid(context, policy_uuid):
-    return IMPL.leasable_resource_get_all_by_policy_uuid(context, policy_uuid)
-
-
-@to_dict
-def leasable_resource_get_all_by_request_uuid(context, request_uuid):
-    return IMPL.leasable_resource_get_all_by_policy_uuid(context, request_uuid)
 
 
 @to_dict

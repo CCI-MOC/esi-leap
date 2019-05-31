@@ -16,14 +16,12 @@ from pecan import rest
 
 from esi_leap.api.controllers.v1 import leasable_resource
 from esi_leap.api.controllers.v1 import lease_request
-from esi_leap.api.controllers.v1 import policy
 
 
 class Controller(rest.RestController):
 
     leasable_resources = leasable_resource.LeasableResourcesController()
     lease_requests = lease_request.LeaseRequestsController()
-    policies = policy.PoliciesController()
 
     @pecan.expose(content_type='application/json')
     def index(self):

@@ -114,7 +114,3 @@ class ManagerService(service.Service):
 
 class ManagerEndpoint(object):
     target = utils.get_target()
-
-    def get_policy(self, context, policy_uuid):
-        return db_api.policy_get(ctx.RequestContext.from_dict(context),
-                                 policy_uuid)

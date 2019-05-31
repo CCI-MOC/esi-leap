@@ -27,7 +27,6 @@ class LeasableResource(base.ESILEAPBase):
     id = wsme.wsattr(int)
     resource_type = wsme.wsattr(wtypes.text)
     resource_uuid = wsme.wsattr(wtypes.text)
-    policy_uuid = wsme.wsattr(wtypes.text)
     expiration_date = wsme.wsattr(datetime.datetime)
     request_uuid = wsme.wsattr(wtypes.text)
     lease_expiration_date = wsme.wsattr(datetime.datetime)

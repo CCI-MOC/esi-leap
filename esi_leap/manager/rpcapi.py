@@ -31,7 +31,3 @@ class ManagerRPCAPI(object):
             target=utils.get_target(),
             transport=messaging.get_rpc_transport(CONF),
         )
-
-    def get_policy(self, context, policy_uuid):
-        cctxt = self._client.prepare()
-        return cctxt.call(context, 'get_policy', policy_uuid=policy_uuid)

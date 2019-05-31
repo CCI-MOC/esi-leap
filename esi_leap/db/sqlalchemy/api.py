@@ -114,70 +114,6 @@ class InequalityCondition(object):
         return [field != value for value in self.values]
 
 
-# Policy
-def policy_get(context, policy_uuid):
-    query = model_query(context, models.Policy, get_session())
-    result = query.filter_by(uuid=policy_uuid).first()
-    if not result:
-        raise exception.PolicyNotFound(policy_uuid=policy_uuid)
-    if not context.is_admin:
-        if context.project_id != result.project_id:
-            raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
-    return result
-
-
-def policy_get_all(context):
-    if not context.is_admin:
-        return policy_get_all_by_project_id(context, context.project_id)
-
-    query = model_query(context, models.Policy, get_session())
-    return query.all()
-
-
-def policy_get_all_by_project_id(context, project_id):
-    if not context.is_admin:
-        if context.project_id != project_id:
-            raise exception.ProjectNoPermission(project_id=project_id)
-
-    query = (model_query(context, models.Policy,
-                         get_session()).filter_by(project_id=project_id))
-    return query.all()
-
-
-def policy_create(context, values):
-    policy_ref = models.Policy()
-    values['uuid'] = uuidutils.generate_uuid()
-    values['project_id'] = context.project_id
-    policy_ref.update(values)
-    policy_ref.save(get_session())
-    return policy_ref
-
-
-def policy_update(context, policy_uuid, values):
-    policy_ref = policy_get(context, policy_uuid)
-    if not context.is_admin:
-        if context.project_id != policy_ref.project_id:
-            raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
-    values.pop('uuid', None)
-    values.pop('project_id', None)
-    policy_ref.update(values)
-    policy_ref.save(get_session())
-    return policy_ref
-
-
-def policy_destroy(context, policy_uuid):
-    policy_ref = policy_get(context, policy_uuid)
-    if not policy_ref:
-        raise exception.PolicyNotFound(policy_uuid=policy_uuid)
-    if not context.is_admin:
-        if context.project_id != policy_ref.project_id:
-            raise exception.PolicyNoPermission(policy_uuid=policy_uuid)
-    model_query(
-        context,
-        models.Policy,
-        get_session()).filter_by(uuid=policy_uuid).delete()
-
-
 # Lease Request
 def lease_request_get(context, request_uuid):
     query = model_query(context, models.LeaseRequest, get_session())
@@ -265,27 +201,12 @@ def leasable_resource_get_all(context):
     return query.all()
 
 
-def leasable_resource_get_all_by_project_id(context, project_id):
-    query = (model_query(
-        context,
-        models.LeasableResource,
-        get_session()).filter(
-            models.LeasableResource.policy.has(project_id=project_id)))
-    return query.all()
-
-
 def leasable_resource_get_all_by_request_project_id(context, project_id):
     query = (model_query(
         context,
         models.LeasableResource,
         get_session()).filter(
             models.LeasableResource.lease_request.has(project_id=project_id)))
-    return query.all()
-
-
-def leasable_resource_get_all_by_policy_uuid(context, policy_uuid):
-    query = (model_query(context, models.LeasableResource,
-                         get_session()).filter_by(policy_uuid=policy_uuid))
     return query.all()
 
 

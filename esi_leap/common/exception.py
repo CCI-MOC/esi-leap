@@ -72,14 +72,6 @@ class LeaseRequestWrongFulfillStatus(ESILeapException):
                 "pending to be fulfilled, but it has a status of %(status)s.")
 
 
-class PolicyNoPermission(ESILeapException):
-    msg_fmt = _("You do not have permissions on policy %(policy_uuid)s.")
-
-
-class PolicyNotFound(ESILeapException):
-    msg_fmt = _("Policy %(policy_uuid)s not found.")
-
-
 class ProjectNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on project %(project_id)s.")
 

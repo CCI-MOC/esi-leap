@@ -35,23 +35,6 @@ class ESILEAPBase(models.TimestampMixin, models.ModelBase):
 Base = declarative_base(cls=ESILEAPBase)
 
 
-class Policy(Base):
-    """Represents a policy that can be applied to a resource."""
-
-    __tablename__ = 'policies'
-    __table_args__ = (
-        Index('policy_project_id_idx', 'project_id'),
-        Index('policy_uuid_idx', 'uuid'),
-    )
-
-    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
-    uuid = Column(String(36), nullable=False, unique=True)
-    project_id = Column(String(255), nullable=False)
-    name = Column(String(255), nullable=False)
-    max_time_for_lease = Column(Integer, default=0)
-    extendible = Column(Boolean, default=False)
-
-
 class LeaseRequest(Base):
     """Represents a lease request."""
 
@@ -75,32 +58,24 @@ class LeaseRequest(Base):
 
 
 class LeasableResource(Base):
-    """Represents a leasable resource that has a policy applied to it."""
+    """Represents a leasable resource."""
 
     __tablename__ = 'leasable_resources'
     __table_args__ = (
         Index('leasable_resource_resource_idx', 'resource_type',
               'resource_uuid'),
-        Index('leasable_resource_policy_uuid_idx', 'policy_uuid'),
         Index('leasable_resource_request_uuid_idx', 'request_uuid'),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     resource_type = Column(String(36), nullable=False)
     resource_uuid = Column(String(36), nullable=False, unique=True)
-    policy_uuid = Column(String(36),
-                         ForeignKey('policies.uuid'),
-                         nullable=False)
     expiration_date = Column(DateTime)
     request_uuid = Column(String(36),
                           ForeignKey('lease_requests.uuid'),
                           nullable=True)
     lease_expiration_date = Column(DateTime)
 
-    policy = orm.relationship(Policy,
-                              backref=orm.backref('applied_resources'),
-                              foreign_keys=policy_uuid,
-                              primaryjoin=policy_uuid == Policy.uuid)
     lease_request = orm.relationship(
         LeaseRequest,
         backref=orm.backref('leases'),

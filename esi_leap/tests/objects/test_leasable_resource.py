@@ -21,7 +21,6 @@ def get_test_leasable_resource():
         'id': 27,
         'resource_type': 'ironic_node',
         'resource_uuid': '8010c964-9637-4ea0-b492-9c99b07ea1db',
-        'policy_uuid': 'b0f45e74-fa2f-4481-bbqc-eeb59eb9e76f',
         'expiration_date': None,
         'request_uuid': None,
         'lease_expiration_date': None,

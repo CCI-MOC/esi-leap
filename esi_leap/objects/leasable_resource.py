@@ -26,7 +26,6 @@ class LeasableResource(base.ESILEAPObject):
         'id': fields.IntegerField(),
         'resource_type': fields.StringField(),
         'resource_uuid': fields.StringField(),
-        'policy_uuid': fields.UUIDField(),
         'expiration_date': fields.DateTimeField(nullable=True),
         'request_uuid': fields.UUIDField(nullable=True),
         'lease_expiration_date': fields.DateTimeField(nullable=True),
@@ -54,12 +53,6 @@ class LeasableResource(base.ESILEAPObject):
         db_resources = cls.dbapi. \
             leasable_resource_get_all_by_request_project_id(
                 context, project_id)
-        return cls._from_db_object_list(context, db_resources)
-
-    @classmethod
-    def get_all_by_policy_uuid(cls, context, policy_uuid):
-        db_resources = cls.dbapi.leasable_resource_get_all_by_policy_uuid(
-            context, policy_uuid)
         return cls._from_db_object_list(context, db_resources)
 
     @classmethod
