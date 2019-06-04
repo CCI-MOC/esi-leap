@@ -16,10 +16,6 @@ import six
 from oslo_versionedobjects import fields as object_fields
 
 
-class BooleanField(object_fields.BooleanField):
-    pass
-
-
 class DateTimeField(object_fields.DateTimeField):
     def __init__(self, **kwargs):
         super(DateTimeField, self).__init__(False, **kwargs)
