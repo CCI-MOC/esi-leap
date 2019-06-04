@@ -1,9 +1,10 @@
 # esi-leap
 
-esi-leap is an OpenStack service for managing leases on Ironic nodes. It is intended
-to work on top of the [esi-common library](https://github.com/CCI-MOC/esi-common), which
-supports an OpenStack install that simulates Ironic multi-tenancy through the use of
-`project_owner_id` and `project_id` property attributes.
+esi-leap is an OpenStack service for acting as a FLOCX provider to communicate with a FLOCX
+marketplace. It is intended to work on top of the
+[esi-common library](https://github.com/CCI-MOC/esi-common), which supports an OpenStack
+install that simulates Ironic multi-tenancy through the use of `project_owner_id` and
+`project_id` property attributes.
 
 
 ### Installation
