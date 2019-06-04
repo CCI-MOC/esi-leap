@@ -18,10 +18,9 @@ from oslo_utils import timeutils
 
 from esi_leap.common import statuses
 import esi_leap.conf
-from esi_leap.db import api as db_api
 from esi_leap.manager import utils
-from esi_leap.objects import leasable_resource
-from esi_leap.objects import lease_request
+from esi_leap.objects import contract
+from esi_leap.objects import offer
 
 
 CONF = esi_leap.conf.CONF
@@ -49,67 +48,48 @@ class ManagerService(service.Service):
         super(ManagerService, self).start()
         LOG.info("Starting esi-leap manager RPC server")
         self.tg.add_thread(self._server.start)
-        LOG.info("Starting _fulfill_leases periodic job")
-        self.tg.add_timer(300, self._fulfill_leases)
-        LOG.info("Starting _monitor_leases periodic job")
-        self.tg.add_timer(60, self._monitor_leases)
-        LOG.info("Starting _monitor_leasable_resources periodic job")
-        self.tg.add_timer(60, self._monitor_leasable_resources)
+        LOG.info("Starting _fulfill_contracts periodic job")
+        self.tg.add_timer(300, self._fulfill_contracts)
+        LOG.info("Starting _expire_contracts periodic job")
+        self.tg.add_timer(60, self._expire_contracts)
+        LOG.info("Starting _expire_offers periodic job")
+        self.tg.add_timer(60, self._expire_offers)
 
     def stop(self):
         super(ManagerService, self).stop()
         LOG.info("Shutting down esi-leap manager RPC server")
         self._server.stop()
 
-    def _fulfill_leases(self):
-        LOG.info("Running _fulfill_leases")
-        leases = lease_request.LeaseRequest.get_all_by_status(
-            self._context, statuses.PENDING)
-        for lease in leases:
-            LOG.info("Trying to fulfill lease %s", lease.uuid)
-            lease.fulfill(self._context)
+    def _fulfill_contracts(self):
+        LOG.info("Checking for contracts to fulfill")
+        contracts = contract.Contract.get_all_by_status(
+            self._context, statuses.OPEN)
+        for c in contracts:
+            if c.start_date and \
+               c.start_date <= timeutils.utcnow():
+                LOG.info("Fulfilling contract %s", c.uuid)
+                c.fulfill(self._context)
 
-    def _monitor_leases(self):
-        LOG.info("Checking for cancelled leases")
-        pending_leases = lease_request.LeaseRequest.get_all_by_status(
-            self._context, statuses.PENDING)
-        for lease in pending_leases:
-            if lease.cancel_date and lease.cancel_date <= timeutils.utcnow():
-                LOG.info("Cancelling lease %s", lease.uuid)
-                lease.expire_or_cancel(self._context, statuses.CANCELLED)
-
-        LOG.info("Checking for expired leases")
-        fulfilled_leases = lease_request.LeaseRequest.get_all_by_status(
+    def _expire_contracts(self):
+        LOG.info("Checking for expiring contracts")
+        contracts = contract.Contract.get_all_by_status(
             self._context, statuses.FULFILLED)
-        expired_leases = lease_request.LeaseRequest.get_all_by_status(
-            self._context, statuses.DEGRADED)
-        for lease in fulfilled_leases + expired_leases:
-            if lease.expiration_date and \
-               lease.expiration_date <= timeutils.utcnow():
-                LOG.info("Expiring lease %s", lease.uuid)
-                lease.expire_or_cancel(self._context)
+        for c in contracts:
+            if c.end_date and \
+               c.end_date <= timeutils.utcnow():
+                LOG.info("Expiring contract %s", c.uuid)
+                c.expire(self._context)
 
-    def _monitor_leasable_resources(self):
-        LOG.info("Checking for expired leasable resources")
-        resources = leasable_resource.LeasableResource.get_all(self._context)
-        for resource in resources:
-            if resource.expiration_date and \
-               resource.expiration_date <= timeutils.utcnow():
-                LOG.info("Expiring resource %s %s",
-                         resource.resource_type, resource.resource_uuid)
-                resource.destroy(self._context)
-
-        LOG.info("Checking for expired leasable_resource leases")
-        resources = leasable_resource.LeasableResource.get_leased(
-            self._context)
-        for resource in resources:
-            if resource.lease_expiration_date and \
-               resource.lease_expiration_date <= timeutils.utcnow():
-                LOG.info("Unassigning %s %s from lease %s",
-                         resource.resource_type,
-                         resource.resource_uuid,
-                         resource.request_uuid)
-                resource.unassign(self._context)
+    def _expire_offers(self):
+        LOG.info("Checking for expiring offers")
+        offers = offer.Offer.get_all_by_status(
+            self._context, statuses.OPEN)
+        for o in offers:
+            if o.end_date and \
+               o.end_date <= timeutils.utcnow():
+                LOG.info("Expiring offer %s for %s %s",
+                         o.uuid, o.resource_type, o.resource_uuid)
+                o.expire(self._context)
 
 
 class ManagerEndpoint(object):
