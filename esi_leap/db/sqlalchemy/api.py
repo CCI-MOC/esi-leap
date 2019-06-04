@@ -13,7 +13,6 @@
 import sys
 
 from oslo_config import cfg
-from oslo_db import exception as db_exception
 from oslo_db.sqlalchemy import session as db_session
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -114,120 +113,44 @@ class InequalityCondition(object):
         return [field != value for value in self.values]
 
 
-# Lease Request
-def lease_request_get(context, request_uuid):
-    query = model_query(context, models.LeaseRequest, get_session())
-    result = query.filter_by(uuid=request_uuid).first()
+# Offer
+def offer_get(context, offer_uuid):
+    query = model_query(context, models.Offer, get_session())
+    result = query.filter_by(uuid=offer_uuid).first()
     if not result:
-        raise exception.LeaseRequestNotFound(request_uuid=request_uuid)
+        raise exception.OfferNotFound(offer_uuid=offer_uuid)
     if not context.is_admin:
         if context.project_id != result.project_id:
-            raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
+            raise exception.OfferNoPermission(offer_uuid=offer_uuid)
     return result
 
 
-def lease_request_get_all(context):
+def offer_get_all(context):
     if not context.is_admin:
-        return lease_request_get_all_by_project_id(context, context.project_id)
-    query = model_query(context, models.LeaseRequest, get_session())
+        return offer_get_all_by_project_id(context, context.project_id)
+    query = model_query(context, models.Offer, get_session())
     return query.all()
 
 
-def lease_request_get_all_by_project_id(context, project_id):
+def offer_get_all_by_project_id(context, project_id):
     if not context.is_admin:
         if context.project_id != project_id:
             raise exception.ProjectNoPermission(project_id=project_id)
 
-    query = (model_query(context, models.LeaseRequest,
+    query = (model_query(context, models.Offer,
                          get_session()).filter_by(project_id=project_id))
     return query.all()
 
 
-def lease_request_get_all_by_status(context, status):
-    query = (model_query(context, models.LeaseRequest,
+def offer_get_all_by_status(context, status):
+    query = (model_query(context, models.Offer,
                          get_session()).filter_by(status=status))
     if not context.is_admin:
         query.filter_by(project_id=context.project_id)
     return query.all()
 
 
-def lease_request_create(context, values):
-    lease_request_ref = models.LeaseRequest()
-    values['uuid'] = uuidutils.generate_uuid()
-    values['project_id'] = context.project_id
-    lease_request_ref.update(values)
-    lease_request_ref.save(get_session())
-    return lease_request_ref
-
-
-def lease_request_update(context, request_uuid, values):
-    lease_request_ref = lease_request_get(context, request_uuid)
-    if not context.is_admin:
-        if context.project_id != lease_request_ref.project_id:
-            raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
-    values.pop('uuid', None)
-    values.pop('project_id', None)
-    lease_request_ref.update(values)
-    lease_request_ref.save(get_session())
-    return lease_request_ref
-
-
-def lease_request_destroy(context, request_uuid):
-    lease_request_ref = lease_request_get(context, request_uuid)
-    if not lease_request_ref:
-        raise exception.LeaseRequestNotFound(request_uuid=request_uuid)
-    if not context.is_admin:
-        if context.project_id != lease_request_ref.project_id:
-            raise exception.LeaseRequestNoPermission(request_uuid=request_uuid)
-    model_query(
-        context,
-        models.LeaseRequest,
-        get_session()).filter_by(uuid=request_uuid).delete()
-
-
-# Leasable Resource
-def leasable_resource_get(context, resource_type, resource_uuid):
-    query = model_query(context, models.LeasableResource, get_session())
-    result = query.filter_by(
-        resource_type=resource_type, resource_uuid=resource_uuid).first()
-    if not result:
-        raise exception.ResourceNotFound(
-            resource_type=resource_type, resource_uuid=resource_uuid)
-    return result
-
-
-def leasable_resource_get_all(context):
-    query = model_query(context, models.LeasableResource, get_session())
-    return query.all()
-
-
-def leasable_resource_get_all_by_request_project_id(context, project_id):
-    query = (model_query(
-        context,
-        models.LeasableResource,
-        get_session()).filter(
-            models.LeasableResource.lease_request.has(project_id=project_id)))
-    return query.all()
-
-
-def leasable_resource_get_all_by_request_uuid(context, request_uuid):
-    query = (model_query(context, models.LeasableResource,
-                         get_session()).filter_by(request_uuid=request_uuid))
-    return query.all()
-
-
-def leasable_resource_get_available(context):
-    return leasable_resource_get_all_by_request_uuid(context, None)
-
-
-def leasable_resource_get_leased(context):
-    query = (model_query(context, models.LeasableResource,
-                         get_session()).filter(
-                             models.LeasableResource.request_uuid is not None))
-    return query.all()
-
-
-def leasable_resource_create(context, values):
+def offer_create(context, values):
     resource_type = values.get('resource_type')
     resource_uuid = values.get('resource_uuid')
     resource = ro_factory.ResourceObjectFactory.get_resource_object(
@@ -236,39 +159,123 @@ def leasable_resource_create(context, values):
         raise exception.ResourceNoPermission(
             resource_type=resource_type, resource_uuid=resource_uuid)
 
-    leasable_resource_ref = models.LeasableResource()
-    leasable_resource_ref.update(values)
-    try:
-        leasable_resource_ref.save(get_session())
-    except db_exception.DBDuplicateEntry:
-        raise exception.ResourceExists(
-            resource_type=resource_type, resource_uuid=resource_uuid)
-    return leasable_resource_ref
+    offer_ref = models.Offer()
+    values['uuid'] = uuidutils.generate_uuid()
+    values['project_id'] = context.project_id
+    offer_ref.update(values)
+    offer_ref.save(get_session())
+    return offer_ref
 
 
-def leasable_resource_update(context, resource_type, resource_uuid, values):
+def offer_update(context, offer_uuid, values):
+    offer_ref = offer_get(context, offer_uuid)
     if not context.is_admin:
+        if context.project_id != offer_ref.project_id:
+            raise exception.OfferNoPermission(offer_uuid=offer_uuid)
+
         resource = ro_factory.ResourceObjectFactory.get_resource_object(
-            resource_type, resource_uuid)
+            offer_ref.resource_type, offer_ref.resource_uuid)
         if not resource.is_resource_admin(context.project_id):
             raise exception.ResourceNoPermission(
-                resource_type=resource_type, resource_uuid=resource_uuid)
+                resource_type=offer_ref.resource_type,
+                resource_uuid=offer_ref.resource_uuid)
 
-    leasable_resource_ref = leasable_resource_get(
-        context, resource_type, resource_uuid)
-    leasable_resource_ref.update(values)
-    leasable_resource_ref.save(get_session())
-    return leasable_resource_ref
+    values.pop('uuid', None)
+    values.pop('project_id', None)
+    offer_ref.update(values)
+    offer_ref.save(get_session())
+    return offer_ref
 
 
-def leasable_resource_destroy(context, resource_type, resource_uuid):
+def offer_destroy(context, offer_uuid):
+    offer_ref = offer_get(context, offer_uuid)
+    if not offer_ref:
+        raise exception.OfferNotFound(offer_uuid=offer_uuid)
     if not context.is_admin:
+        if context.project_id != offer_ref.project_id:
+            raise exception.OfferNoPermission(offer_uuid=offer_uuid)
         resource = ro_factory.ResourceObjectFactory.get_resource_object(
-            resource_type, resource_uuid)
+            offer_ref.resource_type, offer_ref.resource_uuid)
         if not resource.is_resource_admin(context.project_id):
             raise exception.ResourceNoPermission(
-                resource_type=resource_type, resource_uuid=resource_uuid)
-    model_query(context, models.LeasableResource,
-                get_session()).filter_by(
-                    resource_type=resource_type,
-                    resource_uuid=resource_uuid).delete()
+                resource_type=offer_ref.resource_type,
+                resource_uuid=offer_ref.resource_uuid)
+
+    model_query(
+        context,
+        models.Offer,
+        get_session()).filter_by(uuid=offer_uuid).delete()
+
+
+# Contracts
+def contract_get(context, contract_uuid):
+    query = model_query(context, models.Contract, get_session())
+    result = query.filter_by(uuid=contract_uuid).first()
+    if not result:
+        raise exception.ContractNotFound(contract_uuid=contract_uuid)
+    if not context.is_admin:
+        if context.project_id != result.project_id:
+            raise exception.ContractNoPermission(contract_uuid=contract_uuid)
+    return result
+
+
+def contract_get_all(context):
+    query = model_query(context, models.Contract, get_session())
+    return query.all()
+
+
+def contract_get_all_by_project_id(context, project_id):
+    query = (model_query(
+        context,
+        models.Contract,
+        get_session()).filter(
+            models.Contract.offer.has(project_id=project_id)))
+    return query.all()
+
+
+def contract_get_all_by_offer_uuid(context, offer_uuid):
+    query = (model_query(context, models.Contract,
+                         get_session()).filter_by(offer_uuid=offer_uuid))
+    return query.all()
+
+
+def contract_get_all_by_status(context, status):
+    query = (model_query(context, models.Contract,
+                         get_session()).filter_by(status=status))
+    if not context.is_admin:
+        query.filter_by(project_id=context.project_id)
+    return query.all()
+
+
+def contract_create(context, values):
+    contract_ref = models.Contract()
+    values['uuid'] = uuidutils.generate_uuid()
+    values['project_id'] = context.project_id
+    contract_ref.update(values)
+    contract_ref.save(get_session())
+    return contract_ref
+
+
+def contract_update(context, contract_uuid, values):
+    contract_ref = contract_get(context, contract_uuid)
+    if not context.is_admin:
+        if context.project_id != contract_ref.project_id:
+            raise exception.ContractNoPermission(contract_uuid=contract_uuid)
+    values.pop('uuid', None)
+    values.pop('project_id', None)
+    contract_ref.update(values)
+    contract_ref.save(get_session())
+    return contract_ref
+
+
+def contract_destroy(context, contract_uuid):
+    contract_ref = contract_get(context, contract_uuid)
+    if not contract_ref:
+        raise exception.ContractNotFound(contract_uuid=contract_uuid)
+    if not context.is_admin:
+        if context.project_id != contract_ref.project_id:
+            raise exception.ContractNoPermission(contract_uuid=contract_uuid)
+    model_query(
+        context,
+        models.Contract,
+        get_session()).filter_by(uuid=contract_uuid).delete()

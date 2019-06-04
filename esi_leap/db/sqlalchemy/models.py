@@ -16,7 +16,7 @@ from oslo_db.sqlalchemy import types as db_types
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import orm
 from sqlalchemy import Column, DateTime, ForeignKey
-from sqlalchemy import Boolean, Index, Integer, String
+from sqlalchemy import Index, Integer, String
 
 from esi_leap.common import statuses
 
@@ -35,49 +35,51 @@ class ESILEAPBase(models.TimestampMixin, models.ModelBase):
 Base = declarative_base(cls=ESILEAPBase)
 
 
-class LeaseRequest(Base):
-    """Represents a lease request."""
+class Offer(Base):
+    """Represents a resource that is offered to the FLOCX marketplace."""
 
-    __tablename__ = 'lease_requests'
+    __tablename__ = 'offers'
     __table_args__ = (
-        Index('lease_request_project_id_idx', 'project_id'),
-        Index('lease_request_uuid_idx', 'uuid'),
-        Index('lease_request_status_idx', 'status'),
+        Index('offer_uuid_idx', 'uuid'),
+        Index('offer_project_id_idx', 'project_id'),
+        Index('offer_resource_idx', 'resource_type', 'resource_uuid'),
+        Index('offer_status_idx', 'status'),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
-    uuid = Column(String(36), nullable=True, unique=True)
+    uuid = Column(String(36), nullable=False, unique=True)
     project_id = Column(String(255), nullable=False)
-    name = Column(String(255), nullable=False)
-    resource_properties = Column(db_types.JsonEncodedDict, nullable=True)
-    lease_time = Column(Integer, default=0)
-    status = Column(String(15), nullable=False, default=statuses.PENDING)
-    cancel_date = Column(DateTime, nullable=True)
-    fulfilled_date = Column(DateTime, nullable=True)
-    expiration_date = Column(DateTime, nullable=True)
+    resource_type = Column(String(36), nullable=False)
+    resource_uuid = Column(String(36), nullable=False)
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
+    status = Column(String(15), nullable=False, default=statuses.OPEN)
+    properties = Column(db_types.JsonEncodedDict, nullable=True)
 
 
-class LeasableResource(Base):
-    """Represents a leasable resource."""
+class Contract(Base):
+    """Represents an accepted contract from the FLOCX marketplace."""
 
-    __tablename__ = 'leasable_resources'
+    __tablename__ = 'contracts'
     __table_args__ = (
-        Index('leasable_resource_resource_idx', 'resource_type',
-              'resource_uuid'),
-        Index('leasable_resource_request_uuid_idx', 'request_uuid'),
+        Index('contract_uuid_idx', 'uuid'),
+        Index('contract_project_id_idx', 'project_id'),
+        Index('contract_status_idx', 'status'),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
-    resource_type = Column(String(36), nullable=False)
-    resource_uuid = Column(String(36), nullable=False, unique=True)
-    expiration_date = Column(DateTime)
-    request_uuid = Column(String(36),
-                          ForeignKey('lease_requests.uuid'),
-                          nullable=True)
-    lease_expiration_date = Column(DateTime)
+    uuid = Column(String(36), nullable=False, unique=True)
+    project_id = Column(String(255), nullable=False)
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
+    status = Column(String(15), nullable=False, default=statuses.OPEN)
+    properties = Column(db_types.JsonEncodedDict, nullable=True)
+    offer_uuid = Column(String(36),
+                        ForeignKey('offers.uuid'),
+                        nullable=False)
 
-    lease_request = orm.relationship(
-        LeaseRequest,
-        backref=orm.backref('leases'),
-        foreign_keys=request_uuid,
-        primaryjoin=request_uuid == LeaseRequest.uuid)
+    offer = orm.relationship(
+        Offer,
+        backref=orm.backref('offers'),
+        foreign_keys=offer_uuid,
+        primaryjoin=offer_uuid == Offer.uuid)

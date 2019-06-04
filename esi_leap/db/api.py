@@ -88,79 +88,72 @@ def to_dict(func):
     return decorator
 
 
-# Lease Request
+# Offer
 @to_dict
-def lease_request_get(context, request_uuid):
-    return IMPL.lease_request_get(context, request_uuid)
-
-
-@to_dict
-def lease_request_get_all(context):
-    return IMPL.lease_request_get_all(context)
+def offer_get(context, offer_uuid):
+    return IMPL.offer_get(context, offer_uuid)
 
 
 @to_dict
-def lease_request_get_all_by_project_id(context, project_id):
-    return IMPL.lease_request_get_all_by_project_id(context, project_id)
+def offer_get_all(context):
+    return IMPL.offer_get_all(context)
 
 
 @to_dict
-def lease_request_get_all_by_status(context, status):
-    return IMPL.lease_request_get_all_by_status(context, status)
-
-
-def lease_request_create(context, values):
-    return IMPL.lease_request_create(context, values)
-
-
-def lease_request_update(context, request_uuid, values):
-    return IMPL.lease_request_update(context, request_uuid, values)
-
-
-def lease_request_destroy(context, request_uuid):
-    return IMPL.lease_request_destroy(context, request_uuid)
-
-
-# Leasable Resource
-@to_dict
-def leasable_resource_get(context, resource_type, resource_uuid):
-    return IMPL.leasable_resource_get(context, resource_type, resource_uuid)
+def offer_get_all_by_project_id(context, project_id):
+    return IMPL.offer_get_all_by_project_id(context, project_id)
 
 
 @to_dict
-def leasable_resource_get_all(context):
-    return IMPL.leasable_resource_get_all(context)
+def offer_get_all_by_status(context, status):
+    return IMPL.offer_get_all_by_status(context, status)
+
+
+def offer_create(context, values):
+    return IMPL.offer_create(context, values)
+
+
+def offer_update(context, offer_uuid, values):
+    return IMPL.offer_update(context, offer_uuid, values)
+
+
+def offer_destroy(context, offer_uuid):
+    return IMPL.offer_destroy(context, offer_uuid)
+
+
+# Contract
+@to_dict
+def contract_get(context, contract_uuid):
+    return IMPL.contract_get(context, contract_uuid)
 
 
 @to_dict
-def leasable_resource_get_all_by_project_id(context, project_id):
-    return IMPL.leasable_resource_get_all_by_project_id(context, project_id)
+def contract_get_all(context):
+    return IMPL.contract_get_all(context)
 
 
 @to_dict
-def leasable_resource_get_all_by_request_project_id(context, project_id):
-    return IMPL.leasable_resource_get_all_by_request_project_id(
-        context, project_id)
+def contract_get_all_by_project_id(context, project_id):
+    return IMPL.contract_get_all_by_project_id(context, project_id)
 
 
 @to_dict
-def leasable_resource_get_available(context):
-    return IMPL.leasable_resource_get_available(context)
+def contract_get_all_by_offer_uuid(context, offer_uuid):
+    return IMPL.contract_get_all_by_offer_uuid(context, offer_uuid)
 
 
 @to_dict
-def leasable_resource_get_leased(context):
-    return IMPL.leasable_resource_get_leased(context)
+def contract_get_all_by_status(context, status):
+    return IMPL.contract_get_all_by_status(context, status)
 
 
-def leasable_resource_create(context, values):
-    return IMPL.leasable_resource_create(context, values)
+def contract_create(context, values):
+    return IMPL.contract_create(context, values)
 
 
-def leasable_resource_update(context, resource_type, resource_uuid, values):
-    return IMPL.leasable_resource_update(
-        context, resource_type, resource_uuid, values)
+def contract_update(context, contract_uuid, values):
+    return IMPL.contract_update(context, contract_uuid, values)
 
 
-def leasable_resource_destroy(context, resource_type, resource_uuid):
-    IMPL.leasable_resource_destroy(context, resource_type, resource_uuid)
+def contract_destroy(context, contract_uuid):
+    return IMPL.contract_destroy(context, contract_uuid)
