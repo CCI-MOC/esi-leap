@@ -25,18 +25,25 @@ class DummyNode(object):
         self._uuid = uuid
         self._path = DUMMY_NODE_DIR + "/" + uuid
 
+    def get_contract_uuid(self):
+        with open(self._path) as node_file:
+            node_dict = json.load(node_file)
+        return node_dict.get("contract_uuid", None)
+
     def get_project_id(self):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
         return node_dict.get("project_id", None)
 
-    def set_project_id(self, project_id):
+    def set_contract(self, contract):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        if project_id is None:
+        if contract is None:
+            node_dict.pop("contract_uuid", None)
             node_dict.pop("project_id", None)
         else:
-            node_dict["project_id"] = project_id
+            node_dict["contract_uuid"] = contract.uuid
+            node_dict["project_id"] = contract.project_id
         with open(self._path, 'w') as node_file:
             json.dump(node_dict, node_file)
 
