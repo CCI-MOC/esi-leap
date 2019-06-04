@@ -14,14 +14,14 @@ from oslo_serialization import jsonutils
 import pecan
 from pecan import rest
 
-from esi_leap.api.controllers.v1 import leasable_resource
-from esi_leap.api.controllers.v1 import lease_request
+from esi_leap.api.controllers.v1 import contract
+from esi_leap.api.controllers.v1 import offer
 
 
 class Controller(rest.RestController):
 
-    leasable_resources = leasable_resource.LeasableResourcesController()
-    lease_requests = lease_request.LeaseRequestsController()
+    contracts = contract.ContractsController()
+    offers = offer.OffersController()
 
     @pecan.expose(content_type='application/json')
     def index(self):
