@@ -38,55 +38,31 @@ class ESILeapException(Exception):
         super(ESILeapException, self).__init__(message)
 
 
-class LeaseRequestIncorrectStatus(ESILeapException):
-    msg_fmt = _("Lease request %(request_uuid)s has a status of %(status)s "
-                ", but should have a status of %(actual_status)s.")
-
-
-class LeaseRequestNoPermission(ESILeapException):
+class ContractNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on "
-                "lease request %(request_uuid)s.")
+                "contract %(contract_uuid)s.")
 
 
-class LeaseRequestResourceUnavailable(ESILeapException):
-    msg_fmt = _("Lease request %(request_uuid)s cannot be fulfilled, "
-                "as resource are unavailable.")
+class ContractNotFound(ESILeapException):
+    msg_fmt = _("Contract %(contract_uuid)s not found.")
 
 
-class LeaseRequestNotFound(ESILeapException):
-    msg_fmt = _("Lease request %(request_uuid)s not found.")
+class OfferNoPermission(ESILeapException):
+    msg_fmt = _("You do not have permissions on "
+                "offer %(offer_uuid)s.")
 
 
-class LeaseRequestUnexpired(ESILeapException):
-    msg_fmt = _("Lease request %(request_uuid)s was expired, "
-                "but resources are still assigned.")
-
-
-class LeaseRequestUnfulfilled(ESILeapException):
-    msg_fmt = _("Lease request %(request_uuid)s was fulfilled, "
-                "but no resources were assigned.")
-
-
-class LeaseRequestWrongFulfillStatus(ESILeapException):
-    msg_fmt = _("Lease request %(request_uuid)s must have a status of "
-                "pending to be fulfilled, but it has a status of %(status)s.")
+class OfferNotFound(ESILeapException):
+    msg_fmt = _("Offer %(offer_uuid)s not found.")
 
 
 class ProjectNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on project %(project_id)s.")
 
 
-class ResourceExists(ESILeapException):
-    msg_fmt = _("%(resource_type)s %(resource_uuid)s already exists.")
-
-
 class ResourceNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on "
                 "%(resource_type)s %(resource_uuid)s.")
-
-
-class ResourceNotFound(ESILeapException):
-    msg_fmt = _("%(resource_type)s %(resource_uuid)s not found.")
 
 
 class ResourceTypeUnknown(ESILeapException):
