@@ -23,9 +23,6 @@ To  install the python code:
 Run the following to generate the configuration file and copy it to the right place:
 
 ```
-{
-  "project_owner_id": "e546a159307949c0a5333f5d79ef92f7"
-}
     $ tox -egenconfig
     $ sudo mkdir /etc/esi-leap
     $ sudo cp etc/esi-leap/esi-leap.conf.sample /etc/esi-leap/esi-leap.conf
