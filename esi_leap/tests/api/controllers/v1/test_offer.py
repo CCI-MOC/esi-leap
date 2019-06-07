@@ -10,7 +10,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from esi_leap.objects import offer
 from esi_leap.tests.api import base as test_api_base
+
+
+def create_test_offer(context):
+    o = offer.Offer(
+        resource_type='test_node',
+        resource_uuid='1234567890',
+    )
+    o.create(context)
+    return o
 
 
 class TestListOffers(test_api_base.APITestCase):
@@ -21,3 +31,8 @@ class TestListOffers(test_api_base.APITestCase):
     def test_empty(self):
         data = self.get_json('/offers')
         self.assertEqual([], data['offers'])
+
+    def test_one(self):
+        offer = create_test_offer(self.context)
+        data = self.get_json('/offers')
+        self.assertEqual(offer.uuid, data['offers'][0]["uuid"])
