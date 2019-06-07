@@ -12,7 +12,6 @@
 
 import fixtures
 
-from oslo_config import fixture as config_fixture
 from oslo_context import context as ctx
 from oslotest import base
 
@@ -29,6 +28,9 @@ class Database(fixtures.Fixture):
 
     def setUp(self):
         super(Database, self).setUp()
+        CONF.set_override('connection', 'sqlite://',
+                          group='database')
+
         sql_api.reset_facade()
         sql_api.setup_db()
         self.addCleanup(sql_api.drop_db)
@@ -38,9 +40,6 @@ class TestCase(base.BaseTestCase):
 
     def setUp(self):
         super(TestCase, self).setUp()
-        self.cfg_fixture = self.useFixture(config_fixture.Config(CONF))
-        self.cfg_fixture.set_default('connection', 'sqlite://',
-                                     group='database')
         self.context = ctx.RequestContext(
             auth_token=None,
             project_id=None,
