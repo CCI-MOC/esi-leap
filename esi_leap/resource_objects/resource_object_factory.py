@@ -13,8 +13,9 @@
 from esi_leap.common import exception
 from esi_leap.resource_objects import dummy_node
 from esi_leap.resource_objects import ironic_node
+from esi_leap.resource_objects import test_node
 
-RESOURCE_TYPES = ['ironic_node', 'dummy_node']
+RESOURCE_TYPES = ['ironic_node', 'dummy_node', 'test_node']
 
 
 class ResourceObjectFactory(object):
@@ -25,4 +26,6 @@ class ResourceObjectFactory(object):
             return ironic_node.IronicNode(resource_uuid)
         elif resource_type == 'dummy_node':
             return dummy_node.DummyNode(resource_uuid)
+        elif resource_type == 'test_node':
+            return test_node.TestNode(resource_uuid)
         raise exception.ResourceTypeUnknown(resource_type=resource_type)
