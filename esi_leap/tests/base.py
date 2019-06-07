@@ -42,7 +42,7 @@ class TestCase(base.BaseTestCase):
         super(TestCase, self).setUp()
         self.context = ctx.RequestContext(
             auth_token=None,
-            project_id=None,
+            project_id='12345',
             is_admin=True,
             overwrite=False)
 
