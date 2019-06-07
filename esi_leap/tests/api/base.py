@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 import pecan
 import pecan.testing
 
@@ -33,6 +34,12 @@ class APITestCase(base.DBTestCase):
         self.app = pecan.testing.load_test_app(
             dict(app.get_pecan_config())
         )
+
+        self.patch_context = mock.patch(
+            'oslo_context.context.RequestContext.from_environ'
+        )
+        self.mock_context = self.patch_context.start()
+        self.mock_context.return_value = self.context
 
     # borrowed from Ironic
     def get_json(self, path, expect_errors=False, headers=None,
