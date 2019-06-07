@@ -57,4 +57,7 @@ def setup_app(config=None):
         force_canonical=getattr(config.app, 'force_canonical', True),
     )
 
-    return auth_token.AuthProtocol(app, dict(CONF.keystone_authtoken))
+    if CONF.pecan.auth_enable:
+        app = auth_token.AuthProtocol(app, dict(CONF.keystone_authtoken))
+
+    return app
