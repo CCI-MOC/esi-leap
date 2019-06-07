@@ -29,12 +29,16 @@ LOG = logging.getLogger(__name__)
 _engine_facade = None
 
 
-def get_session():
+def get_facade():
     global _engine_facade
     if not _engine_facade:
         _engine_facade = db_session.EngineFacade.from_config(CONF)
 
-    return _engine_facade.get_session()
+    return _engine_facade
+
+
+def get_session():
+    return get_facade().get_session()
 
 
 def reset_facade():
@@ -48,8 +52,7 @@ def get_backend():
 
 
 def setup_db():
-    engine = db_session.EngineFacade(CONF.database.connection,
-                                     sqlite_fk=True).get_engine()
+    engine = get_facade().get_engine()
     models.Base.metadata.create_all(engine)
     return True
 
