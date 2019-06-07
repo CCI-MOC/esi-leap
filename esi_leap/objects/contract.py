@@ -16,7 +16,7 @@ from esi_leap.common import statuses
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 from esi_leap.objects import fields
-from esi_leap.objects import offer
+import esi_leap.objects.offer
 
 
 @versioned_objects_base.VersionedObjectRegistry.register
@@ -79,7 +79,8 @@ class Contract(base.ESILEAPObject):
 
     def fulfill(self, context=None):
         # fulfill resource
-        o = offer.Offer.get(context, self.offer_uuid)
+        o = esi_leap.objects.offer.Offer.get(
+            context, self.offer_uuid)
         resource = o.resource_object()
         resource.set_contract(self)
 
@@ -89,7 +90,8 @@ class Contract(base.ESILEAPObject):
 
     def expire(self, context=None):
         # unassign resource
-        o = offer.Offer.get(context, self.offer_uuid)
+        o = esi_leap.objects.offer.Offer.get(
+            context, self.offer_uuid)
         resource = o.resource_object()
         if resource.get_contract_uuid() == self.uuid:
             resource.set_contract(None)
