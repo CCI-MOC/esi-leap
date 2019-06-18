@@ -1,0 +1,8 @@
+keystonemiddleware==6.1.0
+requests==2.22.0
+SQLAlchemy==1.3.4
+keystoneauth1==3.14.0
+pecan==1.3.3
+python_keystoneclient==3.19.0
+wsme==0.9.3
+WSME==0.9.3
