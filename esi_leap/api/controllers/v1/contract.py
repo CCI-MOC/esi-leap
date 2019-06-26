@@ -19,6 +19,7 @@ import wsmeext.pecan as wsme_pecan
 
 from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
+from esi_leap.common import policy
 from esi_leap.objects import contract
 
 
@@ -50,27 +51,40 @@ class ContractsController(rest.RestController):
 
     @wsme_pecan.wsexpose(Contract, wtypes.text)
     def get_one(self, contract_uuid):
-        c = contract.Contract.get(
-            pecan.request.context, contract_uuid)
+        request = pecan.request.context
+        cdict = request.to_policy_values()
+        policy.authorize('esi_leap:contract:get', cdict, cdict)
+
+        c = contract.Contract.get(request, contract_uuid)
         return Contract(**c.to_dict())
 
     @wsme_pecan.wsexpose(ContractCollection)
     def get_all(self):
+        request = pecan.request.context
+        cdict = request.to_policy_values()
+        policy.authorize('esi_leap:contract:get', cdict, cdict)
+
         contract_collection = ContractCollection()
-        contracts = contract.Contract.get_all(
-            pecan.request.context)
+        contracts = contract.Contract.get_all(request)
         contract_collection.contracts = [
             Contract(**c.to_dict()) for c in contracts]
         return contract_collection
 
     @wsme_pecan.wsexpose(Contract, body=Contract)
     def post(self, new_contract):
+        request = pecan.request.context
+        cdict = request.to_policy_values()
+        policy.authorize('esi_leap:contract:create', cdict, cdict)
+
         c = contract.Contract(**new_contract.to_dict())
-        c.create(pecan.request.context)
+        c.create(request)
         return Contract(**c.to_dict())
 
     @wsme_pecan.wsexpose(Contract, wtypes.text)
     def delete(self, contract_uuid):
-        c = contract.Contract.get(
-            pecan.request.context, contract_uuid)
+        request = pecan.request.context
+        cdict = request.to_policy_values()
+        policy.authorize('esi_leap:contract:delete', cdict, cdict)
+
+        c = contract.Contract.get(request, contract_uuid)
         c.destroy(pecan.request.context)

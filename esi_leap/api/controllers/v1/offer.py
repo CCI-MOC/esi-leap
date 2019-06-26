@@ -19,6 +19,7 @@ import wsmeext.pecan as wsme_pecan
 
 from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
+from esi_leap.common import policy
 from esi_leap.objects import offer
 
 
@@ -51,27 +52,40 @@ class OffersController(rest.RestController):
 
     @wsme_pecan.wsexpose(Offer, wtypes.text)
     def get_one(self, offer_uuid):
-        o = offer.Offer.get(
-            pecan.request.context, offer_uuid)
+        request = pecan.request.context
+        cdict = request.to_policy_values()
+        policy.authorize('esi_leap:offer:get', cdict, cdict)
+
+        o = offer.Offer.get(request, offer_uuid)
         return Offer(**o.to_dict())
 
     @wsme_pecan.wsexpose(OfferCollection)
     def get_all(self):
+        request = pecan.request.context
+        cdict = request.to_policy_values()
+        policy.authorize('esi_leap:offer:get', cdict, cdict)
+
         offer_collection = OfferCollection()
-        offers = offer.Offer.get_all(
-            pecan.request.context)
+        offers = offer.Offer.get_all(request)
         offer_collection.offers = [
             Offer(**o.to_dict()) for o in offers]
         return offer_collection
 
     @wsme_pecan.wsexpose(Offer, body=Offer)
     def post(self, new_offer):
+        request = pecan.request.context
+        cdict = request.to_policy_values()
+        policy.authorize('esi_leap:offer:create', cdict, cdict)
+
         o = offer.Offer(**new_offer.to_dict())
-        o.create(pecan.request.context)
+        o.create(request)
         return Offer(**o.to_dict())
 
     @wsme_pecan.wsexpose(Offer, wtypes.text)
     def delete(self, offer_uuid):
-        o = offer.Offer.get(
-            pecan.request.context, offer_uuid)
+        request = pecan.request.context
+        cdict = request.to_policy_values()
+        policy.authorize('esi_leap:offer:delete', cdict, cdict)
+
+        o = offer.Offer.get(request, offer_uuid)
         o.destroy(pecan.request.context)
