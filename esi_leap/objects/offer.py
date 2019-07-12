@@ -18,6 +18,10 @@ from esi_leap.objects import base
 import esi_leap.objects.contract
 from esi_leap.objects import fields
 from esi_leap.resource_objects import resource_object_factory as ro_factory
+import json
+from keystoneauth1.identity import v3
+from keystoneauth1 import session
+from keystoneauth1 import loading as ks_loading
 
 
 @versioned_objects_base.VersionedObjectRegistry.register
@@ -58,6 +62,26 @@ class Offer(base.ESILEAPObject):
             context, status)
         return cls._from_db_object_list(context, db_offers)
 
+    @classmethod
+    def send(cls, context, offer_uuid):
+        o = Offer.get(context, offer_uuid)
+
+        auth = v3.Password(auth_url='http://localhost:5000/v3',
+                           username='flocx-provider',
+                           password='password',
+                           project_name='service',
+                           user_domain_id='default',
+                           project_domain_id='default')
+        sess = session.Session(auth=auth)
+        
+        marketplace_offer_dict = o.to_marketplace_dict()
+
+        response = sess.post(
+            'http://localhost:8081/offer',
+            data=json.dumps(marketplace_offer_dict))
+
+        return response
+
     def create(self, context=None):
         updates = self.obj_get_changes()
         db_offer = self.dbapi.offer_create(context, updates)
@@ -88,3 +112,25 @@ class Offer(base.ESILEAPObject):
         # expire offer
         self.status = statuses.EXPIRED
         self.save(context)
+
+    def to_marketplace_dict(self):
+        # modifiy the offer data in order to be compatible with flocx-market POST offer api
+        # change fields name
+        offer_dict = self.to_dict()
+        offer_dict['start_time'] = offer_dict.pop('start_date').isoformat()
+        offer_dict['end_time'] = offer_dict.pop('end_date').isoformat()
+        offer_dict['server_config'] = offer_dict.pop('properties')
+        offer_dict['server_id'] = offer_dict.pop('resource_uuid')
+        offer_dict['provider_id'] = offer_dict.pop('uuid')
+        # remove unnecessary feilds
+        offer_dict.pop('created_at')
+        offer_dict.pop('updated_at')
+        offer_dict.pop('id')
+        offer_dict.pop('project_id')
+        offer_dict.pop('resource_type')
+        # fake fields
+        offer_dict['creator_id'] = 'Alice1992'
+        offer_dict['marketplace_date_created'] = '2016-07-16T19:20:30'
+        offer_dict['cost'] = 11.5
+
+        return offer_dict
