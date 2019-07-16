@@ -10,14 +10,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_config import cfg
 
 from esi_leap.conf import api
 from esi_leap.conf import dummy_node
+from esi_leap.conf import flocx_market
 from esi_leap.conf import ironic
 from esi_leap.conf import netconf
 from esi_leap.conf import pecan
-
+from oslo_config import cfg
 
 CONF = cfg.CONF
 
@@ -28,3 +28,4 @@ dummy_node.register_opts(CONF)
 ironic.register_opts(CONF)
 netconf.register_opts(CONF)
 pecan.register_opts(CONF)
+flocx_market.register_opts(CONF)

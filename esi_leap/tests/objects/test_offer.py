@@ -14,11 +14,13 @@ import datetime
 import mock
 
 from esi_leap.common import statuses
+from esi_leap.objects import flocx_market_client
 from esi_leap.objects import offer
 from esi_leap.tests import base
 
 
 def get_test_offer():
+
     return {
         'id': 27,
         'uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
@@ -108,9 +110,11 @@ class TestOfferObject(base.DBTestCase):
         o = offer.Offer(
             self.context, **self.fake_offer)
         with mock.patch.object(self.db_api, 'offer_create',
-                               autospec=True) as mock_offer_create:
+                               autospec=True) as mock_offer_create,\
+            mock.patch.object(offer.Offer, 'send_to_flocx_market',
+                              autospec=True) as mock_offer_send:
             mock_offer_create.return_value = get_test_offer()
-
+            mock_offer_send.return_value = 201
             o.create(self.context)
 
             mock_offer_create.assert_called_once_with(
@@ -147,15 +151,11 @@ class TestOfferObject(base.DBTestCase):
             self.assertEqual(self.context, o._context)
             self.assertEqual(updated_at, o.updated_at)
 
-    def test_send(self):
-        offer_uuid = self.fake_offer['uuid']
-        with mock.patch.object(self.db_api, 'offer_get',
-                               autospec=True) as mock_offer_send:
-            mock_offer_send.return_value = self.fake_offer
-
-            res = offer.Offer.send(self.context, offer_uuid)
-
-            mock_offer_send.assert_called_once_with(
-                self.context, offer_uuid)
-
-            self.assertEqual(res.status_code, 201)
+    def test_send_to_flocx_market(self):
+        o = offer.Offer(self.context, **self.fake_offer)
+        with mock.patch.object(flocx_market_client.FlocxMarketClient,
+                               'send_offer', autospec=True) as mock_send_offer:
+            mock_send_offer.return_value = 201
+            res_status_code = o.send_to_flocx_market()
+            mock_send_offer.assert_called_once()
+            self.assertEqual(res_status_code, 201)
