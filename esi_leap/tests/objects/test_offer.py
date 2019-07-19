@@ -14,19 +14,21 @@ import datetime
 import mock
 
 from esi_leap.common import statuses
+from esi_leap.objects import flocx_market_client
 from esi_leap.objects import offer
 from esi_leap.tests import base
 
 
 def get_test_offer():
+
     return {
         'id': 27,
         'uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
         'project_id': '01d4e6a72f5c408813e02f664cc8c83e',
         'resource_type': 'ironic_node',
-        'resource_uuid': '8010c964-9637-4ea0-b492-9c99b07ea1db',
-        'start_date': None,
-        'end_date': None,
+        'resource_uuid': '8010c964-9637-4ea0-b492-9c99b07ea1dt',
+        'start_date': datetime.datetime(2016, 7, 16, 19, 20, 30),
+        'end_date': datetime.datetime(2016, 8, 16, 19, 20, 30),
         'status': statuses.OPEN,
         'properties': {'floor_price': 3},
         'created_at': None,
@@ -108,9 +110,11 @@ class TestOfferObject(base.DBTestCase):
         o = offer.Offer(
             self.context, **self.fake_offer)
         with mock.patch.object(self.db_api, 'offer_create',
-                               autospec=True) as mock_offer_create:
+                               autospec=True) as mock_offer_create,\
+            mock.patch.object(offer.Offer, 'send_to_flocx_market',
+                              autospec=True) as mock_offer_send:
             mock_offer_create.return_value = get_test_offer()
-
+            mock_offer_send.return_value = 201
             o.create(self.context)
 
             mock_offer_create.assert_called_once_with(
@@ -146,3 +150,12 @@ class TestOfferObject(base.DBTestCase):
                 self.context, o.uuid, updated_values)
             self.assertEqual(self.context, o._context)
             self.assertEqual(updated_at, o.updated_at)
+
+    def test_send_to_flocx_market(self):
+        o = offer.Offer(self.context, **self.fake_offer)
+        with mock.patch.object(flocx_market_client.FlocxMarketClient,
+                               'send_offer', autospec=True) as mock_send_offer:
+            mock_send_offer.return_value = 201
+            res_status_code = o.send_to_flocx_market()
+            mock_send_offer.assert_called_once()
+            self.assertEqual(res_status_code, 201)
