@@ -6,6 +6,42 @@ marketplace. It is intended to work on top of the
 install that simulates Ironic multi-tenancy through the use of `project_owner_id` and
 `project_id` property attributes.
 
+### Service catalog
+#### Create the services
+
+```
+openstack service create --name flocx-provider --description flocx-provider provider
+openstack service create --name flocx-market --description flocx-market marketplace
+```
+
+#### Register the services at an endpoint
+
+```
+openstack endpoint create flocx-provider public http://example.com:XXXX
+openstack endpoint create flocx-market public http://example.com:XXXX
+```
+
+#### Create service users
+
+Create a project for the service users:
+
+```
+openstack project create service --domain default
+```
+
+Create service users for the relevant services:
+
+```
+openstack user create flocx-provider --password PASSWORD
+openstack user create flocx-market --password PASSWORD
+```
+
+Assign the admin role to the user-project pair:
+
+```
+openstack role add --project service --user flocx-provider admin
+openstack role add --project service --user flocx-market admin
+```
 
 ### Installation
 
