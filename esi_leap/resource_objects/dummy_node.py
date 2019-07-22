@@ -35,6 +35,11 @@ class DummyNode(object):
             node_dict = json.load(node_file)
         return node_dict.get("project_id", None)
 
+    def get_node_config(self):
+        with open(self._path) as node_file:
+            node_dict = json.load(node_file)
+        return node_dict.get("server_config", None)
+
     def set_contract(self, contract):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)

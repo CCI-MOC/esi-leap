@@ -51,6 +51,10 @@ class IronicNode(object):
         node = get_ironic_client().node.get(self._uuid)
         return node.properties.get('project_id', None)
 
+    def get_node_config(self):
+        # Node data will be updated later. Return an empty dict for now.
+        return {}
+
     def set_contract(self, contract):
         patches = []
         if contract is None:

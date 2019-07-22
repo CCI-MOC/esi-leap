@@ -22,6 +22,9 @@ class TestNode(object):
     def get_project_id(self):
         return '12345'
 
+    def get_node_config(self):
+        return {}
+
     def set_contract(self, contract):
         return
 

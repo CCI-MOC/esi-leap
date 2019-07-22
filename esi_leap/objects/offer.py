@@ -116,10 +116,11 @@ class Offer(base.ESILEAPObject):
     def to_marketplace_dict(self):
         # change fields name
         offer_dict = self.to_dict()
+        resource = self.resource_object()
+        offer_dict['server_config'] = resource.get_node_config()
         offer_dict['start_time'] = offer_dict.pop('start_date').isoformat()
         offer_dict['end_time'] = offer_dict.pop('end_date').isoformat()
         offer_dict['cost'] = offer_dict['properties'].get('floor_price', 0)
-        offer_dict['server_config'] = offer_dict.pop('properties')
         offer_dict['server_id'] = offer_dict.pop('resource_uuid')
         offer_dict['provider_id'] = offer_dict.pop('uuid')
         offer_dict['creator_id'] = offer_dict.pop('project_id')

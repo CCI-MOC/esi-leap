@@ -109,7 +109,15 @@ as specified above. Once you do so, add dummy nodes as follows:
 ```
 cat <<EOF > /tmp/nodes/1718
 {
-  "project_owner_id": "project id of dummy node owner"
+    "project_owner_id": "project id of dummy node owner",
+    "server_config": {
+        "new attribute XYZ": "This is just a sample list of free-form attributes used for describing a server.",
+        "cpu_type": "Intel Xeon",
+        "cores": 16,
+        "ram_gb": 512,
+        "storage_type": "samsung SSD",
+        "storage_size_gb": 204
+    }
 }
 EOF
 ```
