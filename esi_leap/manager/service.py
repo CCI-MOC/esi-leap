@@ -10,21 +10,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+
+from esi_leap.common import flocx_market
+from esi_leap.common import statuses
+import esi_leap.conf
+from esi_leap.manager import utils
+from esi_leap.objects import contract
+from esi_leap.objects import offer
 from oslo_context import context as ctx
 from oslo_log import log as logging
 import oslo_messaging as messaging
 from oslo_service import service
 from oslo_utils import timeutils
 
-from esi_leap.common import statuses
-import esi_leap.conf
-from esi_leap.manager import utils
-from esi_leap.objects import contract
-from esi_leap.objects import offer
-
-
 CONF = esi_leap.conf.CONF
-EVENT_INTERVAL = 10
+EVENT_INTERVAL = 60
 LOG = logging.getLogger(__name__)
 
 
@@ -49,11 +49,13 @@ class ManagerService(service.Service):
         LOG.info("Starting esi-leap manager RPC server")
         self.tg.add_thread(self._server.start)
         LOG.info("Starting _fulfill_contracts periodic job")
-        self.tg.add_timer(300, self._fulfill_contracts)
+        self.tg.add_timer(EVENT_INTERVAL, self._fulfill_contracts)
         LOG.info("Starting _expire_contracts periodic job")
-        self.tg.add_timer(60, self._expire_contracts)
+        self.tg.add_timer(EVENT_INTERVAL, self._expire_contracts)
         LOG.info("Starting _expire_offers periodic job")
-        self.tg.add_timer(60, self._expire_offers)
+        self.tg.add_timer(EVENT_INTERVAL, self._expire_offers)
+        LOG.info("Starting _retrieve_contracts periodic job")
+        self.tg.add_timer(EVENT_INTERVAL, self._retrieve_contracts)
 
     def stop(self):
         super(ManagerService, self).stop()
@@ -69,6 +71,21 @@ class ManagerService(service.Service):
                c.start_date <= timeutils.utcnow():
                 LOG.info("Fulfilling contract %s", c.uuid)
                 c.fulfill(self._context)
+
+    def _retrieve_contracts(self):
+        LOG.info("Checking for new contracts in marketplace")
+        contracts = flocx_market.retrieve_from_flocx_market(self._context)
+        for c in contracts:
+            co = contract.Contract(self._context, **c)
+            co.create(self._context)
+            LOG.info("Creating contract %s", co.uuid)
+            o_c_r_id = c["marketplace_offer_contract_relationship_id"]
+            res_status_code = flocx_market.update_flocx_market_contract(
+                o_c_r_id)
+            if res_status_code == 200:
+                LOG.info(
+                    "Updating offer contract pair in marketplace for offer %s",
+                    o_c_r_id)
 
     def _expire_contracts(self):
         LOG.info("Checking for expiring contracts")

@@ -10,13 +10,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_versionedobjects import base as versioned_objects_base
-
 from esi_leap.common import statuses
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 from esi_leap.objects import fields
 import esi_leap.objects.offer
+from oslo_config import cfg
+from oslo_versionedobjects import base as versioned_objects_base
+
+CONF = cfg.CONF
 
 
 @versioned_objects_base.VersionedObjectRegistry.register
@@ -32,6 +34,7 @@ class Contract(base.ESILEAPObject):
         'status': fields.StringField(),
         'properties': fields.FlexibleDictField(nullable=True),
         'offer_uuid': fields.UUIDField(),
+        'marketplace_offer_contract_relationship_id': fields.UUIDField()
     }
 
     @classmethod

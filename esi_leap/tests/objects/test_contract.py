@@ -23,6 +23,8 @@ def get_test_contract():
         'id': 27,
         'uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
         'project_id': '01d4e6a72f5c408813e02f664cc8c83e',
+        'marketplace_offer_contract_relationship_id':
+        'dce3f6e7b0dc4b3cb096a3ba10f826c0',
         'start_date': None,
         'end_date': None,
         'status': statuses.OPEN,

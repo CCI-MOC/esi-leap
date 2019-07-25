@@ -70,6 +70,8 @@ class Contract(Base):
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     uuid = Column(String(36), nullable=False, unique=True)
     project_id = Column(String(255), nullable=False)
+    marketplace_offer_contract_relationship_id = Column(String(36),
+                                                        nullable=False)
     start_date = Column(DateTime)
     end_date = Column(DateTime)
     status = Column(String(15), nullable=False, default=statuses.OPEN)
@@ -77,7 +79,6 @@ class Contract(Base):
     offer_uuid = Column(String(36),
                         ForeignKey('offers.uuid'),
                         nullable=False)
-
     offer = orm.relationship(
         Offer,
         backref=orm.backref('offers'),
