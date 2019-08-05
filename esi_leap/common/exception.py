@@ -31,7 +31,6 @@ class ESILeapException(Exception):
             try:
                 message = self.msg_fmt % kwargs
             except Exception as e:
-                print e
                 message = self.msg_fmt
 
         self.message = message
