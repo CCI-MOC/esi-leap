@@ -29,7 +29,7 @@ def get_test_offer():
         'resource_uuid': '1718',
         'start_date': datetime.datetime(2016, 7, 16, 19, 20, 30),
         'end_date': datetime.datetime(2016, 8, 16, 19, 20, 30),
-        'status': statuses.OPEN,
+        'status': statuses.AVAILABLE,
         'properties': {'floor_price': 3},
         'created_at': None,
         'updated_at': None

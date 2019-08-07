@@ -100,7 +100,7 @@ class ManagerService(service.Service):
     def _expire_offers(self):
         LOG.info("Checking for expiring offers")
         offers = offer.Offer.get_all_by_status(
-            self._context, statuses.OPEN)
+            self._context, statuses.AVAILABLE)
         for o in offers:
             if o.end_date and \
                o.end_date <= timeutils.utcnow():
