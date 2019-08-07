@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
+import datetime
 from esi_leap.common import statuses
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
@@ -18,7 +18,6 @@ import esi_leap.objects.contract
 from esi_leap.objects import fields
 from esi_leap.objects import flocx_market_client
 from esi_leap.resource_objects import resource_object_factory as ro_factory
-import datetime
 from keystoneauth1 import adapter
 from keystoneauth1 import loading as ks_loading
 from oslo_config import cfg
@@ -122,9 +121,8 @@ class Offer(base.ESILEAPObject):
         offer_dict['end_time'] = offer_dict.pop('end_date').isoformat()
         offer_dict['cost'] = offer_dict['properties'].get('floor_price', 0)
         offer_dict['server_id'] = offer_dict.pop('resource_uuid')
-        offer_dict['provider_id'] = offer_dict.pop('uuid')
-        offer_dict['creator_id'] = offer_dict.pop('project_id')
-
+        offer_dict['provider_offer_id'] = offer_dict.pop('uuid')
+        offer_dict['project_id'] = offer_dict.pop('project_id')
         # remove unnecessary feilds
         offer_dict.pop('created_at')
         offer_dict.pop('updated_at')

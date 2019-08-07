@@ -253,7 +253,6 @@ def contract_get_all_by_status(context, status):
 def contract_create(context, values):
     contract_ref = models.Contract()
     values['uuid'] = uuidutils.generate_uuid()
-    values['project_id'] = context.project_id
     contract_ref.update(values)
     contract_ref.save(get_session())
     return contract_ref
