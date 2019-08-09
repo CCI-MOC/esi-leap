@@ -10,7 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-OPEN = 'open'
+AVAILABLE = 'available'
 CLAIMED = 'claimed'
-FULFILLED = 'fulfilled'
 EXPIRED = 'expired'
+FULFILLED = 'fulfilled'
+OPEN = 'open'

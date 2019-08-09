@@ -53,7 +53,7 @@ class Offer(Base):
     resource_uuid = Column(String(36), nullable=False)
     start_date = Column(DateTime)
     end_date = Column(DateTime)
-    status = Column(String(15), nullable=False, default=statuses.OPEN)
+    status = Column(String(15), nullable=False, default=statuses.AVAILABLE)
     properties = Column(db_types.JsonEncodedDict, nullable=True)
 
 
