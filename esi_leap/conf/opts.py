@@ -18,7 +18,6 @@ _opts = [
     ('dummy_node', esi_leap.conf.dummy_node.opts),
     ('ironic', esi_leap.conf.ironic.list_opts()),
     ('pecan', esi_leap.conf.pecan.opts),
-    ('flocx_market', esi_leap.conf.flocx_market.list_opts()),
 ]
 
 
