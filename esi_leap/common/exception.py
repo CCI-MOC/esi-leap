@@ -30,7 +30,7 @@ class ESILeapException(Exception):
         if not message:
             try:
                 message = self.msg_fmt % kwargs
-            except Exception as e:
+            except Exception:
                 message = self.msg_fmt
 
         self.message = message

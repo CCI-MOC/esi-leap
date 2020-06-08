@@ -12,7 +12,6 @@
 import datetime
 from esi_leap.objects import offer
 from esi_leap.tests.api import base as test_api_base
-import mock
 
 
 def create_test_offer(context):
@@ -36,10 +35,7 @@ class TestListOffers(test_api_base.APITestCase):
         self.assertEqual([], data['offers'])
 
     def test_one(self):
-        with mock.patch.object(
-                offer.Offer, 'send_to_flocx_market', autospec=True
-        ) as mock_send:
-            mock_send.return_value = 201
-            o = create_test_offer(self.context)
-            data = self.get_json('/offers')
-            self.assertEqual(o.uuid, data['offers'][0]["uuid"])
+
+        o = create_test_offer(self.context)
+        data = self.get_json('/offers')
+        self.assertEqual(o.uuid, data['offers'][0]["uuid"])

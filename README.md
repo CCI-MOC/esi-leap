@@ -40,17 +40,6 @@ transport_url=<transport URL for messaging>
 [database]
 connection=<db connection string>
 
-[flocx_market]
-auth_plugin=password
-auth_url=<public Keystone endpoint>
-username=flocx-market
-password=<password>
-project_name=service
-project_domain_name=Default
-user_domain_name=Default
-timeout=300
-endpoint_override=<flocx-market API endpoint>
-
 [keystone_authtoken]
 www_authenticate_uri=<public Keystone endpoint>
 auth_type=password

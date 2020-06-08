@@ -13,7 +13,6 @@
 
 from esi_leap.conf import api
 from esi_leap.conf import dummy_node
-from esi_leap.conf import flocx_market
 from esi_leap.conf import ironic
 from esi_leap.conf import netconf
 from esi_leap.conf import pecan
@@ -28,4 +27,3 @@ dummy_node.register_opts(CONF)
 ironic.register_opts(CONF)
 netconf.register_opts(CONF)
 pecan.register_opts(CONF)
-flocx_market.register_opts(CONF)

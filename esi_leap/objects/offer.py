@@ -10,16 +10,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import datetime
 from esi_leap.common import statuses
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 import esi_leap.objects.contract
 from esi_leap.objects import fields
-from esi_leap.objects import flocx_market_client
 from esi_leap.resource_objects import resource_object_factory as ro_factory
-from keystoneauth1 import adapter
-from keystoneauth1 import loading as ks_loading
+
 from oslo_config import cfg
 from oslo_versionedobjects import base as versioned_objects_base
 
@@ -64,27 +61,10 @@ class Offer(base.ESILEAPObject):
             context, status)
         return cls._from_db_object_list(context, db_offers)
 
-    def send_to_flocx_market(self):
-        auth_plugin = ks_loading.load_auth_from_conf_options(
-            CONF, 'flocx_market')
-        sess = ks_loading.load_session_from_conf_options(CONF, 'flocx_market',
-                                                         auth=auth_plugin)
-        marketplace_offer_dict = self.to_marketplace_dict()
-
-        adpt = adapter.Adapter(
-            session=sess,
-            service_type='marketplace',
-            interface='public')
-        marketplace_client = flocx_market_client.FlocxMarketClient(adpt)
-        res_status_code = marketplace_client.send_offer(marketplace_offer_dict)
-
-        return res_status_code
-
     def create(self, context=None):
         updates = self.obj_get_changes()
         db_offer = self.dbapi.offer_create(context, updates)
-        o = self._from_db_object(context, self, db_offer)
-        return o.send_to_flocx_market()
+        self._from_db_object(context, self, db_offer)
 
     def destroy(self, context=None):
         self.dbapi.offer_destroy(context, self.uuid)
@@ -111,24 +91,3 @@ class Offer(base.ESILEAPObject):
         # expire offer
         self.status = statuses.EXPIRED
         self.save(context)
-
-    def to_marketplace_dict(self):
-        # change fields name
-        offer_dict = self.to_dict()
-        resource = self.resource_object()
-        offer_dict['server_config'] = resource.get_node_config()
-        offer_dict['start_time'] = offer_dict.pop('start_date').isoformat()
-        offer_dict['end_time'] = offer_dict.pop('end_date').isoformat()
-        offer_dict['cost'] = offer_dict['properties'].get('floor_price', 0)
-        offer_dict['server_id'] = offer_dict.pop('resource_uuid')
-        offer_dict['provider_offer_id'] = offer_dict.pop('uuid')
-        offer_dict['project_id'] = offer_dict.pop('project_id')
-        # remove unnecessary feilds
-        offer_dict.pop('created_at')
-        offer_dict.pop('updated_at')
-        offer_dict.pop('id')
-        offer_dict.pop('resource_type')
-        # fake fields
-        offer_dict['marketplace_date_created'] = datetime.datetime.utcnow()
-
-        return offer_dict
