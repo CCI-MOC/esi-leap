@@ -36,7 +36,7 @@ Base = declarative_base(cls=ESILEAPBase)
 
 
 class Offer(Base):
-    """Represents a resource that is offered to the FLOCX marketplace."""
+    """Represents a resource that is offered."""
 
     __tablename__ = 'offers'
     __table_args__ = (
@@ -58,7 +58,7 @@ class Offer(Base):
 
 
 class Contract(Base):
-    """Represents an accepted contract from the FLOCX marketplace."""
+    """Represents an accepted contract."""
 
     __tablename__ = 'contracts'
     __table_args__ = (
@@ -70,8 +70,6 @@ class Contract(Base):
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     uuid = Column(String(36), nullable=False, unique=True)
     project_id = Column(String(255), nullable=False)
-    marketplace_offer_contract_relationship_id = Column(String(36),
-                                                        nullable=False)
     start_date = Column(DateTime)
     end_date = Column(DateTime)
     status = Column(String(15), nullable=False, default=statuses.OPEN)
