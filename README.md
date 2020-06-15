@@ -72,6 +72,13 @@ password = <ironic password>
 dummy_node_dir=/tmp/nodes
 ```
 
+### Create the Openstack Service
+
+```
+    $ openstack service create --name esi-leap lease
+    $ openstack endpoint create esi-leap --region RegionOne public http://localhost:7777
+```
+
 
 ### Run the Services
 

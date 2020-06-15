@@ -34,7 +34,6 @@ class Contract(base.ESILEAPObject):
         'status': fields.StringField(),
         'properties': fields.FlexibleDictField(nullable=True),
         'offer_uuid': fields.UUIDField(),
-        'marketplace_offer_contract_relationship_id': fields.UUIDField()
     }
 
     @classmethod
