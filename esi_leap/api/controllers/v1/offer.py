@@ -25,11 +25,10 @@ from esi_leap.objects import offer
 
 class Offer(base.ESILEAPBase):
 
-    id = wsme.wsattr(int)
-    uuid = wsme.wsattr(wtypes.text)
-    project_id = wsme.wsattr(wtypes.text)
-    resource_type = wsme.wsattr(wtypes.text)
-    resource_uuid = wsme.wsattr(wtypes.text)
+    uuid = wsme.wsattr(wtypes.text, readonly=True)
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
+    resource_type = wsme.wsattr(wtypes.text, mandatory=True)
+    resource_uuid = wsme.wsattr(wtypes.text, mandatory=True)
     start_date = wsme.wsattr(datetime.datetime)
     end_date = wsme.wsattr(datetime.datetime)
     status = wsme.wsattr(wtypes.text)

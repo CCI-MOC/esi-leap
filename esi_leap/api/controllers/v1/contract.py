@@ -25,14 +25,13 @@ from esi_leap.objects import contract
 
 class Contract(base.ESILEAPBase):
 
-    id = wsme.wsattr(int)
-    uuid = wsme.wsattr(wtypes.text)
-    project_id = wsme.wsattr(wtypes.text)
+    uuid = wsme.wsattr(wtypes.text, readonly=True)
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
     start_date = wsme.wsattr(datetime.datetime)
     end_date = wsme.wsattr(datetime.datetime)
     status = wsme.wsattr(wtypes.text)
     properties = {wtypes.text: types.jsontype}
-    offer_uuid = wsme.wsattr(wtypes.text)
+    offer_uuid = wsme.wsattr(wtypes.text, mandatory=True)
 
     def __init__(self, **kwargs):
         self.fields = contract.Contract.fields
