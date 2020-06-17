@@ -12,6 +12,7 @@
 import datetime
 from esi_leap.objects import offer
 from esi_leap.tests.api import base as test_api_base
+import mock
 
 
 def create_test_offer(context):
@@ -39,3 +40,16 @@ class TestListOffers(test_api_base.APITestCase):
         o = create_test_offer(self.context)
         data = self.get_json('/offers')
         self.assertEqual(o.uuid, data['offers'][0]["uuid"])
+    
+    def test_post(self):
+        
+        o = create_test_offer(self.context)
+        self.assertEqual(self.post(o), o.to_dict())
+
+    def test_delete(self):
+        o = create_test_offer(self.context)
+        with mock.patch.object(self.db_api, 'offer_destroy',
+                               autospec=True) as mock_offer_destroy:
+
+            mock_offer_destroy.assert_called_once_with(
+                self.context, o.uuid)

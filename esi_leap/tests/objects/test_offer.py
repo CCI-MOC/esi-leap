@@ -15,6 +15,7 @@ import mock
 
 from esi_leap.common import statuses
 from esi_leap.objects import offer
+from esi_leap.resource_objects import dummy_node
 from esi_leap.tests import base
 
 
@@ -145,3 +146,12 @@ class TestOfferObject(base.DBTestCase):
                 self.context, o.uuid, updated_values)
             self.assertEqual(self.context, o._context)
             self.assertEqual(updated_at, o.updated_at)
+
+    def test_resource_object(self):
+        o = offer.Offer(self.context, **self.fake_offer)
+        d = dummy_node.DummyNode('1718')
+        with mock.patch.object(self.db_api, 'offer_resource_object',
+                               autospec=True) as mock_offer_resource_object:
+            mock_offer_resource_object.assert_called_once_with(
+                self.context, self.uuid)
+            self.assertEqual(o.resource_object, d)
