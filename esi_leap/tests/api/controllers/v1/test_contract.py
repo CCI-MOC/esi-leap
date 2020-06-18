@@ -9,46 +9,46 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 import datetime
-from esi_leap.objects import offer
+from esi_leap.objects import contract
 from esi_leap.tests.api import base as test_api_base
 
 
-def create_test_offer(context):
-    o = offer.Offer(
-        resource_type='test_node',
-        resource_uuid='1234567890',
+def create_test_contract(context):
+    c = contract.Contract(
         start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
-        end_date=datetime.datetime(2016, 8, 16, 19, 20, 30)
+        end_date=datetime.datetime(2016, 8, 16, 19, 20, 30),
+        offer_uuid='1234567890'
     )
-    o.create(context)
-    return o
+    c.create(context)
+    return c
 
 
-class TestListOffers(test_api_base.APITestCase):
+class TestContractsController(test_api_base.APITestCase):
 
     def setUp(self):
-        super(TestListOffers, self).setUp()
+        super(TestContractsController, self).setUp()
 
     def test_empty(self):
-        data = self.get_json('/offers')
-        self.assertEqual([], data['offers'])
+        data = self.get_json('/contracts')
+        self.assertEqual([], data['contracts'])
 
     def test_one(self):
 
-        o = create_test_offer(self.context)
-        data = self.get_json('/offers')
-        self.assertEqual(o.uuid, data['offers'][0]["uuid"])
+        c = create_test_contract(self.context)
+        data = self.get_json('/contracts')
+        self.assertEqual(c.uuid, data['contracts'][0]["uuid"])
 
     def test_post(self):
-        
-        o = create_test_offer(self.context)
-        self.assertEqual(self.post(o), o.to_dict())
+
+        c = create_test_contract(self.context)
+        self.assertEqual(self.post(c), c.to_dict())
 
     def test_delete(self):
-        o = create_test_offer(self.context)
+        c = create_test_contract(self.context)
         with mock.patch.object(self.db_api, 'offer_destroy',
-                               autospec=True) as mock_offer_destroy:
+                               autospec=True) as mock_contract_destroy:
 
-            mock_offer_destroy.assert_called_once_with(
-                self.context, o.uuid)
+            mock_contract_destroy.assert_called_once_with(
+                self.context, c.uuid)
