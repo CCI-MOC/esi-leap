@@ -42,26 +42,8 @@ class Contract(base.ESILEAPObject):
         return cls._from_db_object(context, cls(), db_contract)
 
     @classmethod
-    def get_all(cls, context):
-        db_contracts = cls.dbapi.contract_get_all(context)
-        return cls._from_db_object_list(context, db_contracts)
-
-    @classmethod
-    def get_all_by_project_id(cls, context, project_id):
-        db_contracts = cls.dbapi.contract_get_all_by_project_id(
-            context, project_id)
-        return cls._from_db_object_list(context, db_contracts)
-
-    @classmethod
-    def get_all_by_offer_uuid(cls, context, offer_uuid):
-        db_contracts = cls.dbapi.contract_get_all_by_offer_uuid(
-            context, offer_uuid)
-        return cls._from_db_object_list(context, db_contracts)
-
-    @classmethod
-    def get_all_by_status(cls, context, status):
-        db_contracts = cls.dbapi.contract_get_all_by_status(
-            context, status)
+    def get_all(cls, context, filters):
+        db_contracts = cls.dbapi.contract_get_all(context, filters)
         return cls._from_db_object_list(context, db_contracts)
 
     def create(self, context=None):
