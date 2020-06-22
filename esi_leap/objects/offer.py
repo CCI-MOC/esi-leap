@@ -45,20 +45,8 @@ class Offer(base.ESILEAPObject):
         return cls._from_db_object(context, cls(), db_offer)
 
     @classmethod
-    def get_all(cls, context):
-        db_offers = cls.dbapi.offer_get_all(context)
-        return cls._from_db_object_list(context, db_offers)
-
-    @classmethod
-    def get_all_by_project_id(cls, context, project_id):
-        db_offers = cls.dbapi.offer_get_all_by_project_id(
-            context, project_id)
-        return cls._from_db_object_list(context, db_offers)
-
-    @classmethod
-    def get_all_by_status(cls, context, status):
-        db_offers = cls.dbapi.offer_get_all_by_status(
-            context, status)
+    def get_all(cls, context, filters):
+        db_offers = cls.dbapi.offer_get_all(context, filters)
         return cls._from_db_object_list(context, db_offers)
 
     def create(self, context=None):

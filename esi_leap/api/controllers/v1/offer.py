@@ -58,14 +58,31 @@ class OffersController(rest.RestController):
         o = offer.Offer.get(request, offer_uuid)
         return Offer(**o.to_dict())
 
-    @wsme_pecan.wsexpose(OfferCollection)
-    def get_all(self):
+    @wsme_pecan.wsexpose(OfferCollection, wtypes.text, wtypes.text,
+                         wtypes.text, datetime.datetime, datetime.datetime,
+                         wtypes.text)
+    def get_all(self, project_id=None, resource_type=None,
+                resource_uuid=None, start_date=None, end_date=None,
+                status=None):
+
         request = pecan.request.context
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:offer:get', cdict, cdict)
 
+        possible_filters = {
+            'project_id': project_id,
+            'resource_type': resource_type,
+            'resource_uuid': resource_uuid,
+            'status': status,
+        }
+
+        filters = {}
+        for k, v in possible_filters.items():
+            if v is not None:
+                filters[k] = v
+
         offer_collection = OfferCollection()
-        offers = offer.Offer.get_all(request)
+        offers = offer.Offer.get_all(request, filters)
         offer_collection.offers = [
             Offer(**o.to_dict()) for o in offers]
         return offer_collection

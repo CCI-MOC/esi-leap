@@ -128,29 +128,10 @@ def offer_get(context, offer_uuid):
     return result
 
 
-def offer_get_all(context):
-    if not context.is_admin:
-        return offer_get_all_by_project_id(context, context.project_id)
+def offer_get_all(context, filters):
+
     query = model_query(context, models.Offer, get_session())
-    return query.all()
-
-
-def offer_get_all_by_project_id(context, project_id):
-    if not context.is_admin:
-        if context.project_id != project_id:
-            raise exception.ProjectNoPermission(project_id=project_id)
-
-    query = (model_query(context, models.Offer,
-                         get_session()).filter_by(project_id=project_id))
-    return query.all()
-
-
-def offer_get_all_by_status(context, status):
-    query = (model_query(context, models.Offer,
-                         get_session()).filter_by(status=status))
-    if not context.is_admin:
-        query.filter_by(project_id=context.project_id)
-    return query.all()
+    return query.filter_by(**filters)
 
 
 def offer_create(context, values):
@@ -222,32 +203,9 @@ def contract_get(context, contract_uuid):
     return result
 
 
-def contract_get_all(context):
+def contract_get_all(context, filters):
     query = model_query(context, models.Contract, get_session())
-    return query.all()
-
-
-def contract_get_all_by_project_id(context, project_id):
-    query = (model_query(
-        context,
-        models.Contract,
-        get_session()).filter(
-            models.Contract.offer.has(project_id=project_id)))
-    return query.all()
-
-
-def contract_get_all_by_offer_uuid(context, offer_uuid):
-    query = (model_query(context, models.Contract,
-                         get_session()).filter_by(offer_uuid=offer_uuid))
-    return query.all()
-
-
-def contract_get_all_by_status(context, status):
-    query = (model_query(context, models.Contract,
-                         get_session()).filter_by(status=status))
-    if not context.is_admin:
-        query.filter_by(project_id=context.project_id)
-    return query.all()
+    return query.filter_by(**filters)
 
 
 def contract_create(context, values):

@@ -60,64 +60,13 @@ class TestContractObject(base.DBTestCase):
                 self.fake_contract]
 
             contracts = contract.Contract.get_all(
-                self.context)
+                self.context, {})
 
             mock_contract_get_all.assert_called_once_with(
-                self.context)
+                self.context, {})
             self.assertEqual(len(contracts), 1)
             self.assertIsInstance(
                 contracts[0], contract.Contract)
-            self.assertEqual(self.context, contracts[0]._context)
-
-    def test_get_all_by_project_id(self):
-        project_id = self.fake_contract['project_id']
-        with mock.patch.object(
-                self.db_api,
-                'contract_get_all_by_project_id',
-                autospec=True) as mock_contract_get_all_by_project_id:
-            mock_contract_get_all_by_project_id.return_value = [
-                self.fake_contract]
-            contracts = contract.Contract.get_all_by_project_id(
-                self.context, project_id)
-
-            mock_contract_get_all_by_project_id.assert_called_once_with(
-                self.context, project_id)
-            self.assertEqual(len(contracts), 1)
-            self.assertIsInstance(contracts[0], contract.Contract)
-            self.assertEqual(self.context, contracts[0]._context)
-
-    def test_get_all_by_offer_uuid(self):
-        offer_uuid = self.fake_contract['offer_uuid']
-        with mock.patch.object(
-                self.db_api,
-                'contract_get_all_by_offer_uuid',
-                autospec=True) as mock_contract_get_all_by_offer_uuid:
-            mock_contract_get_all_by_offer_uuid.return_value = [
-                self.fake_contract]
-            contracts = contract.Contract.get_all_by_offer_uuid(
-                self.context, offer_uuid)
-
-            mock_contract_get_all_by_offer_uuid.assert_called_once_with(
-                self.context, offer_uuid)
-            self.assertEqual(len(contracts), 1)
-            self.assertIsInstance(contracts[0], contract.Contract)
-            self.assertEqual(self.context, contracts[0]._context)
-
-    def test_get_all_by_status(self):
-        status = self.fake_contract['status']
-        with mock.patch.object(
-                self.db_api,
-                'contract_get_all_by_status',
-                autospec=True) as mock_contract_get_all_by_status:
-            mock_contract_get_all_by_status.return_value = [
-                self.fake_contract]
-            contracts = contract.Contract.get_all_by_status(
-                self.context, status)
-
-            mock_contract_get_all_by_status.assert_called_once_with(
-                self.context, status)
-            self.assertEqual(len(contracts), 1)
-            self.assertIsInstance(contracts[0], contract.Contract)
             self.assertEqual(self.context, contracts[0]._context)
 
     def test_create(self):

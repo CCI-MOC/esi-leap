@@ -57,14 +57,28 @@ class ContractsController(rest.RestController):
         c = contract.Contract.get(request, contract_uuid)
         return Contract(**c.to_dict())
 
-    @wsme_pecan.wsexpose(ContractCollection)
-    def get_all(self):
+    @wsme_pecan.wsexpose(ContractCollection, wtypes.text,
+                         datetime.datetime, datetime.datetime, wtypes.text,
+                         wtypes.text)
+    def get_all(self, project_id=None, start_date=None, end_date=None,
+                status=None, offer_uuid=None):
         request = pecan.request.context
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:contract:get', cdict, cdict)
 
+        possible_filters = {
+            'project_id': project_id,
+            'status': status,
+            'offer_uuid': offer_uuid,
+        }
+
+        filters = {}
+        for k, v in possible_filters.items():
+            if v is not None:
+                filters[k] = v
+
         contract_collection = ContractCollection()
-        contracts = contract.Contract.get_all(request)
+        contracts = contract.Contract.get_all(request, filters)
         contract_collection.contracts = [
             Contract(**c.to_dict()) for c in contracts]
         return contract_collection
