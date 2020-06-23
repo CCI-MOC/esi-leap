@@ -66,8 +66,8 @@ class ManagerService(service.Service):
         contracts = contract.Contract.get_all_by_status(
             self._context, statuses.OPEN)
         for c in contracts:
-            if c.start_date and \
-               c.start_date <= timeutils.utcnow():
+            if c.start_time and \
+               c.start_time <= timeutils.utcnow():
                 LOG.info("Fulfilling contract %s", c.uuid)
                 c.fulfill(self._context)
 
@@ -76,8 +76,8 @@ class ManagerService(service.Service):
         contracts = contract.Contract.get_all_by_status(
             self._context, statuses.FULFILLED)
         for c in contracts:
-            if c.end_date and \
-               c.end_date <= timeutils.utcnow():
+            if c.end_time and \
+               c.end_time <= timeutils.utcnow():
                 LOG.info("Expiring contract %s", c.uuid)
                 c.expire(self._context)
 
@@ -86,8 +86,8 @@ class ManagerService(service.Service):
         offers = offer.Offer.get_all_by_status(
             self._context, statuses.AVAILABLE)
         for o in offers:
-            if o.end_date and \
-               o.end_date <= timeutils.utcnow():
+            if o.end_time and \
+               o.end_time <= timeutils.utcnow():
                 LOG.info("Expiring offer %s for %s %s",
                          o.uuid, o.resource_type, o.resource_uuid)
                 o.expire(self._context)

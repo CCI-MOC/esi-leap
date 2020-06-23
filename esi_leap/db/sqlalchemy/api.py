@@ -131,7 +131,18 @@ def offer_get(context, offer_uuid):
 def offer_get_all(context, filters):
 
     query = model_query(context, models.Offer, get_session())
-    return query.filter_by(**filters)
+
+    start = filters.pop('start_time', None)
+    end = filters.pop('end_time', None)
+
+    query = query.filter_by(**filters)
+
+    if start and end:
+
+        query = query.filter((start >= models.Offer.start_time) &
+                             (end <= models.Offer.end_time))
+
+    return query
 
 
 def offer_create(context, values):
@@ -146,6 +157,14 @@ def offer_create(context, values):
     offer_ref = models.Offer()
     values['uuid'] = uuidutils.generate_uuid()
     values['project_id'] = context.project_id
+
+    if 'start_time' in values and 'end_time' in values and \
+       values['start_time'] is not None and values['end_time'] is not None and \
+       values['start_time'] >= values['end_time']:
+        raise exception.InvalidTimeRange(resource="an offer",
+                                         start_time=str(values['start_time']),
+                                         end_time=str(values['end_time']))
+
     offer_ref.update(values)
     offer_ref.save(get_session())
     return offer_ref
@@ -166,6 +185,18 @@ def offer_update(context, offer_uuid, values):
 
     values.pop('uuid', None)
     values.pop('project_id', None)
+
+    start = values.pop('start_time', None)
+    end = values.pop('end_time', None)
+    if start is None:
+        start = offer_ref.start_time
+    if end is None:
+        end = offer_ref.end_time
+    if start >= end:
+        raise exception.InvalidTimeRange(resource="an offer",
+                                         start_time=str(values['start_time']),
+                                         end_time=str(values['end_time']))
+
     offer_ref.update(values)
     offer_ref.save(get_session())
     return offer_ref
@@ -205,13 +236,32 @@ def contract_get(context, contract_uuid):
 
 def contract_get_all(context, filters):
     query = model_query(context, models.Contract, get_session())
-    return query.filter_by(**filters)
+
+    start = filters.pop('start_time', None)
+    end = filters.pop('end_time', None)
+
+    query = query.filter_by(**filters)
+
+    if start and end:
+
+        query = query.filter((start >= models.Contract.start_time) &
+                             (end <= models.Contract.end_time))
+
+    return query
 
 
 def contract_create(context, values):
     contract_ref = models.Contract()
     values['uuid'] = uuidutils.generate_uuid()
     values['project_id'] = context.project_id
+
+    if 'start_time' in values and 'end_time' in values and \
+       values['start_time'] is not None and values['end_time'] is not None and \
+       values['start_time'] >= values['end_time']:
+        raise exception.InvalidTimeRange(resource="a contract",
+                                         start_time=str(values['start_time']),
+                                         end_time=str(values['end_time']))
+
     contract_ref.update(values)
     contract_ref.save(get_session())
     return contract_ref
@@ -222,8 +272,21 @@ def contract_update(context, contract_uuid, values):
     if not context.is_admin:
         if context.project_id != contract_ref.project_id:
             raise exception.ContractNoPermission(contract_uuid=contract_uuid)
+
     values.pop('uuid', None)
     values.pop('project_id', None)
+
+    start = values.pop('start_time', None)
+    end = values.pop('end_time', None)
+    if start is None:
+        start = contract_ref.start_time
+    if end is None:
+        end = contract_ref.end_time
+    if start >= end:
+        raise exception.InvalidTimeRange(resource="a contract",
+                                         start_time=str(values['start_time']),
+                                         end_time=str(values['end_time']))
+
     contract_ref.update(values)
     contract_ref.save(get_session())
     return contract_ref

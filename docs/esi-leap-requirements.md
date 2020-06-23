@@ -14,8 +14,8 @@ Ironic owners can bring up their nodes to ESI Leap with an offer. An offer consi
         'project_id': '01d4e6a72f5c408813e02f664cc8c83e',
         'resource_type': 'ironic_node',
         'resource_uuid': '1718',
-        'start_date': datetime.datetime(2016, 7, 16, 19, 20, 30),
-        'end_date': datetime.datetime(2016, 8, 16, 19, 20, 30),
+        'start_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
+        'end_time': datetime.datetime(2016, 8, 16, 19, 20, 30),
         'status': statuses.AVAILABLE,
         'properties': {},
         'created_at': None,
@@ -38,8 +38,8 @@ Users can choose available nodes offered up and make contracts to lease nodes. A
         'id': 27,
         'uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
         'project_id': '01d4e6a72f5c408813e02f664cc8c83e',
-        'start_date': datetime.datetime(2016, 7, 16, 19, 20, 30),
-        'end_date': datetime.datetime(2016, 7, 16, 19, 20, 30),
+        'start_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
+        'end_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
         'status': statuses.OPEN,
         'properties': {},
         'offer_uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
@@ -58,8 +58,8 @@ The contract data model is designed to support the following basic APIs:
 
 ### Manager Service
 An ESI Leap manager has periodic jobs to manage offers and contracts. 
-* expire offers: out-of-date offers, i.e, the current timestamp > offer's end_date, will be updated with an 'EXPIRED' status.
-* fulfill contracts: if a contract's start_date <= the current timestamp and is not expired, the manager service will fulfill the resources in the contracts and update the status of the contracts to 'FULFILLED'. 
+* expire offers: out-of-date offers, i.e, the current timestamp > offer's end_time, will be updated with an 'EXPIRED' status.
+* fulfill contracts: if a contract's start_time <= the current timestamp and is not expired, the manager service will fulfill the resources in the contracts and update the status of the contracts to 'FULFILLED'. 
 * expire contracts: same as 'expire offers', ESI Leap will expire contracts based on timestamp.
 * update offers: after the manager fulfills and expires contracts, it will update the relevant offers' status. The offers in a fulfilled contract should be unavailable to others. Likewise, when a contract expires, offers in the contract should be updated and be available again. 
 
@@ -73,8 +73,8 @@ ESI Leap admin queries this API to learn about the usage of nodes given a period
         'offer_uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
         'resource_uuid': '1718',
         'resource_type': 'ironic_node',
-        'start_date': datetime.datetime(2016, 7, 16, 19, 20, 30),
-        'end_date': datetime.datetime(2016, 7, 16, 19, 20, 30),
+        'start_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
+        'end_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
         'status': statuses.OPEN,
         'created_at': None,
         'updated_at': None

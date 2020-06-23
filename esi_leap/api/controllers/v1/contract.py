@@ -19,6 +19,7 @@ import wsmeext.pecan as wsme_pecan
 
 from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
+from esi_leap.common import exception
 from esi_leap.common import policy
 from esi_leap.objects import contract
 
@@ -27,8 +28,8 @@ class Contract(base.ESILEAPBase):
 
     uuid = wsme.wsattr(wtypes.text, readonly=True)
     project_id = wsme.wsattr(wtypes.text, readonly=True)
-    start_date = wsme.wsattr(datetime.datetime)
-    end_date = wsme.wsattr(datetime.datetime)
+    start_time = wsme.wsattr(datetime.datetime)
+    end_time = wsme.wsattr(datetime.datetime)
     status = wsme.wsattr(wtypes.text)
     properties = {wtypes.text: types.jsontype}
     offer_uuid = wsme.wsattr(wtypes.text, mandatory=True)
@@ -60,11 +61,17 @@ class ContractsController(rest.RestController):
     @wsme_pecan.wsexpose(ContractCollection, wtypes.text,
                          datetime.datetime, datetime.datetime, wtypes.text,
                          wtypes.text)
-    def get_all(self, project_id=None, start_date=None, end_date=None,
+    def get_all(self, project_id=None, start_time=None, end_time=None,
                 status=None, offer_uuid=None):
         request = pecan.request.context
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:contract:get', cdict, cdict)
+
+        if (start_time and end_time is None) or\
+           (end_time and start_time is None):
+            raise exception.InvalidTimeCommand(resource="a contract",
+                                               start_time=str(start_time),
+                                               end_time=str(end_time))
 
         possible_filters = {
             'project_id': project_id,
