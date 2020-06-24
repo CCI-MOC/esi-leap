@@ -10,9 +10,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 import datetime
-
 from esi_leap.objects import offer
 from esi_leap.tests.api import base as test_api_base
+from http import client as http_client
 
 
 def create_test_offer(context):
@@ -24,6 +24,10 @@ def create_test_offer(context):
     )
     o.create(context)
     return o
+
+
+def create_test_offer_data():
+    return {1: 'test', 2: 'offer'}
 
 
 class TestListOffers(test_api_base.APITestCase):
@@ -46,7 +50,12 @@ class TestListOffers(test_api_base.APITestCase):
         start = datetime.datetime(2016, 7, 16, 19, 20, 30)
         response = self.get_json('/offers?start_time=' + str(start),
                                  expect_errors=True)
-
         self.assertEqual(500, response.status_int)
         self.assertEqual('application/json', response.content_type)
         self.assertIn(str(start), response.json_body['faultstring'])
+
+    def test_post(self):
+
+        data = create_test_offer_data()
+        request = self.post_json('/offers', data)
+        self.assertEqual(http_client.CREATED, request.status_int)

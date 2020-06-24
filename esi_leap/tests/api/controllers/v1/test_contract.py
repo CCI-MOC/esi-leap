@@ -13,6 +13,7 @@
 import datetime
 from esi_leap.objects import contract
 from esi_leap.tests.api import base as test_api_base
+from http import client as http_client
 
 
 def create_test_contract(context):
@@ -23,6 +24,10 @@ def create_test_contract(context):
     )
     c.create(context)
     return c
+
+
+def create_test_contract_data():
+    return {1: 'test', 2: 'contract'}
 
 
 class TestContractsController(test_api_base.APITestCase):
@@ -39,3 +44,9 @@ class TestContractsController(test_api_base.APITestCase):
         c = create_test_contract(self.context)
         data = self.get_json('/contracts')
         self.assertEqual(c.uuid, data['contracts'][0]["uuid"])
+
+    def test_post(self):
+
+        data = create_test_contract_data()
+        request = self.post_json('/contracts', data)
+        self.assertEqual(http_client.CREATED, request.status_int)
