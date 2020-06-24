@@ -29,8 +29,8 @@ class Contract(base.ESILEAPObject):
         'id': fields.IntegerField(),
         'uuid': fields.UUIDField(),
         'project_id': fields.StringField(),
-        'start_date': fields.DateTimeField(nullable=True),
-        'end_date': fields.DateTimeField(nullable=True),
+        'start_time': fields.DateTimeField(nullable=True),
+        'end_time': fields.DateTimeField(nullable=True),
         'status': fields.StringField(),
         'properties': fields.FlexibleDictField(nullable=True),
         'offer_uuid': fields.UUIDField(),
@@ -42,26 +42,8 @@ class Contract(base.ESILEAPObject):
         return cls._from_db_object(context, cls(), db_contract)
 
     @classmethod
-    def get_all(cls, context):
-        db_contracts = cls.dbapi.contract_get_all(context)
-        return cls._from_db_object_list(context, db_contracts)
-
-    @classmethod
-    def get_all_by_project_id(cls, context, project_id):
-        db_contracts = cls.dbapi.contract_get_all_by_project_id(
-            context, project_id)
-        return cls._from_db_object_list(context, db_contracts)
-
-    @classmethod
-    def get_all_by_offer_uuid(cls, context, offer_uuid):
-        db_contracts = cls.dbapi.contract_get_all_by_offer_uuid(
-            context, offer_uuid)
-        return cls._from_db_object_list(context, db_contracts)
-
-    @classmethod
-    def get_all_by_status(cls, context, status):
-        db_contracts = cls.dbapi.contract_get_all_by_status(
-            context, status)
+    def get_all(cls, context, filters):
+        db_contracts = cls.dbapi.contract_get_all(context, filters)
         return cls._from_db_object_list(context, db_contracts)
 
     def create(self, context=None):

@@ -66,3 +66,13 @@ class ResourceNoPermission(ESILeapException):
 
 class ResourceTypeUnknown(ESILeapException):
     msg_fmt = _("%(resource_type)s resource type unknown.")
+
+
+class InvalidTimeRange(ESILeapException):
+    msg_fmt = _("Attempted to create %(resource)s resource with an invalid "
+                "Start Time %(start_time)s and End Time %(end_time)s.")
+
+
+class InvalidTimeCommand(ESILeapException):
+    msg_fmt = _("Attempted to get %(resource)s resource without providing "
+                "a Start Time and End Time. Got %(start_time)s, %(end_time)s")

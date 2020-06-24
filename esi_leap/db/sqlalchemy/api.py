@@ -128,29 +128,21 @@ def offer_get(context, offer_uuid):
     return result
 
 
-def offer_get_all(context):
-    if not context.is_admin:
-        return offer_get_all_by_project_id(context, context.project_id)
+def offer_get_all(context, filters):
+
     query = model_query(context, models.Offer, get_session())
-    return query.all()
 
+    start = filters.pop('start_time', None)
+    end = filters.pop('end_time', None)
 
-def offer_get_all_by_project_id(context, project_id):
-    if not context.is_admin:
-        if context.project_id != project_id:
-            raise exception.ProjectNoPermission(project_id=project_id)
+    query = query.filter_by(**filters)
 
-    query = (model_query(context, models.Offer,
-                         get_session()).filter_by(project_id=project_id))
-    return query.all()
+    if start and end:
 
+        query = query.filter((start >= models.Offer.start_time) &
+                             (end <= models.Offer.end_time))
 
-def offer_get_all_by_status(context, status):
-    query = (model_query(context, models.Offer,
-                         get_session()).filter_by(status=status))
-    if not context.is_admin:
-        query.filter_by(project_id=context.project_id)
-    return query.all()
+    return query
 
 
 def offer_create(context, values):
@@ -165,6 +157,14 @@ def offer_create(context, values):
     offer_ref = models.Offer()
     values['uuid'] = uuidutils.generate_uuid()
     values['project_id'] = context.project_id
+
+    if 'start_time' in values and 'end_time' in values and \
+       values['start_time'] is not None and values['end_time'] is not None and \
+       values['start_time'] >= values['end_time']:
+        raise exception.InvalidTimeRange(resource="an offer",
+                                         start_time=str(values['start_time']),
+                                         end_time=str(values['end_time']))
+
     offer_ref.update(values)
     offer_ref.save(get_session())
     return offer_ref
@@ -185,6 +185,18 @@ def offer_update(context, offer_uuid, values):
 
     values.pop('uuid', None)
     values.pop('project_id', None)
+
+    start = values.pop('start_time', None)
+    end = values.pop('end_time', None)
+    if start is None:
+        start = offer_ref.start_time
+    if end is None:
+        end = offer_ref.end_time
+    if start >= end:
+        raise exception.InvalidTimeRange(resource="an offer",
+                                         start_time=str(values['start_time']),
+                                         end_time=str(values['end_time']))
+
     offer_ref.update(values)
     offer_ref.save(get_session())
     return offer_ref
@@ -222,38 +234,34 @@ def contract_get(context, contract_uuid):
     return result
 
 
-def contract_get_all(context):
+def contract_get_all(context, filters):
     query = model_query(context, models.Contract, get_session())
-    return query.all()
 
+    start = filters.pop('start_time', None)
+    end = filters.pop('end_time', None)
 
-def contract_get_all_by_project_id(context, project_id):
-    query = (model_query(
-        context,
-        models.Contract,
-        get_session()).filter(
-            models.Contract.offer.has(project_id=project_id)))
-    return query.all()
+    query = query.filter_by(**filters)
 
+    if start and end:
 
-def contract_get_all_by_offer_uuid(context, offer_uuid):
-    query = (model_query(context, models.Contract,
-                         get_session()).filter_by(offer_uuid=offer_uuid))
-    return query.all()
+        query = query.filter((start >= models.Contract.start_time) &
+                             (end <= models.Contract.end_time))
 
-
-def contract_get_all_by_status(context, status):
-    query = (model_query(context, models.Contract,
-                         get_session()).filter_by(status=status))
-    if not context.is_admin:
-        query.filter_by(project_id=context.project_id)
-    return query.all()
+    return query
 
 
 def contract_create(context, values):
     contract_ref = models.Contract()
     values['uuid'] = uuidutils.generate_uuid()
     values['project_id'] = context.project_id
+
+    if 'start_time' in values and 'end_time' in values and \
+       values['start_time'] is not None and values['end_time'] is not None and \
+       values['start_time'] >= values['end_time']:
+        raise exception.InvalidTimeRange(resource="a contract",
+                                         start_time=str(values['start_time']),
+                                         end_time=str(values['end_time']))
+
     contract_ref.update(values)
     contract_ref.save(get_session())
     return contract_ref
@@ -264,8 +272,21 @@ def contract_update(context, contract_uuid, values):
     if not context.is_admin:
         if context.project_id != contract_ref.project_id:
             raise exception.ContractNoPermission(contract_uuid=contract_uuid)
+
     values.pop('uuid', None)
     values.pop('project_id', None)
+
+    start = values.pop('start_time', None)
+    end = values.pop('end_time', None)
+    if start is None:
+        start = contract_ref.start_time
+    if end is None:
+        end = contract_ref.end_time
+    if start >= end:
+        raise exception.InvalidTimeRange(resource="a contract",
+                                         start_time=str(values['start_time']),
+                                         end_time=str(values['end_time']))
+
     contract_ref.update(values)
     contract_ref.save(get_session())
     return contract_ref

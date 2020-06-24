@@ -51,8 +51,8 @@ class Offer(Base):
     project_id = Column(String(255), nullable=False)
     resource_type = Column(String(36), nullable=False)
     resource_uuid = Column(String(36), nullable=False)
-    start_date = Column(DateTime)
-    end_date = Column(DateTime)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
     status = Column(String(15), nullable=False, default=statuses.AVAILABLE)
     properties = Column(db_types.JsonEncodedDict, nullable=True)
 
@@ -70,8 +70,8 @@ class Contract(Base):
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     uuid = Column(String(36), nullable=False, unique=True)
     project_id = Column(String(255), nullable=False)
-    start_date = Column(DateTime)
-    end_date = Column(DateTime)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
     status = Column(String(15), nullable=False, default=statuses.OPEN)
     properties = Column(db_types.JsonEncodedDict, nullable=True)
     offer_uuid = Column(String(36),

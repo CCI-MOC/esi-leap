@@ -26,8 +26,8 @@ def get_test_offer():
         'project_id': '01d4e6a72f5c408813e02f664cc8c83e',
         'resource_type': 'dummy_node',
         'resource_uuid': '1718',
-        'start_date': datetime.datetime(2016, 7, 16, 19, 20, 30),
-        'end_date': datetime.datetime(2016, 8, 16, 19, 20, 30),
+        'start_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
+        'end_time': datetime.datetime(2016, 8, 16, 19, 20, 30),
         'status': statuses.AVAILABLE,
         'properties': {'floor_price': 3},
         'created_at': None,
@@ -62,47 +62,13 @@ class TestOfferObject(base.DBTestCase):
                 self.fake_offer]
 
             offers = offer.Offer.get_all(
-                self.context)
+                self.context, {})
 
             mock_offer_get_all.assert_called_once_with(
-                self.context)
+                self.context, {})
             self.assertEqual(len(offers), 1)
             self.assertIsInstance(
                 offers[0], offer.Offer)
-            self.assertEqual(self.context, offers[0]._context)
-
-    def test_get_all_by_project_id(self):
-        project_id = self.fake_offer['project_id']
-        with mock.patch.object(
-                self.db_api,
-                'offer_get_all_by_project_id',
-                autospec=True) as mock_offer_get_all_by_project_id:
-            mock_offer_get_all_by_project_id.return_value = [
-                self.fake_offer]
-            offers = offer.Offer.get_all_by_project_id(
-                self.context, project_id)
-
-            mock_offer_get_all_by_project_id.assert_called_once_with(
-                self.context, project_id)
-            self.assertEqual(len(offers), 1)
-            self.assertIsInstance(offers[0], offer.Offer)
-            self.assertEqual(self.context, offers[0]._context)
-
-    def test_get_all_by_status(self):
-        status = self.fake_offer['status']
-        with mock.patch.object(
-                self.db_api,
-                'offer_get_all_by_status',
-                autospec=True) as mock_offer_get_all_by_status:
-            mock_offer_get_all_by_status.return_value = [
-                self.fake_offer]
-            offers = offer.Offer.get_all_by_status(
-                self.context, status)
-
-            mock_offer_get_all_by_status.assert_called_once_with(
-                self.context, status)
-            self.assertEqual(len(offers), 1)
-            self.assertIsInstance(offers[0], offer.Offer)
             self.assertEqual(self.context, offers[0]._context)
 
     def test_create(self):
