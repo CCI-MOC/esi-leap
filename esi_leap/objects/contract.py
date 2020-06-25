@@ -43,7 +43,7 @@ class Contract(base.ESILEAPObject):
 
     @classmethod
     def get_all(cls, context, filters):
-        db_contracts = cls.dbapi.contract_get_all(context, filters)
+        db_contracts = cls.dbapi.contract_get_all(filters)
         return cls._from_db_object_list(context, db_contracts)
 
     def create(self, context=None):

@@ -19,6 +19,7 @@ import wsmeext.pecan as wsme_pecan
 
 from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
+from esi_leap.api.controllers.v1 import utils as api_utils
 from esi_leap.common import exception
 from esi_leap.common import policy
 from esi_leap.objects import contract
@@ -56,33 +57,23 @@ class ContractsController(rest.RestController):
         policy.authorize('esi_leap:contract:get', cdict, cdict)
 
         c = contract.Contract.get(request, contract_uuid)
+
         return Contract(**c.to_dict())
 
     @wsme_pecan.wsexpose(ContractCollection, wtypes.text,
                          datetime.datetime, datetime.datetime, wtypes.text,
-                         wtypes.text)
+                         wtypes.text, wtypes.text, wtypes.text)
     def get_all(self, project_id=None, start_time=None, end_time=None,
-                status=None, offer_uuid=None):
+                status=None, offer_uuid=None, view=None, owner=None):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        policy.authorize('esi_leap:contract:get', cdict, cdict)
 
-        if (start_time and end_time is None) or\
-           (end_time and start_time is None):
-            raise exception.InvalidTimeCommand(resource="a contract",
-                                               start_time=str(start_time),
-                                               end_time=str(end_time))
-
-        possible_filters = {
-            'project_id': project_id,
-            'status': status,
-            'offer_uuid': offer_uuid,
-        }
-
-        filters = {}
-        for k, v in possible_filters.items():
-            if v is not None:
-                filters[k] = v
+        filters = ContractsController.\
+            _contract_get_all_authorize_filters(
+                cdict, request.project_id,
+                project_id=project_id, start_time=start_time,
+                end_time=end_time, status=status,
+                offer_uuid=offer_uuid, view=view, owner=owner)
 
         contract_collection = ContractCollection()
         contracts = contract.Contract.get_all(request, filters)
@@ -108,3 +99,59 @@ class ContractsController(rest.RestController):
 
         c = contract.Contract.get(request, contract_uuid)
         c.destroy(pecan.request.context)
+
+    @staticmethod
+    def _contract_get_all_authorize_filters(cdict, r_project_id,
+                                            start_time=None, end_time=None,
+                                            status=None, offer_uuid=None,
+                                            project_id=None, view=None,
+                                            owner=None):
+
+        possible_filters = {
+            'status': status,
+            'offer_uuid': offer_uuid,
+            'start_time': start_time,
+            'end_time': end_time,
+        }
+
+        is_admin = api_utils.verify_admin(cdict)
+
+        if view == 'all':
+            policy.authorize('esi_leap:contract:list_all', cdict, cdict)
+            possible_filters['owner'] = owner
+            possible_filters['project_id'] = project_id
+        else:
+            policy.authorize('esi_leap:contract:list', cdict, cdict)
+
+            if owner:
+                if not is_admin:
+                    if r_project_id != owner:
+                        raise exception.ProjectNoPermission(
+                            project_id=project_id)
+
+                possible_filters['owner'] = owner
+                possible_filters['project_id'] = project_id
+            else:
+
+                if project_id is None:
+                    project_id = r_project_id
+                else:
+                    if not is_admin:
+                        if project_id != r_project_id:
+                            raise exception.ProjectNoPermission(
+                                project_id=project_id)
+
+                possible_filters['project_id'] = project_id
+
+        if (start_time and end_time is None) or \
+                (end_time and start_time is None):
+            raise exception.InvalidTimeCommand(resource="a contract",
+                                               start_time=str(start_time),
+                                               end_time=str(end_time))
+
+        filters = {}
+        for k, v in possible_filters.items():
+            if v is not None:
+                filters[k] = v
+
+        return filters

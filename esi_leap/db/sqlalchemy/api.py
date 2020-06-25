@@ -64,7 +64,7 @@ def drop_db():
     return True
 
 
-def model_query(context, model, session=None):
+def model_query(model, session=None):
     """Query helper.
 
     :param model: base model to query
@@ -118,7 +118,7 @@ class InequalityCondition(object):
 
 # Offer
 def offer_get(context, offer_uuid):
-    query = model_query(context, models.Offer, get_session())
+    query = model_query(models.Offer, get_session())
     result = query.filter_by(uuid=offer_uuid).first()
     if not result:
         raise exception.OfferNotFound(offer_uuid=offer_uuid)
@@ -130,7 +130,7 @@ def offer_get(context, offer_uuid):
 
 def offer_get_all(context, filters):
 
-    query = model_query(context, models.Offer, get_session())
+    query = model_query(models.Offer, get_session())
 
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
@@ -217,14 +217,13 @@ def offer_destroy(context, offer_uuid):
                 resource_uuid=offer_ref.resource_uuid)
 
     model_query(
-        context,
         models.Offer,
         get_session()).filter_by(uuid=offer_uuid).delete()
 
 
 # Contracts
 def contract_get(context, contract_uuid):
-    query = model_query(context, models.Contract, get_session())
+    query = model_query(models.Contract, get_session())
     result = query.filter_by(uuid=contract_uuid).first()
     if not result:
         raise exception.ContractNotFound(contract_uuid=contract_uuid)
@@ -234,18 +233,22 @@ def contract_get(context, contract_uuid):
     return result
 
 
-def contract_get_all(context, filters):
-    query = model_query(context, models.Contract, get_session())
+def contract_get_all(filters):
+    query = model_query(models.Contract, get_session())
 
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
+    owner = filters.pop('owner', None)
 
     query = query.filter_by(**filters)
 
     if start and end:
-
         query = query.filter((start >= models.Contract.start_time) &
                              (end <= models.Contract.end_time))
+
+    if owner:
+        query = query.join(models.Offer).\
+            filter(models.Offer.project_id == owner)
 
     return query
 
@@ -300,6 +303,5 @@ def contract_destroy(context, contract_uuid):
         if context.project_id != contract_ref.project_id:
             raise exception.ContractNoPermission(contract_uuid=contract_uuid)
     model_query(
-        context,
         models.Contract,
         get_session()).filter_by(uuid=contract_uuid).delete()

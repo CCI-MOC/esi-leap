@@ -99,16 +99,6 @@ def offer_get_all(context):
     return IMPL.offer_get_all(context)
 
 
-@to_dict
-def offer_get_all_by_project_id(context, project_id):
-    return IMPL.offer_get_all_by_project_id(context, project_id)
-
-
-@to_dict
-def offer_get_all_by_status(context, status):
-    return IMPL.offer_get_all_by_status(context, status)
-
-
 def offer_create(context, values):
     return IMPL.offer_create(context, values)
 
@@ -128,23 +118,8 @@ def contract_get(context, contract_uuid):
 
 
 @to_dict
-def contract_get_all(context):
-    return IMPL.contract_get_all(context)
-
-
-@to_dict
-def contract_get_all_by_project_id(context, project_id):
-    return IMPL.contract_get_all_by_project_id(context, project_id)
-
-
-@to_dict
-def contract_get_all_by_offer_uuid(context, offer_uuid):
-    return IMPL.contract_get_all_by_offer_uuid(context, offer_uuid)
-
-
-@to_dict
-def contract_get_all_by_status(context, status):
-    return IMPL.contract_get_all_by_status(context, status)
+def contract_get_all():
+    return IMPL.contract_get_all()
 
 
 def contract_create(context, values):

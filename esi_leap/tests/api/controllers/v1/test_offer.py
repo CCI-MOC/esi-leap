@@ -40,13 +40,3 @@ class TestListOffers(test_api_base.APITestCase):
         o = create_test_offer(self.context)
         data = self.get_json('/offers')
         self.assertEqual(o.uuid, data['offers'][0]["uuid"])
-
-    def test_get_invalid_time(self):
-
-        start = datetime.datetime(2016, 7, 16, 19, 20, 30)
-        response = self.get_json('/offers?start_time=' + str(start),
-                                 expect_errors=True)
-
-        self.assertEqual(500, response.status_int)
-        self.assertEqual('application/json', response.content_type)
-        self.assertIn(str(start), response.json_body['faultstring'])

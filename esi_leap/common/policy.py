@@ -20,12 +20,15 @@ CONF = esi_leap.conf.CONF
 _ENFORCER = None
 
 default_policies = [
-    policy.RuleDefault('is_owner',
-                       'role:owner or role:esi_leap_owner',
-                       description='Owner API access'),
     policy.RuleDefault('is_admin',
                        'role:admin or role:esi_leap_admin',
                        description='Full read/write API access'),
+    policy.RuleDefault('is_owner',
+                       'role:owner or role:esi_leap_owner',
+                       description='Owner API access'),
+    policy.RuleDefault('is_lessee',
+                       'role:lessee or role:esi_leap_lessee',
+                       description='Lessee API access'),
 ]
 
 contract_policies = [
@@ -36,10 +39,20 @@ contract_policies = [
         [{'path': '/contracts', 'method': 'POST'}]),
     policy.DocumentedRuleDefault(
         'esi_leap:contract:get',
-        'rule:is_admin or rule:is_owner',
+        'rule:is_admin or rule:is_owner or rule:is_lessee',
         'Retrieve contract',
-        [{'path': '/contracts', 'method': 'GET'},
-         {'path': '/contracts/{contract_ident}', 'method': 'GET'}]),
+        [{'path': '/offers', 'method': 'GET'},
+         {'path': '/offers/{offer_ident}', 'method': 'GET'}]),
+    policy.DocumentedRuleDefault(
+        'esi_leap:contract:list',
+        'rule:is_admin or rule:is_lessee or rule:is_owner',
+        'Retrieve all contracts owned by project_id',
+        [{'path': '/contracts', 'method': 'GET'}]),
+    policy.DocumentedRuleDefault(
+        'esi_leap:contract:list_all',
+        'rule:is_admin',
+        'Retrieve all contracts',
+        [{'path': '/contracts', 'method': 'GET'}]),
     policy.DocumentedRuleDefault(
         'esi_leap:contract:delete',
         'rule:is_admin',
