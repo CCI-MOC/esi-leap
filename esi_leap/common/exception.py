@@ -76,3 +76,8 @@ class InvalidTimeRange(ESILeapException):
 class InvalidTimeCommand(ESILeapException):
     msg_fmt = _("Attempted to get %(resource)s resource without providing "
                 "a Start Time and End Time. Got %(start_time)s, %(end_time)s")
+
+
+class InvalidOwnerCommand(ESILeapException):
+    msg_fmt = _("Cannot set variable 'owner' without setting view='owned' "
+                "(Got view=%(view)s, owner=%(owner)s.")

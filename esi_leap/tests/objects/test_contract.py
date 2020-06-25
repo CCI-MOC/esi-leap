@@ -62,8 +62,7 @@ class TestContractObject(base.DBTestCase):
             contracts = contract.Contract.get_all(
                 self.context, {})
 
-            mock_contract_get_all.assert_called_once_with(
-                self.context, {})
+            mock_contract_get_all.assert_called_once_with({})
             self.assertEqual(len(contracts), 1)
             self.assertIsInstance(
                 contracts[0], contract.Contract)
