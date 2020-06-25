@@ -30,7 +30,7 @@ def get_ironic_client():
     sess = ks_loading.load_session_from_conf_options(CONF, 'ironic',
                                                      auth=auth_plugin)
 
-    kwargs = {}
+    kwargs = {'os_ironic_api_version': '1.65'}
     cli = ironic_client.get_client(1,
                                    session=sess, **kwargs)
     _cached_ironic_client = cli
@@ -49,14 +49,12 @@ class IronicNode(object):
 
     def get_project_id(self):
         node = get_ironic_client().node.get(self._uuid)
-        return node.properties.get('project_id', None)
+        return node.lessee
 
     def get_node_config(self):
         node = get_ironic_client().node.get(self._uuid)
         config = node.properties
         config.pop('contract_uuid', None)
-        config.pop('project_id', None)
-        config.pop('project_owner_id', None)
         return config
 
     def set_contract(self, contract):
@@ -70,7 +68,7 @@ class IronicNode(object):
             if self.get_project_id():
                 patches.append({
                     "op": "remove",
-                    "path": "/properties/project_id",
+                    "path": "/lessee",
                 })
         else:
             patches.append({
@@ -80,7 +78,7 @@ class IronicNode(object):
             })
             patches.append({
                 "op": "add",
-                "path": "/properties/project_id",
+                "path": "/lessee",
                 "value": contract.project_id,
             })
         if len(patches) > 0:
@@ -88,5 +86,5 @@ class IronicNode(object):
 
     def is_resource_admin(self, project_id):
         node = get_ironic_client().node.get(self._uuid)
-        project_owner_id = node.properties.get('project_owner_id', None)
+        project_owner_id = node.owner
         return (project_owner_id == project_id)
