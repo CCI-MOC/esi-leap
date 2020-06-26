@@ -66,7 +66,8 @@ def create_test_contract(context):
     c = contract.Contract(
         start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
         end_date=datetime.datetime(2016, 8, 16, 19, 20, 30),
-        offer_uuid='1234567890'
+        offer_uuid='1234567890',
+        project_id="222222222222"
     )
     c.create(context)
     return c
@@ -190,7 +191,7 @@ class TestContractControllersGetAllFilters(testtools.TestCase):
             project_id=owner_lesseeproject)
         self.assertEqual(expected_filters, filters)
 
-        self.assertRaises(exception.ProjectNoPermission,
+        self.assertRaises(policy.PolicyNotAuthorized,
                           ContractsController.
                           _contract_get_all_authorize_filters,
                           owner_lessee_context, owner_lesseeproject,
@@ -256,7 +257,7 @@ class TestContractControllersGetAllFilters(testtools.TestCase):
             owner=owner_lesseeproject)
         self.assertEqual(expected_filters, filters)
 
-        self.assertRaises(exception.ProjectNoPermission,
+        self.assertRaises(policy.PolicyNotAuthorized,
                           ContractsController.
                           _contract_get_all_authorize_filters,
                           owner_lessee_context, owner_lesseeproject,

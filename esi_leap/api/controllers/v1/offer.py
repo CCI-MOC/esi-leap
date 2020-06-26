@@ -22,12 +22,13 @@ from esi_leap.api.controllers import types
 from esi_leap.common import exception
 from esi_leap.common import policy
 from esi_leap.objects import offer
+from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 
 class Offer(base.ESILEAPBase):
 
     uuid = wsme.wsattr(wtypes.text, readonly=True)
-    project_id = wsme.wsattr(wtypes.text, readonly=True)
+    project_id = wsme.wsattr(wtypes.text)
     resource_type = wsme.wsattr(wtypes.text, mandatory=True)
     resource_uuid = wsme.wsattr(wtypes.text, mandatory=True)
     start_time = wsme.wsattr(datetime.datetime)
@@ -103,7 +104,17 @@ class OffersController(rest.RestController):
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:offer:create', cdict, cdict)
 
-        o = offer.Offer(**new_offer.to_dict())
+        offer_dict = new_offer.to_dict()
+
+        if 'project_id' in offer_dict:
+            if offer_dict['project_id'] != request.project_id:
+                policy.authorize('esi_leap:offer:offer_admin', cdict, cdict)
+        else:
+            offer_dict['project_id'] = request.project_id
+
+        OffersController._verify_resource_permission(cdict, offer_dict)
+
+        o = offer.Offer(**offer_dict)
         o.create(request)
         return Offer(**o.to_dict())
 
@@ -114,4 +125,15 @@ class OffersController(rest.RestController):
         policy.authorize('esi_leap:offer:delete', cdict, cdict)
 
         o = offer.Offer.get(request, offer_uuid)
-        o.destroy(pecan.request.context)
+        OffersController._verify_resource_permission(cdict, o.to_dict())
+
+        o.destroy()
+
+    @staticmethod
+    def _verify_resource_permission(cdict, offer_dict):
+        resource_type = offer_dict.get('resource_type')
+        resource_uuid = offer_dict.get('resource_uuid')
+        resource = ro_factory.ResourceObjectFactory.get_resource_object(
+            resource_type, resource_uuid)
+        if not resource.is_resource_admin(offer_dict['project_id']):
+            policy.authorize('esi_leap:offer:offer_admin', cdict, cdict)
