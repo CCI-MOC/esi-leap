@@ -33,34 +33,40 @@ default_policies = [
 
 contract_policies = [
     policy.DocumentedRuleDefault(
-        'esi_leap:contract:create',
+        'esi_leap:contract:contract_admin',
         'rule:is_admin',
+        'Complete permissions over contracts',
+        [{'path': '/contracts', 'method': 'POST'},
+         {'path': '/contracts', 'method': 'GET'},
+         {'path': '/contracts/{contract_ident}', 'method': 'GET'},
+         {'path': '/contracts/{contract_ident}', 'method': 'DELETE'}]),
+    policy.DocumentedRuleDefault(
+        'esi_leap:contract:create',
+        'rule:is_admin or rule:is_lessee',
         'Create contract',
         [{'path': '/contracts', 'method': 'POST'}]),
     policy.DocumentedRuleDefault(
         'esi_leap:contract:get',
-        'rule:is_admin or rule:is_owner or rule:is_lessee',
-        'Retrieve contract',
-        [{'path': '/offers', 'method': 'GET'},
-         {'path': '/offers/{offer_ident}', 'method': 'GET'}]),
-    policy.DocumentedRuleDefault(
-        'esi_leap:contract:list',
         'rule:is_admin or rule:is_lessee or rule:is_owner',
         'Retrieve all contracts owned by project_id',
-        [{'path': '/contracts', 'method': 'GET'}]),
-    policy.DocumentedRuleDefault(
-        'esi_leap:contract:list_all',
-        'rule:is_admin',
-        'Retrieve all contracts',
-        [{'path': '/contracts', 'method': 'GET'}]),
+        [{'path': '/contracts', 'method': 'GET'},
+         {'path': '/contracts/{contract_ident}', 'method': 'GET'}]),
     policy.DocumentedRuleDefault(
         'esi_leap:contract:delete',
-        'rule:is_admin',
+        'rule:is_admin or rule:is_owner or rule:is_lessee',
         'Delete contract',
         [{'path': '/contracts/{contract_ident}', 'method': 'DELETE'}]),
 ]
 
 offer_policies = [
+    policy.DocumentedRuleDefault(
+        'esi_leap:offer:offer_admin',
+        'rule:is_admin',
+        'Complete permissions over offers',
+        [{'path': '/offers', 'method': 'POST'},
+         {'path': '/offers', 'method': 'GET'},
+         {'path': '/offers/{offer_ident}', 'method': 'GET'},
+         {'path': '/offers/{offer_ident}', 'method': 'DELETE'}]),
     policy.DocumentedRuleDefault(
         'esi_leap:offer:create',
         'rule:is_admin or rule:is_owner',
@@ -68,7 +74,7 @@ offer_policies = [
         [{'path': '/offers', 'method': 'POST'}]),
     policy.DocumentedRuleDefault(
         'esi_leap:offer:get',
-        'rule:is_admin or rule:is_owner',
+        'rule:is_admin or rule:is_owner or rule:is_lessee',
         'Retrieve offer',
         [{'path': '/offers', 'method': 'GET'},
          {'path': '/offers/{offer_ident}', 'method': 'GET'}]),

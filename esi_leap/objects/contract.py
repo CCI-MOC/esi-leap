@@ -38,7 +38,7 @@ class Contract(base.ESILEAPObject):
 
     @classmethod
     def get(cls, context, contract_uuid):
-        db_contract = cls.dbapi.contract_get(context, contract_uuid)
+        db_contract = cls.dbapi.contract_get(contract_uuid)
         return cls._from_db_object(context, cls(), db_contract)
 
     @classmethod
@@ -48,17 +48,17 @@ class Contract(base.ESILEAPObject):
 
     def create(self, context=None):
         updates = self.obj_get_changes()
-        db_contract = self.dbapi.contract_create(context, updates)
+        db_contract = self.dbapi.contract_create(updates)
         self._from_db_object(context, self, db_contract)
 
-    def destroy(self, context=None):
-        self.dbapi.contract_destroy(context, self.uuid)
+    def destroy(self):
+        self.dbapi.contract_destroy(self.uuid)
         self.obj_reset_changes()
 
     def save(self, context=None):
         updates = self.obj_get_changes()
         db_contract = self.dbapi.contract_update(
-            context, self.uuid, updates)
+            self.uuid, updates)
         self._from_db_object(context, self, db_contract)
 
     def fulfill(self, context=None):

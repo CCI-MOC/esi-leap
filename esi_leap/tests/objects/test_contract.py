@@ -49,7 +49,7 @@ class TestContractObject(base.DBTestCase):
                 self.context, contract_uuid)
 
             mock_contract_get.assert_called_once_with(
-                self.context, contract_uuid)
+                contract_uuid)
             self.assertEqual(self.context, c._context)
 
     def test_get_all(self):
@@ -75,20 +75,20 @@ class TestContractObject(base.DBTestCase):
                                autospec=True) as mock_contract_create:
             mock_contract_create.return_value = get_test_contract()
 
-            c.create(self.context)
+            c.create()
 
             mock_contract_create.assert_called_once_with(
-                self.context, get_test_contract())
+                get_test_contract())
 
     def test_destroy(self):
         c = contract.Contract(self.context, **self.fake_contract)
         with mock.patch.object(self.db_api, 'contract_destroy',
                                autospec=True) as mock_contract_destroy:
 
-            c.destroy(self.context)
+            c.destroy()
 
             mock_contract_destroy.assert_called_once_with(
-                self.context, c.uuid)
+                c.uuid)
 
     def test_save(self):
         c = contract.Contract(self.context, **self.fake_contract)
@@ -107,6 +107,6 @@ class TestContractObject(base.DBTestCase):
             updated_values = get_test_contract()
             updated_values['status'] = new_status
             mock_contract_update.assert_called_once_with(
-                self.context, c.uuid, updated_values)
+                c.uuid, updated_values)
             self.assertEqual(self.context, c._context)
             self.assertEqual(updated_at, c.updated_at)

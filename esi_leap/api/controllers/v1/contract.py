@@ -19,16 +19,16 @@ import wsmeext.pecan as wsme_pecan
 
 from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
-from esi_leap.api.controllers.v1 import utils as api_utils
 from esi_leap.common import exception
 from esi_leap.common import policy
 from esi_leap.objects import contract
+from esi_leap.objects import offer
 
 
 class Contract(base.ESILEAPBase):
 
     uuid = wsme.wsattr(wtypes.text, readonly=True)
-    project_id = wsme.wsattr(wtypes.text, readonly=True)
+    project_id = wsme.wsattr(wtypes.text)
     start_time = wsme.wsattr(datetime.datetime)
     end_time = wsme.wsattr(datetime.datetime)
     status = wsme.wsattr(wtypes.text)
@@ -57,6 +57,11 @@ class ContractsController(rest.RestController):
         policy.authorize('esi_leap:contract:get', cdict, cdict)
 
         c = contract.Contract.get(request, contract_uuid)
+
+        if c.project_id != request.project_id:
+            o = offer.Offer.get(request.project_id, c.offer_uuid)
+            if o.project_id != request.project_id:
+                policy.authorize('esi_leap:contract:get_admin', cdict, cdict)
 
         return Contract(**c.to_dict())
 
@@ -87,8 +92,18 @@ class ContractsController(rest.RestController):
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:contract:create', cdict, cdict)
 
-        c = contract.Contract(**new_contract.to_dict())
+        contract_dict = new_contract.to_dict()
+
+        if 'project_id' in contract_dict:
+            if contract_dict['project_id'] != request.project_id:
+                policy.authorize('esi_leap:contract:contract_admin',
+                                 cdict, cdict)
+        else:
+            contract_dict['project_id'] = request.project_id
+
+        c = contract.Contract(**contract_dict)
         c.create(request)
+
         return Contract(**c.to_dict())
 
     @wsme_pecan.wsexpose(Contract, wtypes.text)
@@ -98,7 +113,13 @@ class ContractsController(rest.RestController):
         policy.authorize('esi_leap:contract:delete', cdict, cdict)
 
         c = contract.Contract.get(request, contract_uuid)
-        c.destroy(pecan.request.context)
+        if c.project_id != request.project_id:
+            o = offer.Offer.get(request.project_id, c.offer_uuid)
+            if o.project_id != request.project_id:
+                policy.authorize('esi_leap:contract:contract_admin',
+                                 cdict, cdict)
+
+        c.destroy()
 
     @staticmethod
     def _contract_get_all_authorize_filters(cdict, r_project_id,
@@ -114,20 +135,17 @@ class ContractsController(rest.RestController):
             'end_time': end_time,
         }
 
-        is_admin = api_utils.verify_admin(cdict)
-
         if view == 'all':
-            policy.authorize('esi_leap:contract:list_all', cdict, cdict)
+            policy.authorize('esi_leap:contract:contract_admin', cdict, cdict)
             possible_filters['owner'] = owner
             possible_filters['project_id'] = project_id
         else:
-            policy.authorize('esi_leap:contract:list', cdict, cdict)
+            policy.authorize('esi_leap:contract:get', cdict, cdict)
 
             if owner:
-                if not is_admin:
-                    if r_project_id != owner:
-                        raise exception.ProjectNoPermission(
-                            project_id=project_id)
+                if r_project_id != owner:
+                    policy.authorize('esi_leap:contract:contract_admin',
+                                     cdict, cdict)
 
                 possible_filters['owner'] = owner
                 possible_filters['project_id'] = project_id
@@ -136,10 +154,9 @@ class ContractsController(rest.RestController):
                 if project_id is None:
                     project_id = r_project_id
                 else:
-                    if not is_admin:
-                        if project_id != r_project_id:
-                            raise exception.ProjectNoPermission(
-                                project_id=project_id)
+                    if project_id != r_project_id:
+                        policy.authorize('esi_leap:contract:contract_admin',
+                                         cdict, cdict)
 
                 possible_filters['project_id'] = project_id
 

@@ -51,7 +51,7 @@ class TestOfferObject(base.DBTestCase):
                 self.context, offer_uuid)
 
             mock_offer_get.assert_called_once_with(
-                self.context, offer_uuid)
+                offer_uuid)
             self.assertEqual(self.context, o._context)
 
     def test_get_all(self):
@@ -65,7 +65,7 @@ class TestOfferObject(base.DBTestCase):
                 self.context, {})
 
             mock_offer_get_all.assert_called_once_with(
-                self.context, {})
+                {})
             self.assertEqual(len(offers), 1)
             self.assertIsInstance(
                 offers[0], offer.Offer)
@@ -79,17 +79,17 @@ class TestOfferObject(base.DBTestCase):
             mock_offer_create.return_value = get_test_offer()
             o.create(self.context)
             mock_offer_create.assert_called_once_with(
-                self.context, get_test_offer())
+                get_test_offer())
 
     def test_destroy(self):
         o = offer.Offer(self.context, **self.fake_offer)
         with mock.patch.object(self.db_api, 'offer_destroy',
                                autospec=True) as mock_offer_destroy:
 
-            o.destroy(self.context)
+            o.destroy()
 
             mock_offer_destroy.assert_called_once_with(
-                self.context, o.uuid)
+                o.uuid)
 
     def test_save(self):
         o = offer.Offer(self.context, **self.fake_offer)
@@ -108,6 +108,6 @@ class TestOfferObject(base.DBTestCase):
             updated_values = get_test_offer()
             updated_values['status'] = new_status
             mock_offer_update.assert_called_once_with(
-                self.context, o.uuid, updated_values)
+                o.uuid, updated_values)
             self.assertEqual(self.context, o._context)
             self.assertEqual(updated_at, o.updated_at)

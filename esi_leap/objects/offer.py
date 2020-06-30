@@ -41,27 +41,27 @@ class Offer(base.ESILEAPObject):
 
     @classmethod
     def get(cls, context, offer_uuid):
-        db_offer = cls.dbapi.offer_get(context, offer_uuid)
+        db_offer = cls.dbapi.offer_get(offer_uuid)
         return cls._from_db_object(context, cls(), db_offer)
 
     @classmethod
     def get_all(cls, context, filters):
-        db_offers = cls.dbapi.offer_get_all(context, filters)
+        db_offers = cls.dbapi.offer_get_all(filters)
         return cls._from_db_object_list(context, db_offers)
 
     def create(self, context=None):
         updates = self.obj_get_changes()
-        db_offer = self.dbapi.offer_create(context, updates)
+        db_offer = self.dbapi.offer_create(updates)
         self._from_db_object(context, self, db_offer)
 
-    def destroy(self, context=None):
-        self.dbapi.offer_destroy(context, self.uuid)
+    def destroy(self):
+        self.dbapi.offer_destroy(self.uuid)
         self.obj_reset_changes()
 
     def save(self, context=None):
         updates = self.obj_get_changes()
         db_offer = self.dbapi.offer_update(
-            context, self.uuid, updates)
+            self.uuid, updates)
         self._from_db_object(context, self, db_offer)
 
     def resource_object(self):
