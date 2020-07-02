@@ -35,12 +35,16 @@ class Offer(base.ESILEAPBase):
     end_time = wsme.wsattr(datetime.datetime)
     status = wsme.wsattr(wtypes.text)
     properties = {wtypes.text: types.jsontype}
+    availabilities = wsme.wsattr([[datetime.datetime]], readonly=True)
 
     def __init__(self, **kwargs):
 
         self.fields = offer.Offer.fields
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
+
+        setattr(self, 'availabilities', kwargs.get('availabilities',
+                                                   wtypes.Unset))
 
 
 class OfferCollection(types.Collection):
@@ -59,13 +63,17 @@ class OffersController(rest.RestController):
         policy.authorize('esi_leap:offer:get', cdict, cdict)
 
         o = offer.Offer.get(request, offer_uuid)
-        return Offer(**o.to_dict())
+        o = OffersController._add_offer_availabilities(o)
+
+        return Offer(**o)
 
     @wsme_pecan.wsexpose(OfferCollection, wtypes.text, wtypes.text,
                          wtypes.text, datetime.datetime, datetime.datetime,
+                         datetime.datetime, datetime.datetime,
                          wtypes.text)
     def get_all(self, project_id=None, resource_type=None,
                 resource_uuid=None, start_time=None, end_time=None,
+                available_start_time=None, available_end_time=None,
                 status=None):
 
         request = pecan.request.context
@@ -74,9 +82,27 @@ class OffersController(rest.RestController):
 
         if (start_time and end_time is None) or\
            (end_time and start_time is None):
-            raise exception.InvalidTimeCommand(resource='an offer',
-                                               start_time=str(start_time),
-                                               end_time=str(end_time))
+            raise exception.InvalidTimeAPICommand(resource='an offer',
+                                                  start_time=str(start_time),
+                                                  end_time=str(end_time))
+
+        if start_time and end_time and\
+           end_time <= start_time:
+            raise exception.InvalidTimeAPICommand(resource='an offer',
+                                                  start_time=str(start_time),
+                                                  end_time=str(end_time))
+
+        if (available_start_time and available_end_time is None) or\
+           (available_end_time and available_start_time is None):
+            raise exception.InvalidAvailabilityAPICommand(
+                a_start=str(start_time),
+                a_end=str(end_time))
+
+        if available_start_time and available_end_time and\
+                available_end_time <= available_start_time:
+            raise exception.InvalidAvailabilityAPICommand(
+                a_start=available_start_time,
+                a_end=available_end_time)
 
         possible_filters = {
             'project_id': project_id,
@@ -85,6 +111,8 @@ class OffersController(rest.RestController):
             'status': status,
             'start_time': start_time,
             'end_time': end_time,
+            'available_start_time': available_start_time,
+            'available_end_time': available_end_time,
         }
 
         filters = {}
@@ -94,8 +122,10 @@ class OffersController(rest.RestController):
 
         offer_collection = OfferCollection()
         offers = offer.Offer.get_all(request, filters)
+
         offer_collection.offers = [
-            Offer(**o.to_dict()) for o in offers]
+            Offer(**OffersController._add_offer_availabilities(o))
+            for o in offers]
         return offer_collection
 
     @wsme_pecan.wsexpose(Offer, body=Offer)
@@ -116,7 +146,10 @@ class OffersController(rest.RestController):
 
         o = offer.Offer(**offer_dict)
         o.create(request)
-        return Offer(**o.to_dict())
+
+        o = OffersController._add_offer_availabilities(o)
+
+        return Offer(**o)
 
     @wsme_pecan.wsexpose(Offer, wtypes.text)
     def delete(self, offer_uuid):
@@ -128,6 +161,13 @@ class OffersController(rest.RestController):
         OffersController._verify_resource_permission(cdict, o.to_dict())
 
         o.destroy()
+
+    @staticmethod
+    def _add_offer_availabilities(o):
+        availabilities = o.get_availabilities()
+        o = o.to_dict()
+        o['availabilities'] = availabilities
+        return o
 
     @staticmethod
     def _verify_resource_permission(cdict, offer_dict):

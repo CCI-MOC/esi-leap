@@ -162,9 +162,15 @@ class ContractsController(rest.RestController):
 
         if (start_time and end_time is None) or \
                 (end_time and start_time is None):
-            raise exception.InvalidTimeCommand(resource="a contract",
-                                               start_time=str(start_time),
-                                               end_time=str(end_time))
+            raise exception.InvalidTimeAPICommand(resource="a contract",
+                                                  start_time=str(start_time),
+                                                  end_time=str(end_time))
+
+        if start_time and end_time and\
+           end_time <= start_time:
+            raise exception.InvalidTimeAPICommand(resource='a contract',
+                                                  start_time=str(start_time),
+                                                  end_time=str(end_time))
 
         filters = {}
         for k, v in possible_filters.items():

@@ -62,17 +62,6 @@ random_context = random_context.to_policy_values()
 random_project = 'randomid'
 
 
-def create_test_contract(context):
-    c = contract.Contract(
-        start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
-        end_date=datetime.datetime(2016, 8, 16, 19, 20, 30),
-        offer_uuid='1234567890',
-        project_id="222222222222"
-    )
-    c.create(context)
-    return c
-
-
 class TestContractsControllerAdmin(test_api_base.APITestCase):
 
     def setUp(self):
@@ -85,7 +74,16 @@ class TestContractsControllerAdmin(test_api_base.APITestCase):
 
     def test_one(self):
 
-        c = create_test_contract(self.context)
+        o = TestContractsControllerAdmin.create_test_offer(self.context)
+
+        c = contract.Contract(
+            start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
+            end_date=datetime.datetime(2016, 8, 16, 19, 20, 30),
+            offer_uuid=o.uuid,
+            project_id="222222222222"
+        )
+        c.create(self.context)
+
         data = self.get_json('/contracts')
         self.assertEqual(c.uuid, data['contracts'][0]["uuid"])
 
@@ -324,13 +322,13 @@ class TestContractControllersGetAllFilters(testtools.TestCase):
             view='all', start_time=start, end_time=end)
         self.assertEqual(expected_filters, filters)
 
-        self.assertRaises(exception.InvalidTimeCommand,
+        self.assertRaises(exception.InvalidTimeAPICommand,
                           ContractsController.
                           _contract_get_all_authorize_filters,
                           admin_context, admin_project,
                           view='all', start_time=start)
 
-        self.assertRaises(exception.InvalidTimeCommand,
+        self.assertRaises(exception.InvalidTimeAPICommand,
                           ContractsController.
                           _contract_get_all_authorize_filters,
                           admin_context, admin_project,
