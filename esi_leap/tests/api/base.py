@@ -10,12 +10,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+import datetime
 import pecan
 import pecan.testing
 
 from esi_leap.api import app
 import esi_leap.conf
+from esi_leap.objects import contract
+from esi_leap.objects import offer
 from esi_leap.tests import base
 
 
@@ -24,6 +26,29 @@ PATH_PREFIX = '/v1'
 
 
 class APITestCase(base.DBTestCase):
+
+    @staticmethod
+    def create_test_offer(context):
+        o = offer.Offer(
+            resource_type='test_node',
+            resource_uuid='1234567890',
+            start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
+            end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
+            project_id="111111111111"
+        )
+        o.create(context)
+        return o
+
+    @staticmethod
+    def create_test_contract(context):
+        c = contract.Contract(
+            start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
+            end_date=datetime.datetime(2016, 8, 16, 19, 20, 30),
+            offer_uuid='1234567890',
+            project_id="222222222222"
+        )
+        c.create(context)
+        return c
 
     def setUp(self):
         super(APITestCase, self).setUp()
@@ -34,12 +59,6 @@ class APITestCase(base.DBTestCase):
         self.app = pecan.testing.load_test_app(
             dict(app.get_pecan_config())
         )
-
-        self.patch_context = mock.patch(
-            'oslo_context.context.RequestContext.from_environ'
-        )
-        self.mock_context = self.patch_context.start()
-        self.mock_context.return_value = self.context
 
     # borrowed from Ironic
     def get_json(self, path, expect_errors=False, headers=None,

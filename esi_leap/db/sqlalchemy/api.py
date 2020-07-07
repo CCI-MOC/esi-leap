@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
 import sys
 
 from oslo_config import cfg
@@ -21,7 +22,6 @@ import sqlalchemy as sa
 
 from esi_leap.common import exception
 from esi_leap.db.sqlalchemy import models
-from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 
 CONF = cfg.CONF
@@ -64,7 +64,7 @@ def drop_db():
     return True
 
 
-def model_query(context, model, session=None):
+def model_query(model, session=None):
     """Query helper.
 
     :param model: base model to query
@@ -117,50 +117,91 @@ class InequalityCondition(object):
 
 
 # Offer
-def offer_get(context, offer_uuid):
-    query = model_query(context, models.Offer, get_session())
-    result = query.filter_by(uuid=offer_uuid).first()
-    if not result:
+def offer_get(offer_uuid):
+    query = model_query(models.Offer, get_session())
+    offer_ref = query.filter_by(uuid=offer_uuid).first()
+    if not offer_ref:
         raise exception.OfferNotFound(offer_uuid=offer_uuid)
-    if not context.is_admin:
-        if context.project_id != result.project_id:
-            raise exception.OfferNoPermission(offer_uuid=offer_uuid)
-    return result
+
+    return offer_ref
 
 
-def offer_get_all(context, filters):
+def offer_get_all(filters):
 
-    query = model_query(context, models.Offer, get_session())
+    query = model_query(models.Offer, get_session())
 
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
 
+    a_start = filters.pop('available_start_time', None)
+    a_end = filters.pop('available_end_time', None)
+
     query = query.filter_by(**filters)
 
     if start and end:
-
         query = query.filter((start >= models.Offer.start_time) &
                              (end <= models.Offer.end_time))
+
+    if a_start and a_end:
+        for o in query:
+            try:
+                offer_verify_availability(o, a_start, a_end)
+            except exception.OfferNotAvailable:
+                query = query.filter(models.Offer.uuid != o.uuid)
 
     return query
 
 
-def offer_create(context, values):
-    resource_type = values.get('resource_type')
-    resource_uuid = values.get('resource_uuid')
-    resource = ro_factory.ResourceObjectFactory.get_resource_object(
-        resource_type, resource_uuid)
-    if not resource.is_resource_admin(context.project_id):
-        raise exception.ResourceNoPermission(
-            resource_type=resource_type, resource_uuid=resource_uuid)
+def offer_get_conflict_times(offer_ref):
+
+    c_query = model_query(models.Contract, get_session())
+    return c_query.with_entities(models.Contract.start_time, models.Contract.end_time).\
+        join(models.Offer).\
+        order_by(models.Contract.start_time).\
+        filter(models.Contract.offer_uuid == offer_ref.uuid).all()
+
+
+def offer_verify_availability(offer_ref, start, end):
+
+    if start < offer_ref.start_time or end > offer_ref.end_time:
+        raise exception.OfferNotAvailable(offer_uuid=offer_ref.uuid,
+                                          start_time=start,
+                                          end_time=end)
+
+    c_query = model_query(models.Contract, get_session())
+
+    contracts = c_query.with_entities(models.Contract.start_time, models.Contract.end_time).\
+        join(models.Offer).\
+        filter((models.Contract.offer_uuid == offer_ref.uuid))
+
+    conflict = contracts.filter((
+        (start >= models.Contract.start_time) &
+        (start < models.Contract.end_time) |
+
+        (end > models.Contract.start_time) &
+        (end <= models.Contract.end_time) |
+
+        (start <= models.Contract.start_time) &
+        (end >= models.Contract.end_time)
+    )).first()
+
+    if conflict:
+        raise exception.OfferNotAvailable(offer_uuid=offer_ref.uuid,
+                                          start_time=start,
+                                          end_time=end)
+
+
+def offer_create(values):
 
     offer_ref = models.Offer()
     values['uuid'] = uuidutils.generate_uuid()
-    values['project_id'] = context.project_id
 
-    if 'start_time' in values and 'end_time' in values and \
-       values['start_time'] is not None and values['end_time'] is not None and \
-       values['start_time'] >= values['end_time']:
+    if 'start_time' not in values:
+        values['start_time'] = datetime.datetime.now()
+    if 'end_time' not in values:
+        values['end_time'] = datetime.datetime.max
+
+    if values['start_time'] >= values['end_time']:
         raise exception.InvalidTimeRange(resource="an offer",
                                          start_time=str(values['start_time']),
                                          end_time=str(values['end_time']))
@@ -170,18 +211,9 @@ def offer_create(context, values):
     return offer_ref
 
 
-def offer_update(context, offer_uuid, values):
-    offer_ref = offer_get(context, offer_uuid)
-    if not context.is_admin:
-        if context.project_id != offer_ref.project_id:
-            raise exception.OfferNoPermission(offer_uuid=offer_uuid)
-
-        resource = ro_factory.ResourceObjectFactory.get_resource_object(
-            offer_ref.resource_type, offer_ref.resource_uuid)
-        if not resource.is_resource_admin(context.project_id):
-            raise exception.ResourceNoPermission(
-                resource_type=offer_ref.resource_type,
-                resource_uuid=offer_ref.resource_uuid)
+def offer_update(offer_uuid, values):
+    query = model_query(models.Offer, get_session())
+    offer_ref = query.filter_by(uuid=offer_uuid)
 
     values.pop('uuid', None)
     values.pop('project_id', None)
@@ -202,76 +234,87 @@ def offer_update(context, offer_uuid, values):
     return offer_ref
 
 
-def offer_destroy(context, offer_uuid):
-    offer_ref = offer_get(context, offer_uuid)
+def offer_destroy(offer_uuid):
+    query = model_query(models.Offer, get_session())
+    offer_ref = query.filter_by(uuid=offer_uuid)
+
     if not offer_ref:
         raise exception.OfferNotFound(offer_uuid=offer_uuid)
-    if not context.is_admin:
-        if context.project_id != offer_ref.project_id:
-            raise exception.OfferNoPermission(offer_uuid=offer_uuid)
-        resource = ro_factory.ResourceObjectFactory.get_resource_object(
-            offer_ref.resource_type, offer_ref.resource_uuid)
-        if not resource.is_resource_admin(context.project_id):
-            raise exception.ResourceNoPermission(
-                resource_type=offer_ref.resource_type,
-                resource_uuid=offer_ref.resource_uuid)
 
     model_query(
-        context,
         models.Offer,
         get_session()).filter_by(uuid=offer_uuid).delete()
 
 
 # Contracts
-def contract_get(context, contract_uuid):
-    query = model_query(context, models.Contract, get_session())
+def contract_get(contract_uuid):
+    query = model_query(models.Contract, get_session())
+
     result = query.filter_by(uuid=contract_uuid).first()
+
     if not result:
         raise exception.ContractNotFound(contract_uuid=contract_uuid)
-    if not context.is_admin:
-        if context.project_id != result.project_id:
-            raise exception.ContractNoPermission(contract_uuid=contract_uuid)
     return result
 
 
-def contract_get_all(context, filters):
-    query = model_query(context, models.Contract, get_session())
+def contract_get_all(filters):
+    query = model_query(models.Contract, get_session())
 
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
+    owner = filters.pop('owner', None)
 
     query = query.filter_by(**filters)
 
     if start and end:
-
         query = query.filter((start >= models.Contract.start_time) &
                              (end <= models.Contract.end_time))
+
+    if owner:
+        query = query.join(models.Offer).\
+            filter(models.Offer.project_id == owner)
 
     return query
 
 
-def contract_create(context, values):
+def contract_create(values):
     contract_ref = models.Contract()
     values['uuid'] = uuidutils.generate_uuid()
-    values['project_id'] = context.project_id
 
-    if 'start_time' in values and 'end_time' in values and \
-       values['start_time'] is not None and values['end_time'] is not None and \
-       values['start_time'] >= values['end_time']:
-        raise exception.InvalidTimeRange(resource="a contract",
-                                         start_time=str(values['start_time']),
-                                         end_time=str(values['end_time']))
+    query = model_query(models.Offer, get_session())
+
+    if 'offer_uuid' not in values:
+        raise exception.ContractNoOfferUUID()
+
+    offer_ref = query.filter_by(uuid=values['offer_uuid']).first()
+
+    if offer_ref is None:
+        raise exception.OfferNotFound(offer_uuid=values['offer_uuid'])
+
+    if 'start_time' not in values:
+        values['start_time'] = datetime.datetime.now()
+
+    if 'end_time' not in values:
+        c_query = model_query(models.Contract, get_session())
+        c = c_query.order_by(models.Contract.end_time).\
+            filter(models.Contract.start_time > values['start_time']).first()
+
+        if c is None:
+            values['end_time'] = offer_ref.end_time
+        else:
+            values['end_time'] = c.start_time
+
+    offer_verify_availability(offer_ref,
+                              values['start_time'], values['end_time'])
 
     contract_ref.update(values)
     contract_ref.save(get_session())
     return contract_ref
 
 
-def contract_update(context, contract_uuid, values):
-    contract_ref = contract_get(context, contract_uuid)
-    if not context.is_admin:
-        if context.project_id != contract_ref.project_id:
-            raise exception.ContractNoPermission(contract_uuid=contract_uuid)
+def contract_update(contract_uuid, values):
+    query = model_query(models.Contract, get_session())
+    contract_ref = query.filter_by(uuid=contract_uuid)
 
     values.pop('uuid', None)
     values.pop('project_id', None)
@@ -292,14 +335,10 @@ def contract_update(context, contract_uuid, values):
     return contract_ref
 
 
-def contract_destroy(context, contract_uuid):
-    contract_ref = contract_get(context, contract_uuid)
+def contract_destroy(contract_uuid):
+    query = model_query(models.Contract, get_session())
+    contract_ref = query.filter_by(uuid=contract_uuid)
+
     if not contract_ref:
         raise exception.ContractNotFound(contract_uuid=contract_uuid)
-    if not context.is_admin:
-        if context.project_id != contract_ref.project_id:
-            raise exception.ContractNoPermission(contract_uuid=contract_uuid)
-    model_query(
-        context,
-        models.Contract,
-        get_session()).filter_by(uuid=contract_uuid).delete()
+    contract_ref.delete()

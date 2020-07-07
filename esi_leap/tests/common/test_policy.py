@@ -20,7 +20,8 @@ class PolicyTestCase(base.TestCase):
 
     def test_authorized(self):
         creds = {'roles': ['esi_leap_owner']}
-        self.assertTrue(policy.authorize('esi_leap:offer:get', creds, creds))
+        self.assertTrue(policy.authorize('esi_leap:offer:get',
+                                         creds, creds))
 
     def test_unauthorized(self):
         creds = {'roles': ['generic_user']}

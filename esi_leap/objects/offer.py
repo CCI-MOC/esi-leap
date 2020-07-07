@@ -41,27 +41,54 @@ class Offer(base.ESILEAPObject):
 
     @classmethod
     def get(cls, context, offer_uuid):
-        db_offer = cls.dbapi.offer_get(context, offer_uuid)
+        db_offer = cls.dbapi.offer_get(offer_uuid)
         return cls._from_db_object(context, cls(), db_offer)
 
     @classmethod
     def get_all(cls, context, filters):
-        db_offers = cls.dbapi.offer_get_all(context, filters)
+        db_offers = cls.dbapi.offer_get_all(filters)
         return cls._from_db_object_list(context, db_offers)
+
+    def get_availabilities(self):
+
+        conflicts = self.dbapi.offer_get_conflict_times(self)
+
+        if conflicts:
+            a = [self.start_time, conflicts[0][0]]
+            for i in range(len(conflicts) - 1):
+                a.append(conflicts[i][1])
+                a.append(conflicts[i + 1][0])
+            a.append(conflicts[-1][1])
+            a.append(self.end_time)
+
+            i = 0
+            while i < len(a) - 1:
+                if a[i] == a[i + 1]:
+                    a.pop(i)
+                    a.pop(i)
+                else:
+                    i += 1
+
+            a = [[a[j], a[j + 1]] for j in range(0, len(a) - 1, 2)]
+
+        else:
+            a = [[self.start_time, self.end_time]]
+
+        return a
 
     def create(self, context=None):
         updates = self.obj_get_changes()
-        db_offer = self.dbapi.offer_create(context, updates)
+        db_offer = self.dbapi.offer_create(updates)
         self._from_db_object(context, self, db_offer)
 
-    def destroy(self, context=None):
-        self.dbapi.offer_destroy(context, self.uuid)
+    def destroy(self):
+        self.dbapi.offer_destroy(self.uuid)
         self.obj_reset_changes()
 
     def save(self, context=None):
         updates = self.obj_get_changes()
         db_offer = self.dbapi.offer_update(
-            context, self.uuid, updates)
+            self.uuid, updates)
         self._from_db_object(context, self, db_offer)
 
     def resource_object(self):

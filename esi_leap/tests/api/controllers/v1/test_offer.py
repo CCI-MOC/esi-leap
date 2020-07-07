@@ -20,7 +20,8 @@ def create_test_offer(context):
         resource_type='test_node',
         resource_uuid='1234567890',
         start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
-        end_time=datetime.datetime(2016, 8, 16, 19, 20, 30)
+        end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
+        project_id="111111111111"
     )
     o.create(context)
     return o

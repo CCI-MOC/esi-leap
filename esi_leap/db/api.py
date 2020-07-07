@@ -90,70 +90,55 @@ def to_dict(func):
 
 # Offer
 @to_dict
-def offer_get(context, offer_uuid):
-    return IMPL.offer_get(context, offer_uuid)
+def offer_get(offer_uuid):
+    return IMPL.offer_get(offer_uuid)
 
 
 @to_dict
-def offer_get_all(context):
-    return IMPL.offer_get_all(context)
+def offer_get_all():
+    return IMPL.offer_get_all()
 
 
 @to_dict
-def offer_get_all_by_project_id(context, project_id):
-    return IMPL.offer_get_all_by_project_id(context, project_id)
+def offer_get_conflict_times(offer_ref):
+    return IMPL.offer_get_conflict_times(offer_ref)
 
 
-@to_dict
-def offer_get_all_by_status(context, status):
-    return IMPL.offer_get_all_by_status(context, status)
+def offer_verify_availability(offer_ref, start, end):
+    return IMPL.offer_verify_availability(
+        offer_ref, start, end)
 
 
-def offer_create(context, values):
-    return IMPL.offer_create(context, values)
+def offer_create(values):
+    return IMPL.offer_create(values)
 
 
 def offer_update(context, offer_uuid, values):
     return IMPL.offer_update(context, offer_uuid, values)
 
 
-def offer_destroy(context, offer_uuid):
-    return IMPL.offer_destroy(context, offer_uuid)
+def offer_destroy(offer_uuid):
+    return IMPL.offer_destroy(offer_uuid)
 
 
 # Contract
 @to_dict
-def contract_get(context, contract_uuid):
-    return IMPL.contract_get(context, contract_uuid)
+def contract_get(contract_uuid):
+    return IMPL.contract_get(contract_uuid)
 
 
 @to_dict
-def contract_get_all(context):
-    return IMPL.contract_get_all(context)
+def contract_get_all():
+    return IMPL.contract_get_all()
 
 
-@to_dict
-def contract_get_all_by_project_id(context, project_id):
-    return IMPL.contract_get_all_by_project_id(context, project_id)
+def contract_create(values):
+    return IMPL.contract_create(values)
 
 
-@to_dict
-def contract_get_all_by_offer_uuid(context, offer_uuid):
-    return IMPL.contract_get_all_by_offer_uuid(context, offer_uuid)
+def contract_update(contract_uuid, values):
+    return IMPL.contract_update(contract_uuid, values)
 
 
-@to_dict
-def contract_get_all_by_status(context, status):
-    return IMPL.contract_get_all_by_status(context, status)
-
-
-def contract_create(context, values):
-    return IMPL.contract_create(context, values)
-
-
-def contract_update(context, contract_uuid, values):
-    return IMPL.contract_update(context, contract_uuid, values)
-
-
-def contract_destroy(context, contract_uuid):
-    return IMPL.contract_destroy(context, contract_uuid)
+def contract_destroy(contract_uuid):
+    return IMPL.contract_destroy(contract_uuid)
