@@ -20,14 +20,16 @@ from esi_leap.tests import base
 
 def get_test_offer():
 
+    start = datetime.datetime(2016, 7, 16, 19, 20, 30)
+
     return {
         'id': 27,
         'uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
         'project_id': '01d4e6a72f5c408813e02f664cc8c83e',
         'resource_type': 'dummy_node',
         'resource_uuid': '1718',
-        'start_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
-        'end_time': datetime.datetime(2016, 8, 16, 19, 20, 30),
+        'start_time': start,
+        'end_time': start + datetime.timedelta(days=100),
         'status': statuses.AVAILABLE,
         'properties': {'floor_price': 3},
         'created_at': None,
@@ -70,6 +72,66 @@ class TestOfferObject(base.DBTestCase):
             self.assertIsInstance(
                 offers[0], offer.Offer)
             self.assertEqual(self.context, offers[0]._context)
+
+    def test_get_availabilities(self):
+        o = offer.Offer(
+            self.context, **self.fake_offer)
+        with mock.patch.object(
+                self.db_api, 'offer_get_conflict_times', autospec=True
+        ) as mock_offer_get_conflict_times:
+            mock_offer_get_conflict_times.return_value = [
+                [
+                    o.start_time + datetime.timedelta(days=10),
+                    o.start_time + datetime.timedelta(days=20)
+                ],
+                [
+                    o.start_time + datetime.timedelta(days=20),
+                    o.start_time + datetime.timedelta(days=30)
+                ],
+                [
+                    o.start_time + datetime.timedelta(days=50),
+                    o.start_time + datetime.timedelta(days=60)
+                ]
+            ]
+
+            expect = [
+                [
+                    o.start_time,
+                    o.start_time + datetime.timedelta(days=10)
+                ],
+                [
+                    o.start_time + datetime.timedelta(days=30),
+                    o.start_time + datetime.timedelta(days=50)
+                ],
+                [
+                    o.start_time + datetime.timedelta(days=60),
+                    o.end_time
+                ],
+            ]
+            a = o.get_availabilities()
+            self.assertEqual(a, expect)
+
+            mock_offer_get_conflict_times.return_value = [
+                [
+                    o.start_time,
+                    o.end_time
+                ],
+            ]
+
+            expect = []
+            a = o.get_availabilities()
+            self.assertEqual(a, expect)
+
+            mock_offer_get_conflict_times.return_value = []
+
+            expect = [
+                [
+                    o.start_time,
+                    o.end_time
+                ],
+            ]
+            a = o.get_availabilities()
+            self.assertEqual(a, expect)
 
     def test_create(self):
         o = offer.Offer(

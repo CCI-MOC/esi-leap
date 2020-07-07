@@ -46,6 +46,10 @@ class ContractNotFound(ESILeapException):
     msg_fmt = _("Contract %(contract_uuid)s not found.")
 
 
+class ContractNoOfferUUID(ESILeapException):
+    msg_fmt = _("Cannot create contract without parameter offer_uuid.")
+
+
 class OfferNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on "
                 "offer %(offer_uuid)s.")
@@ -53,6 +57,11 @@ class OfferNoPermission(ESILeapException):
 
 class OfferNotFound(ESILeapException):
     msg_fmt = _("Offer %(offer_uuid)s not found.")
+
+
+class OfferNotAvailable(ESILeapException):
+    msg_fmt = _("Offer %(offer_uuid)s is not available at given time range "
+                "%(start_time)s, %(end_time)s.")
 
 
 class ProjectNoPermission(ESILeapException):
@@ -68,16 +77,21 @@ class ResourceTypeUnknown(ESILeapException):
     msg_fmt = _("%(resource_type)s resource type unknown.")
 
 
+class InvalidTimeAPICommand(ESILeapException):
+    msg_fmt = _("Attempted to get %(resource)s resource without providing "
+                "both a valid Start Time and End Time. "
+                "Start Time must be strictly less than End Time. "
+                "Got %(start_time)s, %(end_time)s")
+
+
+class InvalidAvailabilityAPICommand(ESILeapException):
+    msg_fmt = _("Attempted to get an offer resource without providing "
+                "both a valid Availability Start Time and Availability "
+                "End Time. Availability Start Time must be strictly "
+                "less than Availability End Time. "
+                "Got %(a_start)s, %(a_end)s")
+
+
 class InvalidTimeRange(ESILeapException):
     msg_fmt = _("Attempted to create %(resource)s resource with an invalid "
                 "Start Time %(start_time)s and End Time %(end_time)s.")
-
-
-class InvalidTimeCommand(ESILeapException):
-    msg_fmt = _("Attempted to get %(resource)s resource without providing "
-                "a Start Time and End Time. Got %(start_time)s, %(end_time)s")
-
-
-class InvalidOwnerCommand(ESILeapException):
-    msg_fmt = _("Cannot set variable 'owner' without setting view='owned' "
-                "(Got view=%(view)s, owner=%(owner)s.")

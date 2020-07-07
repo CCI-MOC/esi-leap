@@ -99,6 +99,16 @@ def offer_get_all():
     return IMPL.offer_get_all()
 
 
+@to_dict
+def offer_get_conflict_times(offer_ref):
+    return IMPL.offer_get_conflict_times(offer_ref)
+
+
+def offer_verify_availability(offer_ref, start, end):
+    return IMPL.offer_verify_availability(
+        offer_ref, start, end)
+
+
 def offer_create(values):
     return IMPL.offer_create(values)
 
