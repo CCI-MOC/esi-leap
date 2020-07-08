@@ -10,8 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+ACTIVE = 'active'
 AVAILABLE = 'available'
-CLAIMED = 'claimed'
+CANCELLED = 'cancelled'
+CREATED = 'created'
 EXPIRED = 'expired'
-FULFILLED = 'fulfilled'
-OPEN = 'open'

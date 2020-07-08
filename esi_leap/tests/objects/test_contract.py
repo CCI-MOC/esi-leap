@@ -18,19 +18,51 @@ from esi_leap.objects import contract
 from esi_leap.tests import base
 
 
+class Offer(object):
+    pass
+
+
 def get_test_contract():
+
+    start = datetime.datetime(2016, 7, 16, 19, 20, 30)
+
     return {
         'id': 27,
         'uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
         'project_id': '01d4e6a72f5c408813e02f664cc8c83e',
-        'start_time': None,
-        'end_time': None,
-        'status': statuses.OPEN,
+        'start_time': start + datetime.timedelta(days=5),
+        'end_time': start + datetime.timedelta(days=10),
+        'status': statuses.CREATED,
         'properties': {},
         'offer_uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
         'created_at': None,
         'updated_at': None
     }
+
+
+def get_offer():
+
+    start = datetime.datetime(2016, 7, 16, 19, 20, 30)
+
+    o = Offer()
+    offer = dict(
+        id=27,
+        uuid='534653c9-880d-4c2d-6d6d-f4f2a09e384',
+        project_id='01d4e6a72f5c408813e02f664cc8c83e',
+        resource_type='dummy_node',
+        resource_uuid='1718',
+        start_time=start,
+        end_time=start + datetime.timedelta(days=100),
+        status=statuses.AVAILABLE,
+        properties={'floor_price': 3},
+        created_at=None,
+        updated_at=None
+    )
+
+    for k, v in offer.items():
+        setattr(o, k, v)
+
+    return o
 
 
 class TestContractObject(base.DBTestCase):
@@ -73,26 +105,34 @@ class TestContractObject(base.DBTestCase):
             self.context, **self.fake_contract)
         with mock.patch.object(self.db_api, 'contract_create',
                                autospec=True) as mock_contract_create:
-            mock_contract_create.return_value = get_test_contract()
+            with mock.patch.object(self.db_api, 'offer_get',
+                                   autospec=True) as mock_offer_get:
+                with mock.patch(
+                        'esi_leap.objects.contract.uuidutils.generate_uuid')\
+                        as mock_uuid:
+                    mock_offer_get.return_value = get_offer()
+                    mock_contract_create.return_value = get_test_contract()
+                    mock_uuid.return_value = '534653c9-880d-4c2d-6d6d-' \
+                                             'f4f2a09e384'
 
-            c.create()
+                    c.create()
 
-            mock_contract_create.assert_called_once_with(
-                get_test_contract())
+                    mock_contract_create.assert_called_once_with(
+                        get_test_contract())
 
     def test_destroy(self):
         c = contract.Contract(self.context, **self.fake_contract)
         with mock.patch.object(self.db_api, 'contract_destroy',
-                               autospec=True) as mock_contract_destroy:
+                               autospec=True) as mock_contract_cancel:
 
             c.destroy()
 
-            mock_contract_destroy.assert_called_once_with(
+            mock_contract_cancel.assert_called_once_with(
                 c.uuid)
 
     def test_save(self):
         c = contract.Contract(self.context, **self.fake_contract)
-        new_status = statuses.FULFILLED
+        new_status = statuses.ACTIVE
         updated_at = datetime.datetime(2006, 12, 11, 0, 0)
         with mock.patch.object(self.db_api, 'contract_update',
                                autospec=True) as mock_contract_update:

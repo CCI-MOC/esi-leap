@@ -21,6 +21,7 @@ from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
 from esi_leap.common import exception
 from esi_leap.common import policy
+from esi_leap.common import statuses
 from esi_leap.objects import offer
 from esi_leap.resource_objects import resource_object_factory as ro_factory
 
@@ -33,7 +34,7 @@ class Offer(base.ESILEAPBase):
     resource_uuid = wsme.wsattr(wtypes.text, mandatory=True)
     start_time = wsme.wsattr(datetime.datetime)
     end_time = wsme.wsattr(datetime.datetime)
-    status = wsme.wsattr(wtypes.text)
+    status = wsme.wsattr(wtypes.text, readonly=True)
     properties = {wtypes.text: types.jsontype}
     availabilities = wsme.wsattr([[datetime.datetime]], readonly=True)
 
@@ -104,6 +105,11 @@ class OffersController(rest.RestController):
                 a_start=available_start_time,
                 a_end=available_end_time)
 
+        if status is None:
+            status = statuses.AVAILABLE
+        elif status == 'any':
+            status = None
+
         possible_filters = {
             'project_id': project_id,
             'resource_type': resource_type,
@@ -160,7 +166,7 @@ class OffersController(rest.RestController):
         o = offer.Offer.get(request, offer_uuid)
         OffersController._verify_resource_permission(cdict, o.to_dict())
 
-        o.destroy()
+        o.cancel()
 
     @staticmethod
     def _add_offer_availabilities(o):

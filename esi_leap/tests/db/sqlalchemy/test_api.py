@@ -13,36 +13,53 @@
 import datetime
 
 from esi_leap.common import exception as e
+from esi_leap.common import statuses
 from esi_leap.db.sqlalchemy import api
 import esi_leap.tests.base as base
 
 now = datetime.datetime(2016, 7, 16, 19, 20, 30)
 
 test_offer_1 = dict(
+    uuid='abc123',
     project_id='0wn3r',
     resource_uuid='1111',
     resource_type='dummy_node',
     start_time=now,
     end_time=now + datetime.timedelta(days=100),
     properties={'foo': 'bar'},
+    status=statuses.AVAILABLE,
 )
 
 test_contract_1 = dict(
+    uuid='11111',
     project_id='1e5533',
     start_time=now + datetime.timedelta(days=10),
     end_time=now + datetime.timedelta(days=20),
+    status=statuses.CREATED,
 )
 
 test_contract_2 = dict(
+    uuid='22222',
     project_id='1e5533',
     start_time=now + datetime.timedelta(days=20),
     end_time=now + datetime.timedelta(days=30),
+    status=statuses.CREATED,
 )
 
 test_contract_3 = dict(
+    uuid='33333',
     project_id='1e5533',
     start_time=now + datetime.timedelta(days=50),
     end_time=now + datetime.timedelta(days=60),
+    status=statuses.ACTIVE,
+)
+
+test_contract_4 = dict(
+    uuid='44444',
+    project_id='1e5533',
+    start_time=now + datetime.timedelta(days=85),
+    end_time=now + datetime.timedelta(days=90),
+    status=statuses.CANCELLED,
 )
 
 
@@ -91,63 +108,69 @@ class TestAPI(base.DBTestCase):
 
         start = now + datetime.timedelta(days=15)
         end = now + datetime.timedelta(days=16)
-        self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
-                          offer, start, end)
+        self.assertRaises(e.OfferNoTimeAvailabilities,
+                          api.offer_verify_availability, offer, start, end)
 
         start = now + datetime.timedelta(days=45)
         end = now + datetime.timedelta(days=55)
-        self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
-                          offer, start, end)
+        self.assertRaises(e.OfferNoTimeAvailabilities,
+                          api.offer_verify_availability, offer, start, end)
 
         start = now + datetime.timedelta(days=55)
         end = now + datetime.timedelta(days=65)
-        self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
-                          offer, start, end)
+        self.assertRaises(e.OfferNoTimeAvailabilities,
+                          api.offer_verify_availability, offer, start, end)
 
         start = now + datetime.timedelta(days=50)
         end = now + datetime.timedelta(days=65)
-        self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
-                          offer, start, end)
+        self.assertRaises(e.OfferNoTimeAvailabilities,
+                          api.offer_verify_availability, offer, start, end)
 
         start = now + datetime.timedelta(days=45)
         end = now + datetime.timedelta(days=60)
-        self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
-                          offer, start, end)
+        self.assertRaises(e.OfferNoTimeAvailabilities,
+                          api.offer_verify_availability, offer, start, end)
 
         start = now + datetime.timedelta(days=90)
         end = now + datetime.timedelta(days=105)
-        self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
-                          offer, start, end)
+        self.assertRaises(e.OfferNoTimeAvailabilities,
+                          api.offer_verify_availability, offer, start, end)
 
         start = now + datetime.timedelta(days=100)
         end = now + datetime.timedelta(days=105)
-        self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
-                          offer, start, end)
+        self.assertRaises(e.OfferNoTimeAvailabilities,
+                          api.offer_verify_availability, offer, start, end)
 
         start = now + datetime.timedelta(days=105)
         end = now + datetime.timedelta(days=110)
-        self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
-                          offer, start, end)
+        self.assertRaises(e.OfferNoTimeAvailabilities,
+                          api.offer_verify_availability, offer, start, end)
 
         start = now - datetime.timedelta(days=1)
         end = now + datetime.timedelta(days=5)
-        self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
-                          offer, start, end)
+        self.assertRaises(e.OfferNoTimeAvailabilities,
+                          api.offer_verify_availability, offer, start, end)
 
         start = now - datetime.timedelta(days=1)
         end = now
-        self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
-                          offer, start, end)
+        self.assertRaises(e.OfferNoTimeAvailabilities,
+                          api.offer_verify_availability, offer, start, end)
 
         start = now - datetime.timedelta(days=10)
         end = now - datetime.timedelta(days=5)
-        self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
-                          offer, start, end)
+        self.assertRaises(e.OfferNoTimeAvailabilities,
+                          api.offer_verify_availability, offer, start, end)
 
         start = now + datetime.timedelta(days=45)
         end = now + datetime.timedelta(days=55)
-        self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
-                          offer, start, end)
+        self.assertRaises(e.OfferNoTimeAvailabilities,
+                          api.offer_verify_availability, offer, start, end)
+
+        test_contract_4['offer_uuid'] = offer.uuid
+        api.contract_create(test_contract_4)
+        start = now + datetime.timedelta(days=86)
+        end = now + datetime.timedelta(days=87)
+        api.offer_verify_availability(offer, start, end)
 
     def test_offer_get(self):
 
@@ -159,5 +182,4 @@ class TestAPI(base.DBTestCase):
 
     def test_offer_get_not_found(self):
 
-        self.assertRaises(e.OfferNotFound,
-                          api.offer_get, 'some_uuid')
+        self.assertRaises(e.OfferNotFound, api.offer_get, 'some_uuid')

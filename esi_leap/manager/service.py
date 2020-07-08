@@ -64,7 +64,7 @@ class ManagerService(service.Service):
     def _fulfill_contracts(self):
         LOG.info("Checking for contracts to fulfill")
         contracts = contract.Contract.get_all_by_status(
-            self._context, statuses.OPEN)
+            self._context, statuses.CREATED)
         for c in contracts:
             if c.start_time and \
                c.start_time <= timeutils.utcnow():
@@ -74,7 +74,7 @@ class ManagerService(service.Service):
     def _expire_contracts(self):
         LOG.info("Checking for expiring contracts")
         contracts = contract.Contract.get_all_by_status(
-            self._context, statuses.FULFILLED)
+            self._context, statuses.ACTIVE)
         for c in contracts:
             if c.end_time and \
                c.end_time <= timeutils.utcnow():
