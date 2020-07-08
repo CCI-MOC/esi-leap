@@ -100,3 +100,54 @@ class APITestCase(base.DBTestCase):
             response = response.json
         print('GOT:%s' % response)
         return response
+
+    # borrowed from Ironic
+    def post_json(self, path, params, expect_errors=False, headers=None,
+                  extra_environ=None, status=None):
+        """Sends simulated HTTP POST request to Pecan test app.
+
+        :param path: url path of target service
+        :param params: content for wsgi.input of request
+        :param expect_errors: Boolean value; whether an error is expected based
+                              on request
+        :param headers: a dictionary of headers to send along with the request
+        :param extra_environ: a dictionary of environ variables to send along
+                              with the request
+        :param status: expected status code of response
+        """
+        return self._request_json(path=path, params=params,
+                                  expect_errors=expect_errors,
+                                  headers=headers, extra_environ=extra_environ,
+                                  status=status, method="post")
+
+    # borrowed from Ironic
+    def _request_json(self, path, params, expect_errors=False, headers=None,
+                      method="post", extra_environ=None, status=None,
+                      path_prefix=PATH_PREFIX):
+        """Sends simulated HTTP request to Pecan test app.
+
+        :param path: url path of target service
+        :param params: content for wsgi.input of request
+        :param expect_errors: Boolean value; whether an error is expected based
+                              on request
+        :param headers: a dictionary of headers to send along with the request
+        :param method: Request method type. Appropriate method function call
+                       should be used rather than passing attribute in.
+        :param extra_environ: a dictionary of environ variables to send along
+                              with the request
+        :param status: expected status code of response
+        :param path_prefix: prefix of the url path
+        """
+
+        full_path = path_prefix + path
+        print('%s: %s %s' % (method.upper(), full_path, params))
+        response = getattr(self.app, "%s_json" % method)(
+            str(full_path),
+            params=params,
+            headers=headers,
+            status=status,
+            extra_environ=extra_environ,
+            expect_errors=expect_errors
+        )
+        print('GOT:%s' % response)
+        return response
