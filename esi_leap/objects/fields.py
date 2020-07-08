@@ -35,7 +35,7 @@ class FlexibleDictField(object_fields.AutoTypedField):
 
     def _null(self, obj, attr):
         if self.nullable:
-                return {}
+            return {}
         super(FlexibleDictField, self)._null(obj, attr)
 
 

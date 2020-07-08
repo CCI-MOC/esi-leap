@@ -155,10 +155,15 @@ def offer_get_all(filters):
 def offer_get_conflict_times(offer_ref):
 
     c_query = model_query(models.Contract, get_session())
-    return c_query.with_entities(models.Contract.start_time, models.Contract.end_time).\
-        join(models.Offer).\
-        order_by(models.Contract.start_time).\
-        filter(models.Contract.offer_uuid == offer_ref.uuid).all()
+    return (
+        c_query.with_entities(
+            models.Contract.start_time, models.Contract.end_time
+        )
+        .join(models.Offer)
+        .order_by(models.Contract.start_time)
+        .filter(models.Contract.offer_uuid == offer_ref.uuid)
+        .all()
+    )
 
 
 def offer_verify_availability(offer_ref, start, end):
@@ -170,9 +175,13 @@ def offer_verify_availability(offer_ref, start, end):
 
     c_query = model_query(models.Contract, get_session())
 
-    contracts = c_query.with_entities(models.Contract.start_time, models.Contract.end_time).\
-        join(models.Offer).\
-        filter((models.Contract.offer_uuid == offer_ref.uuid))
+    contracts = (
+        c_query.with_entities(
+            models.Contract.start_time, models.Contract.end_time
+        )
+        .join(models.Offer)
+        .filter((models.Contract.offer_uuid == offer_ref.uuid))
+    )
 
     conflict = contracts.filter((
         (start >= models.Contract.start_time) &

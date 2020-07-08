@@ -1,0 +1,11 @@
+language: python
+python:
+  - "3.8"
+
+install:
+  - pip3 install pycodestyle
+  - pip3 install pylint
+
+script:
+  - sh -e ci/pylint_tests.sh
+  - sh -e ci/pycodestyle_tests.sh
