@@ -148,3 +148,21 @@ class TestAPI(base.DBTestCase):
         end = now + datetime.timedelta(days=55)
         self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
                           offer, start, end)
+
+    def test_offer_get(Self):
+
+        res = self.db.sqlalchemy.api.offer_get(test_offer_1.resource_uuid)
+        self.assertEqual(test_offer_1.resrouce_uuid, res.resource_uuid)
+        self.assertEqual(test_offer_1.project_id, res.project_id)
+        self.assertEqual(test_offer_1.properties, res.properties)
+    
+    def test_offer_get_not_found(self):
+
+        self.assertRaises(exception.NodeNotFound,    
+                          self.db.sqlalchemy.api.offer_get, 'some_uuid')
+        self.assertRaises(exception.NodeNotFound,
+                          self.db.sqlalchemy.api.offer_get,
+                          '12345678909876543212345678900987654321')
+        self.assertRaises(exception.NodeNotFound,
+                          self.db.sqlalchemy.api.offer_get,
+                          'breakfast_lunch_and_dinner')
