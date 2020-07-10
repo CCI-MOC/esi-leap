@@ -59,9 +59,14 @@ class OfferNotFound(ESILeapException):
     msg_fmt = _("Offer %(offer_uuid)s not found.")
 
 
+class OfferNoTimeAvailabilities(ESILeapException):
+    msg_fmt = _("Offer %(offer_uuid)s has no availabilities at given "
+                "time range %(start_time)s, %(end_time)s.")
+
+
 class OfferNotAvailable(ESILeapException):
-    msg_fmt = _("Offer %(offer_uuid)s is not available at given time range "
-                "%(start_time)s, %(end_time)s.")
+    msg_fmt = _("Offer %(offer_uuid)s does not have status "
+                "'available'. Got offer status '%(status)s'.")
 
 
 class ProjectNoPermission(ESILeapException):

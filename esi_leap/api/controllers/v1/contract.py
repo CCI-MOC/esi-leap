@@ -21,6 +21,7 @@ from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
 from esi_leap.common import exception
 from esi_leap.common import policy
+from esi_leap.common import statuses
 from esi_leap.objects import contract
 from esi_leap.objects import offer
 
@@ -31,7 +32,7 @@ class Contract(base.ESILEAPBase):
     project_id = wsme.wsattr(wtypes.text)
     start_time = wsme.wsattr(datetime.datetime)
     end_time = wsme.wsattr(datetime.datetime)
-    status = wsme.wsattr(wtypes.text)
+    status = wsme.wsattr(wtypes.text, readonly=True)
     properties = {wtypes.text: types.jsontype}
     offer_uuid = wsme.wsattr(wtypes.text, mandatory=True)
 
@@ -119,7 +120,7 @@ class ContractsController(rest.RestController):
                 policy.authorize('esi_leap:contract:contract_admin',
                                  cdict, cdict)
 
-        c.destroy()
+        c.cancel()
 
     @staticmethod
     def _contract_get_all_authorize_filters(cdict, r_project_id,
@@ -127,6 +128,11 @@ class ContractsController(rest.RestController):
                                             status=None, offer_uuid=None,
                                             project_id=None, view=None,
                                             owner=None):
+
+        if status is None:
+            status = [statuses.CREATED, statuses.ACTIVE]
+        elif status == 'any':
+            status = None
 
         possible_filters = {
             'status': status,

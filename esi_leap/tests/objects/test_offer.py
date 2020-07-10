@@ -138,24 +138,30 @@ class TestOfferObject(base.DBTestCase):
             self.context, **self.fake_offer)
         with mock.patch.object(self.db_api, 'offer_create',
                                autospec=True) as mock_offer_create:
-            mock_offer_create.return_value = get_test_offer()
-            o.create(self.context)
-            mock_offer_create.assert_called_once_with(
-                get_test_offer())
+            with mock.patch(
+                    'esi_leap.objects.offer.uuidutils.generate_uuid') \
+                    as mock_uuid:
+                mock_uuid.return_value = '534653c9-880d-4c2d-6d6d-' \
+                                         'f4f2a09e384'
+                mock_offer_create.return_value = get_test_offer()
+
+                o.create(self.context)
+                mock_offer_create.assert_called_once_with(
+                    get_test_offer())
 
     def test_destroy(self):
         o = offer.Offer(self.context, **self.fake_offer)
         with mock.patch.object(self.db_api, 'offer_destroy',
-                               autospec=True) as mock_offer_destroy:
+                               autospec=True) as mock_offer_cancel:
 
             o.destroy()
 
-            mock_offer_destroy.assert_called_once_with(
+            mock_offer_cancel.assert_called_once_with(
                 o.uuid)
 
     def test_save(self):
         o = offer.Offer(self.context, **self.fake_offer)
-        new_status = statuses.CLAIMED
+        new_status = statuses.CANCELLED
         updated_at = datetime.datetime(2006, 12, 11, 0, 0)
         with mock.patch.object(self.db_api, 'offer_update',
                                autospec=True) as mock_offer_update:

@@ -10,6 +10,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
+
+from esi_leap.common import exception
 from esi_leap.common import statuses
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
@@ -18,6 +21,7 @@ from esi_leap.objects import fields
 from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 from oslo_config import cfg
+from oslo_utils import uuidutils
 from oslo_versionedobjects import base as versioned_objects_base
 
 CONF = cfg.CONF
@@ -51,6 +55,9 @@ class Offer(base.ESILEAPObject):
 
     def get_availabilities(self):
 
+        if self.status != statuses.AVAILABLE:
+            return []
+
         conflicts = self.dbapi.offer_get_conflict_times(self)
 
         if conflicts:
@@ -78,8 +85,32 @@ class Offer(base.ESILEAPObject):
 
     def create(self, context=None):
         updates = self.obj_get_changes()
+
+        updates['uuid'] = uuidutils.generate_uuid()
+
+        if 'start_time' not in updates:
+            updates['start_time'] = datetime.datetime.now()
+        if 'end_time' not in updates:
+            updates['end_time'] = datetime.datetime.max
+
+        if updates['start_time'] >= updates['end_time']:
+            raise exception.\
+                InvalidTimeRange(resource="an offer",
+                                 start_time=str(updates['start_time']),
+                                 end_time=str(updates['end_time']))
+
         db_offer = self.dbapi.offer_create(updates)
         self._from_db_object(context, self, db_offer)
+
+    def cancel(self):
+        contracts = esi_leap.objects.contract.Contract.get_all(
+            None, {'offer_uuid': self.uuid})
+        for c in contracts:
+            if c.status == statuses.CREATED or c.status == statuses.ACTIVE:
+                c.cancel()
+
+        self.status = statuses.CANCELLED
+        self.save(None)
 
     def destroy(self):
         self.dbapi.offer_destroy(self.uuid)
@@ -97,8 +128,8 @@ class Offer(base.ESILEAPObject):
 
     def expire(self, context=None):
         # make sure all related contracts are expired
-        contracts = esi_leap.objects.contract.Contract.get_all_by_offer_uuid(
-            context, self.uuid)
+        contracts = esi_leap.objects.contract.Contract.get_all(
+            None, {'offer_uuid': self.uuid})
         for c in contracts:
             if c.status != statuses.EXPIRED:
                 c.expire(context)

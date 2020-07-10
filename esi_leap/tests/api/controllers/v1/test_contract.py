@@ -116,7 +116,7 @@ class TestContractControllersGetAllFilters(testtools.TestCase):
     def test_contract_get_all_no_view_no_projectid_no_owner(self):
 
         expected_filters = {
-            'status': 'available',
+            'status': 'random',
             'offer_uuid': 'offeruuid',
         }
 
@@ -124,27 +124,27 @@ class TestContractControllersGetAllFilters(testtools.TestCase):
         expected_filters['project_id'] = admin_project
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_context, admin_project,
-            status='available', offer_uuid='offeruuid')
+            status='random', offer_uuid='offeruuid')
         self.assertEqual(expected_filters, filters)
 
         expected_filters['project_id'] = admin_lesseeproject
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_lessee_context, admin_lesseeproject,
-            status='available', offer_uuid='offeruuid')
+            status='random', offer_uuid='offeruuid')
         self.assertEqual(expected_filters, filters)
 
         # admin owner
         expected_filters['project_id'] = admin_ownerproject
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_owner_context, admin_ownerproject,
-            status='available', offer_uuid='offeruuid')
+            status='random', offer_uuid='offeruuid')
         self.assertEqual(expected_filters, filters)
 
         # owner lessee
         expected_filters['project_id'] = owner_lesseeproject
         filters = ContractsController._contract_get_all_authorize_filters(
             owner_lessee_context, owner_lesseeproject,
-            status='available', offer_uuid='offeruuid')
+            status='random', offer_uuid='offeruuid')
         self.assertEqual(expected_filters, filters)
 
         # admin lessee owner
@@ -152,7 +152,7 @@ class TestContractControllersGetAllFilters(testtools.TestCase):
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_owner_lessee_context,
             admin_owner_lesseeproject,
-            status='available', offer_uuid='offeruuid')
+            status='random', offer_uuid='offeruuid')
         self.assertEqual(expected_filters, filters)
 
         # random
@@ -160,77 +160,89 @@ class TestContractControllersGetAllFilters(testtools.TestCase):
                           ContractsController.
                           _contract_get_all_authorize_filters,
                           random_context, random_project,
-                          status='available', offer_uuid='offeruuid')
+                          status='random', offer_uuid='offeruuid')
 
     def test_contract_get_all_no_view_project_no_owner(self):
 
-        expected_filters = {}
+        expected_filters = {
+            'status': 'random'
+        }
 
         # admin
         expected_filters['project_id'] = admin_project
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_context, admin_project,
-            project_id=admin_project)
+            project_id=admin_project,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         expected_filters['project_id'] = random_project
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_context, admin_project,
-            project_id=random_project)
+            project_id=random_project,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         # admin lessee
         expected_filters['project_id'] = admin_lesseeproject
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_lessee_context, admin_lesseeproject,
-            project_id=admin_lesseeproject)
+            project_id=admin_lesseeproject,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         expected_filters['project_id'] = random_project
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_lessee_context, admin_lesseeproject,
-            project_id=random_project)
+            project_id=random_project,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         # admin owner
         expected_filters['project_id'] = admin_ownerproject
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_owner_context, admin_ownerproject,
-            project_id=admin_ownerproject)
+            project_id=admin_ownerproject,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         expected_filters['project_id'] = random_project
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_owner_context, admin_ownerproject,
-            project_id=random_project)
+            project_id=random_project,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         # owner lessee
         expected_filters['project_id'] = owner_lesseeproject
         filters = ContractsController._contract_get_all_authorize_filters(
             owner_lessee_context, owner_lesseeproject,
-            project_id=owner_lesseeproject)
+            project_id=owner_lesseeproject,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         self.assertRaises(policy.PolicyNotAuthorized,
                           ContractsController.
                           _contract_get_all_authorize_filters,
                           owner_lessee_context, owner_lesseeproject,
-                          project_id=random_project)
+                          project_id=random_project,
+                          status='random')
 
         # admin lessee owner
         expected_filters['project_id'] = admin_owner_lesseeproject
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_owner_lessee_context,
             admin_owner_lesseeproject,
-            project_id=admin_owner_lesseeproject)
+            project_id=admin_owner_lesseeproject,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         expected_filters['project_id'] = random_project
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_owner_lessee_context,
             admin_owner_lesseeproject,
-            project_id=random_project)
+            project_id=random_project,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         # random
@@ -238,63 +250,74 @@ class TestContractControllersGetAllFilters(testtools.TestCase):
                           ContractsController.
                           _contract_get_all_authorize_filters,
                           random_context, random_project,
-                          project_id=random_project)
+                          project_id=random_project,
+                          status='random')
 
     def test_contract_get_all_no_view_any_projectid_owner(self):
 
-        expected_filters = {}
+        expected_filters = {
+            'status': 'random'
+        }
 
         # admin
         expected_filters['owner'] = admin_project
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_context, admin_project,
-            owner=admin_project)
+            owner=admin_project,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         expected_filters['owner'] = random_project
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_context, admin_project,
-            owner=random_project)
+            owner=random_project,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         # admin lessee
         expected_filters['owner'] = random_project
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_lessee_context, admin_lesseeproject,
-            owner=random_project)
+            owner=random_project,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         # admin owner
         expected_filters['owner'] = random_project
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_owner_context, admin_ownerproject,
-            owner=random_project)
+            owner=random_project,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         # owner lessee
         expected_filters['owner'] = owner_lesseeproject
         filters = ContractsController._contract_get_all_authorize_filters(
             owner_lessee_context, owner_lesseeproject,
-            owner=owner_lesseeproject)
+            owner=owner_lesseeproject,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         self.assertRaises(policy.PolicyNotAuthorized,
                           ContractsController.
                           _contract_get_all_authorize_filters,
                           owner_lessee_context, owner_lesseeproject,
-                          owner=random_project)
+                          owner=random_project,
+                          status='random')
 
         # admin lessee owner
         expected_filters['owner'] = admin_owner_lesseeproject
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_owner_context, admin_owner_lesseeproject,
-            owner=admin_owner_lesseeproject)
+            owner=admin_owner_lesseeproject,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         expected_filters['owner'] = random_project
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_owner_context, admin_owner_lesseeproject,
-            owner=random_project)
+            owner=random_project,
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         # random
@@ -302,24 +325,28 @@ class TestContractControllersGetAllFilters(testtools.TestCase):
                           ContractsController.
                           _contract_get_all_authorize_filters,
                           random_context, random_project,
-                          owner=random_project)
+                          owner=random_project,
+                          status='random')
 
         # owner w/ project_id
         expected_filters['owner'] = owner_project
         expected_filters['project_id'] = random_project
         filters = ContractsController._contract_get_all_authorize_filters(
             owner_context, owner_project,
-            owner=owner_project, project_id=random_project)
+            owner=owner_project, project_id=random_project, status='random')
         self.assertEqual(expected_filters, filters)
 
     def test_contract_get_all_all_view(self):
 
-        expected_filters = {}
+        expected_filters = {
+            'status': 'random'
+        }
 
         # admin
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_context, admin_project,
-            view='all')
+            view='all',
+            status='random')
         self.assertEqual(expected_filters, filters)
 
         # not admin
@@ -327,7 +354,8 @@ class TestContractControllersGetAllFilters(testtools.TestCase):
                           ContractsController.
                           _contract_get_all_authorize_filters,
                           owner_lessee_context, owner_lesseeproject,
-                          view='all')
+                          view='all',
+                          status='random')
 
     def test_contract_get_all_all_view_times(self):
 
@@ -335,6 +363,7 @@ class TestContractControllersGetAllFilters(testtools.TestCase):
         end = datetime.datetime(2020, 7, 16, 19, 20, 30)
 
         expected_filters = {
+            'status': 'random',
             'start_time': start,
             'end_time': end
         }
@@ -342,17 +371,34 @@ class TestContractControllersGetAllFilters(testtools.TestCase):
         # admin
         filters = ContractsController._contract_get_all_authorize_filters(
             admin_context, admin_project,
-            view='all', start_time=start, end_time=end)
+            view='all', start_time=start, end_time=end, status='random')
         self.assertEqual(expected_filters, filters)
 
         self.assertRaises(exception.InvalidTimeAPICommand,
                           ContractsController.
                           _contract_get_all_authorize_filters,
                           admin_context, admin_project,
-                          view='all', start_time=start)
+                          view='all', start_time=start, status='random')
 
         self.assertRaises(exception.InvalidTimeAPICommand,
                           ContractsController.
                           _contract_get_all_authorize_filters,
                           admin_context, admin_project,
-                          view='all', end_time=end)
+                          view='all', end_time=end, status='random')
+
+    def test_contract_get_all_status(self):
+
+        expected_filters = {
+            'project_id': 'adminid',
+            'status': ['created', 'active']
+        }
+
+        # admin
+        filters = ContractsController._contract_get_all_authorize_filters(
+            admin_context, admin_project)
+        self.assertEqual(expected_filters, filters)
+
+        del(expected_filters['status'])
+        filters = ContractsController._contract_get_all_authorize_filters(
+            admin_context, admin_project, status='any')
+        self.assertEqual(expected_filters, filters)

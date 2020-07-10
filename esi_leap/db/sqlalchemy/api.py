@@ -10,17 +10,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import datetime
 import sys
 
 from oslo_config import cfg
 from oslo_db.sqlalchemy import session as db_session
 from oslo_log import log as logging
-from oslo_utils import uuidutils
 
 import sqlalchemy as sa
 
 from esi_leap.common import exception
+from esi_leap.common import statuses
 from esi_leap.db.sqlalchemy import models
 
 
@@ -119,7 +118,7 @@ class InequalityCondition(object):
 # Offer
 def offer_get(offer_uuid):
     query = model_query(models.Offer, get_session())
-    offer_ref = query.filter_by(uuid=offer_uuid).first()
+    offer_ref = query.filter_by(uuid=offer_uuid).one_or_none()
     if not offer_ref:
         raise exception.OfferNotFound(offer_uuid=offer_uuid)
 
@@ -146,7 +145,7 @@ def offer_get_all(filters):
         for o in query:
             try:
                 offer_verify_availability(o, a_start, a_end)
-            except exception.OfferNotAvailable:
+            except exception.OfferNoTimeAvailabilities:
                 query = query.filter(models.Offer.uuid != o.uuid)
 
     return query
@@ -155,33 +154,47 @@ def offer_get_all(filters):
 def offer_get_conflict_times(offer_ref):
 
     c_query = model_query(models.Contract, get_session())
-    return (
-        c_query.with_entities(
-            models.Contract.start_time, models.Contract.end_time
-        )
-        .join(models.Offer)
-        .order_by(models.Contract.start_time)
-        .filter(models.Contract.offer_uuid == offer_ref.uuid)
-        .all()
-    )
+
+    return c_query.with_entities(
+        models.Contract.start_time, models.Contract.end_time).\
+        join(models.Offer).\
+        order_by(models.Contract.start_time).\
+        filter(models.Contract.offer_uuid == offer_ref.uuid,
+               (models.Contract.status == statuses.CREATED) |
+               (models.Contract.status == statuses.ACTIVE)
+               ).all()
+
+
+def offer_get_first_availability(offer_ref, start):
+    c_query = model_query(models.Contract, get_session())
+
+    return c_query.with_entities(
+        models.Contract.start_time).\
+        join(models.Offer).\
+        filter(models.Contract.offer_uuid == offer_ref.uuid,
+               (models.Contract.status == statuses.CREATED) |
+               (models.Contract.status == statuses.ACTIVE)
+               ).\
+        order_by(models.Contract.start_time).\
+        filter(models.Contract.end_time >= start).one_or_none()
 
 
 def offer_verify_availability(offer_ref, start, end):
 
     if start < offer_ref.start_time or end > offer_ref.end_time:
-        raise exception.OfferNotAvailable(offer_uuid=offer_ref.uuid,
-                                          start_time=start,
-                                          end_time=end)
+        raise exception.OfferNoTimeAvailabilities(offer_uuid=offer_ref.uuid,
+                                                  start_time=start,
+                                                  end_time=end)
 
     c_query = model_query(models.Contract, get_session())
 
-    contracts = (
-        c_query.with_entities(
-            models.Contract.start_time, models.Contract.end_time
-        )
-        .join(models.Offer)
-        .filter((models.Contract.offer_uuid == offer_ref.uuid))
-    )
+    contracts = c_query.with_entities(
+        models.Contract.start_time, models.Contract.end_time).\
+        join(models.Offer).\
+        filter((models.Contract.offer_uuid == offer_ref.uuid),
+               (models.Contract.status == statuses.CREATED) |
+               (models.Contract.status == statuses.ACTIVE)
+               )
 
     conflict = contracts.filter((
         (start >= models.Contract.start_time) &
@@ -195,34 +208,22 @@ def offer_verify_availability(offer_ref, start, end):
     )).first()
 
     if conflict:
-        raise exception.OfferNotAvailable(offer_uuid=offer_ref.uuid,
-                                          start_time=start,
-                                          end_time=end)
+        raise exception.OfferNoTimeAvailabilities(offer_uuid=offer_ref.uuid,
+                                                  start_time=start,
+                                                  end_time=end)
 
 
 def offer_create(values):
-
     offer_ref = models.Offer()
-    values['uuid'] = uuidutils.generate_uuid()
-
-    if 'start_time' not in values:
-        values['start_time'] = datetime.datetime.now()
-    if 'end_time' not in values:
-        values['end_time'] = datetime.datetime.max
-
-    if values['start_time'] >= values['end_time']:
-        raise exception.InvalidTimeRange(resource="an offer",
-                                         start_time=str(values['start_time']),
-                                         end_time=str(values['end_time']))
-
     offer_ref.update(values)
     offer_ref.save(get_session())
     return offer_ref
 
 
 def offer_update(offer_uuid, values):
-    query = model_query(models.Offer, get_session())
-    offer_ref = query.filter_by(uuid=offer_uuid)
+    s = get_session()
+    query = model_query(models.Offer, s)
+    offer_ref = query.filter_by(uuid=offer_uuid).one_or_none()
 
     values.pop('uuid', None)
     values.pop('project_id', None)
@@ -239,13 +240,13 @@ def offer_update(offer_uuid, values):
                                          end_time=str(values['end_time']))
 
     offer_ref.update(values)
-    offer_ref.save(get_session())
+    offer_ref.save(s)
     return offer_ref
 
 
 def offer_destroy(offer_uuid):
     query = model_query(models.Offer, get_session())
-    offer_ref = query.filter_by(uuid=offer_uuid)
+    offer_ref = query.filter_by(uuid=offer_uuid).one_or_none()
 
     if not offer_ref:
         raise exception.OfferNotFound(offer_uuid=offer_uuid)
@@ -259,7 +260,7 @@ def offer_destroy(offer_uuid):
 def contract_get(contract_uuid):
     query = model_query(models.Contract, get_session())
 
-    result = query.filter_by(uuid=contract_uuid).first()
+    result = query.filter_by(uuid=contract_uuid).one_or_none()
 
     if not result:
         raise exception.ContractNotFound(contract_uuid=contract_uuid)
@@ -272,8 +273,16 @@ def contract_get_all(filters):
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
     owner = filters.pop('owner', None)
+    status = filters.pop('status', None)
 
     query = query.filter_by(**filters)
+
+    if status:
+        if type(status) == list:
+            query.filter((models.Contract.status == status[0]) |
+                         (models.Contract.status == status[1]))
+        else:
+            query.filter_by(status=status)
 
     if start and end:
         query = query.filter((start >= models.Contract.start_time) &
@@ -288,42 +297,15 @@ def contract_get_all(filters):
 
 def contract_create(values):
     contract_ref = models.Contract()
-    values['uuid'] = uuidutils.generate_uuid()
-
-    query = model_query(models.Offer, get_session())
-
-    if 'offer_uuid' not in values:
-        raise exception.ContractNoOfferUUID()
-
-    offer_ref = query.filter_by(uuid=values['offer_uuid']).first()
-
-    if offer_ref is None:
-        raise exception.OfferNotFound(offer_uuid=values['offer_uuid'])
-
-    if 'start_time' not in values:
-        values['start_time'] = datetime.datetime.now()
-
-    if 'end_time' not in values:
-        c_query = model_query(models.Contract, get_session())
-        c = c_query.order_by(models.Contract.end_time).\
-            filter(models.Contract.start_time > values['start_time']).first()
-
-        if c is None:
-            values['end_time'] = offer_ref.end_time
-        else:
-            values['end_time'] = c.start_time
-
-    offer_verify_availability(offer_ref,
-                              values['start_time'], values['end_time'])
-
     contract_ref.update(values)
     contract_ref.save(get_session())
     return contract_ref
 
 
 def contract_update(contract_uuid, values):
-    query = model_query(models.Contract, get_session())
-    contract_ref = query.filter_by(uuid=contract_uuid)
+    s = get_session()
+    query = model_query(models.Contract, s)
+    contract_ref = query.filter_by(uuid=contract_uuid).one_or_none()
 
     values.pop('uuid', None)
     values.pop('project_id', None)
@@ -340,13 +322,13 @@ def contract_update(contract_uuid, values):
                                          end_time=str(values['end_time']))
 
     contract_ref.update(values)
-    contract_ref.save(get_session())
+    contract_ref.save(s)
     return contract_ref
 
 
 def contract_destroy(contract_uuid):
     query = model_query(models.Contract, get_session())
-    contract_ref = query.filter_by(uuid=contract_uuid)
+    contract_ref = query.filter_by(uuid=contract_uuid).one_or_none()
 
     if not contract_ref:
         raise exception.ContractNotFound(contract_uuid=contract_uuid)
