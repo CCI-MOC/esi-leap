@@ -148,3 +148,16 @@ class TestAPI(base.DBTestCase):
         end = now + datetime.timedelta(days=55)
         self.assertRaises(e.OfferNotAvailable, api.offer_verify_availability,
                           offer, start, end)
+
+    def test_offer_get(self):
+
+        offer = api.offer_create(test_offer_1)
+        res = api.offer_get(offer.uuid)
+        self.assertEqual(offer.uuid, res.uuid)
+        self.assertEqual(offer.project_id, res.project_id)
+        self.assertEqual(offer.properties, res.properties)
+
+    def test_offer_get_not_found(self):
+
+        self.assertRaises(e.OfferNotFound,
+                          api.offer_get, 'some_uuid')
