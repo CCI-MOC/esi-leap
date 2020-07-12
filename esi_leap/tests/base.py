@@ -40,11 +40,13 @@ class TestCase(base.BaseTestCase):
 
     def setUp(self):
         super(TestCase, self).setUp()
-        self.context = ctx.RequestContext(
-            auth_token=None,
-            project_id='12345',
-            is_admin=True,
-            overwrite=False)
+
+        if not hasattr(self, 'context'):
+            self.context = ctx.RequestContext(
+                auth_token=None,
+                project_id='12345',
+                is_admin=True,
+                overwrite=False)
 
 
 class DBTestCase(TestCase):
