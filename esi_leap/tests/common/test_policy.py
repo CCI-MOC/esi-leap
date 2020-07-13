@@ -13,10 +13,20 @@
 from oslo_policy import policy as oslo_policy
 
 from esi_leap.common import policy
+import esi_leap.conf
 from esi_leap.tests import base
 
 
+CONF = esi_leap.conf.CONF
+
+
 class PolicyTestCase(base.TestCase):
+
+    def setUp(self):
+        super(PolicyTestCase, self).setUp()
+
+        CONF.set_override("auth_enable", True,
+                          group='pecan')
 
     def test_authorized(self):
         creds = {'roles': ['esi_leap_owner']}
