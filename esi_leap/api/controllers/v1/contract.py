@@ -149,11 +149,13 @@ class ContractsController(rest.RestController):
             policy.authorize('esi_leap:contract:get', cdict, cdict)
 
             if owner:
-                if r_project_id != owner:
-                    policy.authorize('esi_leap:contract:contract_admin',
-                                     cdict, cdict)
-
-                possible_filters['owner'] = owner
+                if owner == 'self':
+                    possible_filters['owner'] = cdict['project_id']
+                else:
+                    if r_project_id != owner:
+                        policy.authorize('esi_leap:contract:contract_admin',
+                                         cdict, cdict)
+                    possible_filters['owner'] = owner
                 possible_filters['project_id'] = project_id
             else:
 
