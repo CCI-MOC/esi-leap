@@ -29,7 +29,7 @@ from esi_leap.resource_objects import resource_object_factory as ro_factory
 class Offer(base.ESILEAPBase):
 
     uuid = wsme.wsattr(wtypes.text, readonly=True)
-    project_id = wsme.wsattr(wtypes.text)
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
     resource_type = wsme.wsattr(wtypes.text, mandatory=True)
     resource_uuid = wsme.wsattr(wtypes.text, mandatory=True)
     start_time = wsme.wsattr(datetime.datetime)
@@ -141,12 +141,7 @@ class OffersController(rest.RestController):
         policy.authorize('esi_leap:offer:create', cdict, cdict)
 
         offer_dict = new_offer.to_dict()
-
-        if 'project_id' in offer_dict:
-            if offer_dict['project_id'] != request.project_id:
-                policy.authorize('esi_leap:offer:offer_admin', cdict, cdict)
-        else:
-            offer_dict['project_id'] = request.project_id
+        offer_dict['project_id'] = request.project_id
 
         OffersController._verify_resource_permission(cdict, offer_dict)
 

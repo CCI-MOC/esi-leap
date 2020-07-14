@@ -10,9 +10,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 import datetime
+import mock
+from oslo_context import context as ctx
+
 from esi_leap.objects import offer
 from esi_leap.tests.api import base as test_api_base
-import mock
+
+
+owner_ctx = ctx.RequestContext(project_id='ownerid',
+                               roles=['owner'])
 
 
 def create_test_offer_data():
@@ -22,20 +28,22 @@ def create_test_offer_data():
         "resource_uuid": "1234567890",
         "start_time": "2016-07-16T19:20:30",
         "end_time": "2016-08-16T19:20:30",
-        "project_id": "111111111111"
     }
 
 
 class TestListOffers(test_api_base.APITestCase):
 
     def setUp(self):
+
+        self.context = owner_ctx
+
         super(TestListOffers, self).setUp()
         self.test_offer = offer.Offer(
             resource_type='test_node',
             resource_uuid='1234567890',
             start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
             end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
-            project_id="111111111111"
+            project_id=owner_ctx.project_id
         )
 
     def test_empty(self):
@@ -58,6 +66,7 @@ class TestListOffers(test_api_base.APITestCase):
         mock_create.return_value = self.test_offer
         data = create_test_offer_data()
         request = self.post_json('/offers', data)
+        data['project_id'] = owner_ctx.project_id
         self.assertEqual(1, mock_create.call_count)
         self.assertEqual(request.json, {})
         # FIXME: post returns incorrect status code
