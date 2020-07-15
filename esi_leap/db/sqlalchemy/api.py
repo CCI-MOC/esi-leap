@@ -309,10 +309,10 @@ def contract_get_all(filters):
 
     if status:
         if type(status) == list:
-            query.filter((models.Contract.status == status[0]) |
-                         (models.Contract.status == status[1]))
+            query = query.filter((models.Contract.status == status[0]) |
+                                 (models.Contract.status == status[1]))
         else:
-            query.filter_by(status=status)
+            query = query.filter_by(status=status)
 
     if start and end:
         query = query.filter((start >= models.Contract.start_time) &
