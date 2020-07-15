@@ -11,6 +11,7 @@
 #    under the License.
 
 import datetime
+from oslo_policy import policy as oslo_policy
 import pecan
 from pecan import rest
 import wsme
@@ -28,6 +29,7 @@ from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 class Offer(base.ESILEAPBase):
 
+    name = wsme.wsattr(wtypes.text)
     uuid = wsme.wsattr(wtypes.text, readonly=True)
     project_id = wsme.wsattr(wtypes.text, readonly=True)
     resource_type = wsme.wsattr(wtypes.text, mandatory=True)
@@ -58,13 +60,19 @@ class OfferCollection(types.Collection):
 class OffersController(rest.RestController):
 
     @wsme_pecan.wsexpose(Offer, wtypes.text)
-    def get_one(self, offer_uuid):
+    def get_one(self, offer_id):
         request = pecan.request.context
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:offer:get', cdict, cdict)
 
-        o = offer.Offer.get(request, offer_uuid)
-        o = OffersController._add_offer_availabilities(o)
+        o_id = offer.Offer.get(offer_id)
+
+        if len(o_id) > 1:
+            raise exception.OfferDuplicateName(name=offer_id)
+        elif len(o_id) == 0:
+            raise exception.OfferNotFound(offer_uuid=offer_id)
+
+        o = OffersController._add_offer_availabilities(o_id[0])
 
         return Offer(**o)
 
@@ -147,21 +155,35 @@ class OffersController(rest.RestController):
 
         o = offer.Offer(**offer_dict)
         o.create(request)
-
         o = OffersController._add_offer_availabilities(o)
-
         return Offer(**o)
 
     @wsme_pecan.wsexpose(Offer, wtypes.text)
-    def delete(self, offer_uuid):
+    def delete(self, offer_id):
         request = pecan.request.context
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:offer:delete', cdict, cdict)
 
-        o = offer.Offer.get(request, offer_uuid)
-        OffersController._verify_resource_permission(cdict, o.to_dict())
+        o_id = offer.Offer.get(offer_id)
 
-        o.cancel()
+        permission = []
+        for o in o_id:
+            try:
+                if o.project_id != request.project_id:
+                    policy.authorize('esi_leap:offer:offer_admin',
+                                     cdict, cdict)
+                permission.append(o)
+            except oslo_policy.PolicyNotAuthorized:
+                continue
+            if len(permission) > 1:
+                raise exception.ContractDuplicateName(name=offer_id)
+
+        if len(permission) == 0:
+            raise exception.OfferNotFound(offer_id=offer_id)
+
+        OffersController._verify_resource_permission(cdict, o_id[0].to_dict())
+
+        o_id[0].cancel()
 
     @staticmethod
     def _add_offer_availabilities(o):

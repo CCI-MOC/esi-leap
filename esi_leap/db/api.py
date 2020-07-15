@@ -90,8 +90,13 @@ def to_dict(func):
 
 # Offer
 @to_dict
-def offer_get(offer_uuid):
-    return IMPL.offer_get(offer_uuid)
+def offer_get_by_uuid(offer_uuid):
+    return IMPL.offer_get_by_uuid(offer_uuid)
+
+
+@to_dict
+def offer_get_by_name(offer_name):
+    return IMPL.offer_get(offer_name)
 
 
 @to_dict
@@ -123,8 +128,13 @@ def offer_destroy(offer_uuid):
 
 # Contract
 @to_dict
-def contract_get(contract_uuid):
+def contract_get_by_uuid(contract_uuid):
     return IMPL.contract_get(contract_uuid)
+
+
+@to_dict
+def contract_get_by_name(contract_name):
+    return IMPL.contract_get(contract_name)
 
 
 @to_dict

@@ -48,6 +48,7 @@ class Offer(Base):
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     uuid = Column(String(36), nullable=False, unique=True)
+    name = Column(String(35), nullable=True, unique=False)
     project_id = Column(String(255), nullable=False)
     resource_type = Column(String(36), nullable=False)
     resource_uuid = Column(String(36), nullable=False)
@@ -69,6 +70,7 @@ class Contract(Base):
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     uuid = Column(String(36), nullable=False, unique=True)
+    name = Column(String(35), nullable=True, unique=False)
     project_id = Column(String(255), nullable=False)
     start_time = Column(DateTime)
     end_time = Column(DateTime)

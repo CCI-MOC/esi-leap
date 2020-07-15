@@ -17,15 +17,52 @@ from esi_leap.common import statuses
 from esi_leap.objects import offer
 from esi_leap.tests import base
 
+start = datetime.datetime(2016, 7, 16, 19, 20, 30)
+
 
 def get_test_offer():
 
-    start = datetime.datetime(2016, 7, 16, 19, 20, 30)
-
     return {
         'id': 27,
-        'uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
-        'project_id': '01d4e6a72f5c408813e02f664cc8c83e',
+        'name': "o",
+        'uuid': '534653c9-880d-4c2d-6d6d-11111111111',
+        'project_id': '0wn5r',
+        'resource_type': 'dummy_node',
+        'resource_uuid': '1718',
+        'start_time': start,
+        'end_time': start + datetime.timedelta(days=100),
+        'status': statuses.AVAILABLE,
+        'properties': {'floor_price': 3},
+        'created_at': None,
+        'updated_at': None
+    }
+
+
+def get_test_offer_2():
+
+    return {
+        'id': 28,
+        'name': "o",
+        'uuid': '534653c9-880d-4c2d-6d6d-2222222222',
+        'project_id': '0wn5r',
+        'resource_type': 'dummy_node',
+        'resource_uuid': '1718',
+        'start_time': start,
+        'end_time': start + datetime.timedelta(days=100),
+        'status': statuses.AVAILABLE,
+        'properties': {'floor_price': 3},
+        'created_at': None,
+        'updated_at': None
+    }
+
+
+def get_test_offer_3():
+
+    return {
+        'id': 29,
+        'name': "o",
+        'uuid': '534653c9-880d-4c2d-6d6d-3333333333',
+        'project_id': '0wn5r2',
         'resource_type': 'dummy_node',
         'resource_uuid': '1718',
         'start_time': start,
@@ -42,19 +79,67 @@ class TestOfferObject(base.DBTestCase):
     def setUp(self):
         super(TestOfferObject, self).setUp()
         self.fake_offer = get_test_offer()
+        self.fake_offer_2 = get_test_offer_2()
+        self.fake_offer_3 = get_test_offer_3()
+
+    def test_get_by_uuid(self):
+        offer_uuid = self.fake_offer['uuid']
+        with mock.patch.object(self.db_api, 'offer_get_by_uuid',
+                               autospec=True) as mock_offer_get_by_uuid:
+            mock_offer_get_by_uuid.return_value = self.fake_offer
+
+            c = offer.Offer.get_by_uuid(
+                offer_uuid, self.context)
+
+            mock_offer_get_by_uuid.assert_called_once_with(
+                offer_uuid)
+            self.assertEqual(self.context, c._context)
+
+    def test_get_by_name(self):
+        with mock.patch.object(self.db_api, 'offer_get_by_name',
+                               autospec=True) as mock_offer_get_by_name:
+            mock_offer_get_by_name.return_value = \
+                [self.fake_offer, self.fake_offer_2,
+                 self.fake_offer_3]
+
+            o = offer.Offer.get_by_name(
+                'o', self.context)
+
+            mock_offer_get_by_name.assert_called_once_with('o')
+            self.assertEqual(self.context, o[0]._context)
 
     def test_get(self):
-        offer_uuid = self.fake_offer['uuid']
-        with mock.patch.object(self.db_api, 'offer_get',
-                               autospec=True) as mock_offer_get:
-            mock_offer_get.return_value = self.fake_offer
+        with mock.patch.object(self.db_api, 'offer_get_by_name',
+                               autospec=True) as mock_offer_get_by_name:
+            with mock.patch.object(self.db_api, 'offer_get_by_uuid',
+                                   autospec=True) as mock_offer_get_by_uuid:
 
-            o = offer.Offer.get(
-                self.context, offer_uuid)
+                mock_offer_get_by_name.return_value = \
+                    [self.fake_offer, self.fake_offer_2,
+                     self.fake_offer_3]
+                mock_offer_get_by_uuid.return_value = None
 
-            mock_offer_get.assert_called_once_with(
-                offer_uuid)
-            self.assertEqual(self.context, o._context)
+                o = offer.Offer.get(
+                    'o', self.context)
+
+                mock_offer_get_by_uuid.assert_called_once_with('o')
+                mock_offer_get_by_name.assert_called_once_with('o')
+                assert len(o) == 3
+
+        with mock.patch.object(self.db_api, 'offer_get_by_name',
+                               autospec=True) as mock_offer_get_by_name:
+            with mock.patch.object(self.db_api, 'offer_get_by_uuid',
+                                   autospec=True) as mock_offer_get_by_uuid:
+
+                mock_offer_get_by_uuid.return_value = self.fake_offer
+                o = offer.Offer.get(
+                    self.fake_offer['uuid'], self.context)
+
+                mock_offer_get_by_uuid.assert_called_once_with(
+                    self.fake_offer['uuid']
+                )
+                assert not mock_offer_get_by_name.called
+                assert len(o) == 1
 
     def test_get_all(self):
         with mock.patch.object(
@@ -142,7 +227,7 @@ class TestOfferObject(base.DBTestCase):
                     'esi_leap.objects.offer.uuidutils.generate_uuid') \
                     as mock_uuid:
                 mock_uuid.return_value = '534653c9-880d-4c2d-6d6d-' \
-                                         'f4f2a09e384'
+                                         '11111111111'
                 mock_offer_create.return_value = get_test_offer()
 
                 o.create(self.context)

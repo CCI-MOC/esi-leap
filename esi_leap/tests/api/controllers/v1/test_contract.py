@@ -18,7 +18,10 @@ import testtools
 
 from esi_leap.api.controllers.v1.contract import ContractsController
 from esi_leap.common import exception
+from esi_leap.common import statuses
 from esi_leap.objects import contract
+from esi_leap.objects import offer
+from esi_leap.resource_objects.test_node import TestNode
 from esi_leap.tests.api import base as test_api_base
 
 
@@ -39,12 +42,73 @@ random_ctx = ctx.RequestContext(project_id='randomid',
 random_ctx_dict = random_ctx.to_policy_values()
 
 
+owner_ctx_2 = ctx.RequestContext(project_id='ownerid2',
+                                 roles=['owner'])
+lessee_ctx_2 = ctx.RequestContext(project_id="lesseeid2",
+                                  roles=['lessee'])
+
+
+start = datetime.datetime(2016, 7, 16)
+start_iso = '2016-07-16T00:00:00'
+
+end = start + datetime.timedelta(days=100)
+end_iso = '2016-10-24T00:00:00'
+
+
+test_node_1 = TestNode('111', owner_ctx.project_id)
+
+
 def create_test_contract_data():
     return {
         "offer_uuid": "some_uuid",
         "start_time": "2016-07-16T19:20:30",
         "end_time": "2016-08-16T19:20:30"
     }
+
+
+test_offer = offer.Offer(
+    resource_type='test_node',
+    resource_uuid=test_node_1._uuid,
+    name="o",
+    uuid='11111',
+    status=statuses.AVAILABLE,
+    start_time=start,
+    end_time=end,
+    project_id=owner_ctx.project_id
+)
+
+test_contract = contract.Contract(
+    offer_uuid="11111",
+    name='c',
+    uuid='zzzzz',
+    project_id=lessee_ctx.project_id,
+    status=statuses.CREATED
+)
+
+test_contract_2 = contract.Contract(
+    offer_uuid="11111",
+    name='c',
+    uuid='yyyyy',
+    project_id=lessee_ctx.project_id,
+    status=statuses.CREATED
+)
+
+test_contract_3 = contract.Contract(
+    offer_uuid="11111",
+    name='c',
+    uuid='xxxxx',
+    project_id=lessee_ctx_2.project_id,
+    status=statuses.CREATED
+)
+
+
+test_contract_4 = contract.Contract(
+    offer_uuid="11111",
+    name='c2',
+    uuid='wwwww',
+    project_id=lessee_ctx_2.project_id,
+    status=statuses.CREATED
+)
 
 
 class TestContractsControllerAdmin(test_api_base.APITestCase):
@@ -90,6 +154,195 @@ class TestContractsControllerAdmin(test_api_base.APITestCase):
         self.assertEqual(request.json, data)
         # FIXME: post returns incorrect status code
         # self.assertEqual(http_client.CREATED, request.status_int)
+
+
+class TestContractControllerStaticMethods(testtools.TestCase):
+
+    @mock.patch('esi_leap.api.controllers.v1.contract.offer.Offer.'
+                'get_by_uuid')
+    @mock.patch('esi_leap.api.controllers.v1.offer.policy.authorize')
+    def test__contract_authorize_management_valid_lessee(self,
+                                                         mock_authorize,
+                                                         mock_gbu):
+
+        ContractsController._contract_authorize_management(
+            test_contract, lessee_ctx.to_policy_values()
+        )
+
+        assert not mock_authorize.called
+        assert not mock_gbu.called
+
+    @mock.patch('esi_leap.api.controllers.v1.contract.offer.Offer.'
+                'get_by_uuid')
+    @mock.patch('esi_leap.api.controllers.v1.offer.policy.authorize')
+    def test__contract_authorize_management_invalid_lessee(self,
+                                                           mock_authorize,
+                                                           mock_gbu):
+        mock_gbu.return_value = test_offer
+        mock_authorize.side_effect = [
+            policy.PolicyNotAuthorized('esi_leap:contract:contract_admin',
+                                       lessee_ctx.to_policy_values(),
+                                       lessee_ctx.to_policy_values()),
+            policy.PolicyNotAuthorized('esi_leap:offer:offer_admin',
+                                       lessee_ctx.to_policy_values(),
+                                       lessee_ctx.to_policy_values())
+        ]
+
+        self.assertRaises(policy.PolicyNotAuthorized,
+                          ContractsController._contract_authorize_management,
+                          test_contract_3, lessee_ctx.to_policy_values())
+
+        mock_authorize.assert_has_calls(
+            [
+                mock.call('esi_leap:contract:contract_admin',
+                          lessee_ctx.to_policy_values(),
+                          lessee_ctx.to_policy_values()),
+                mock.call('esi_leap:offer:offer_admin',
+                          lessee_ctx.to_policy_values(),
+                          lessee_ctx.to_policy_values())
+            ])
+
+        mock_gbu.assert_called_with(test_contract_3.offer_uuid)
+
+    @mock.patch('esi_leap.api.controllers.v1.contract.offer.Offer.'
+                'get_by_uuid')
+    @mock.patch('esi_leap.api.controllers.v1.offer.policy.authorize')
+    def test__contract_authorize_management_valid_owner(self,
+                                                        mock_authorize,
+                                                        mock_gbu):
+
+        mock_gbu.return_value = test_offer
+        mock_authorize.side_effect = [
+            policy.PolicyNotAuthorized('esi_leap:contract:contract_admin',
+                                       lessee_ctx.to_policy_values(),
+                                       lessee_ctx.to_policy_values()),
+            None]
+
+        ContractsController._contract_authorize_management(
+            test_contract, owner_ctx.to_policy_values()
+        )
+
+        mock_authorize.assert_called_once_with(
+            'esi_leap:contract:contract_admin',
+            owner_ctx.to_policy_values(),
+            owner_ctx.to_policy_values())
+
+        mock_gbu.assert_called_with(test_contract.offer_uuid)
+
+    @mock.patch('esi_leap.api.controllers.v1.contract.offer.Offer.'
+                'get_by_uuid')
+    @mock.patch('esi_leap.api.controllers.v1.offer.policy.authorize')
+    def test__contract_authorize_management_invalid_owner(self,
+                                                          mock_authorize,
+                                                          mock_gbu):
+        mock_gbu.return_value = test_offer
+        mock_authorize.side_effect = [
+            policy.PolicyNotAuthorized('esi_leap:contract:contract_admin',
+                                       owner_ctx_2.to_policy_values(),
+                                       owner_ctx_2.to_policy_values()),
+            policy.PolicyNotAuthorized('esi_leap:offer:offer_admin',
+                                       owner_ctx_2.to_policy_values(),
+                                       owner_ctx_2.to_policy_values())
+        ]
+
+        self.assertRaises(policy.PolicyNotAuthorized,
+                          ContractsController._contract_authorize_management,
+                          test_contract_3, owner_ctx_2.to_policy_values())
+
+        mock_authorize.assert_has_calls(
+            [
+                mock.call('esi_leap:contract:contract_admin',
+                          owner_ctx_2.to_policy_values(),
+                          owner_ctx_2.to_policy_values()),
+                mock.call('esi_leap:offer:offer_admin',
+                          owner_ctx_2.to_policy_values(),
+                          owner_ctx_2.to_policy_values())
+            ])
+
+        mock_gbu.assert_called_with(test_contract_3.offer_uuid)
+
+    @mock.patch('esi_leap.api.controllers.v1.contract.ContractsController.'
+                '_contract_authorize_management')
+    @mock.patch('esi_leap.api.controllers.v1.contract.contract.Contract.get')
+    def test__contract_get_authorized_contract_duplicate(self,
+                                                         mock_get,
+                                                         mock_cam):
+        mock_get.return_value = [
+            test_contract, test_contract_2, test_contract_3
+        ]
+        mock_cam.side_effect = [
+            None,
+            None,
+            policy.PolicyNotAuthorized('esi_leap:offer:contract_admin',
+                                       lessee_ctx.to_policy_values(),
+                                       lessee_ctx.to_policy_values())
+        ]
+
+        self.assertRaises(exception.ContractDuplicateName,
+                          ContractsController.
+                          _contract_get_authorized_contract,
+                          'c',
+                          lessee_ctx.to_policy_values())
+
+        mock_get.assert_called_once_with('c')
+        mock_cam.assert_has_calls([
+            mock.call(test_contract, lessee_ctx.to_policy_values()),
+            mock.call(test_contract_2, lessee_ctx.to_policy_values()),
+            ])
+
+    @mock.patch('esi_leap.api.controllers.v1.contract.ContractsController.'
+                '_contract_authorize_management')
+    @mock.patch('esi_leap.api.controllers.v1.contract.contract.Contract.get')
+    def test__contract_get_authorized_contract_unique(self,
+                                                      mock_get,
+                                                      mock_cam):
+        mock_get.return_value = [
+            test_contract, test_contract_3
+        ]
+        mock_cam.side_effect = [
+            None,
+            policy.PolicyNotAuthorized('esi_leap:offer:contract_admin',
+                                       lessee_ctx.to_policy_values(),
+                                       lessee_ctx.to_policy_values())
+        ]
+
+        p = ContractsController._contract_get_authorized_contract(
+            'c',
+            lessee_ctx.to_policy_values())
+
+        mock_get.assert_called_once_with('c')
+        mock_cam.assert_has_calls([
+            mock.call(test_contract, lessee_ctx.to_policy_values()),
+            mock.call(test_contract_3, lessee_ctx.to_policy_values()),
+            ])
+
+        assert p.uuid == test_contract.uuid
+
+    @mock.patch('esi_leap.api.controllers.v1.contract.ContractsController.'
+                '_contract_authorize_management')
+    @mock.patch('esi_leap.api.controllers.v1.contract.contract.Contract.get')
+    def test__contract_get_authorized_contract_none(self,
+                                                    mock_get,
+                                                    mock_cam):
+        mock_get.return_value = [
+            test_contract_3
+        ]
+        mock_cam.side_effect = [
+            policy.PolicyNotAuthorized('esi_leap:offer:contract_admin',
+                                       lessee_ctx.to_policy_values(),
+                                       lessee_ctx.to_policy_values())
+        ]
+
+        self.assertRaises(exception.ContractNotFound,
+                          ContractsController.
+                          _contract_get_authorized_contract,
+                          'c',
+                          lessee_ctx.to_policy_values())
+
+        mock_get.assert_called_once_with('c')
+        mock_cam.assert_has_calls([
+            mock.call(test_contract_3, lessee_ctx.to_policy_values()),
+            ])
 
 
 class TestContractControllersGetAllFilters(testtools.TestCase):

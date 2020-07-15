@@ -116,13 +116,16 @@ class InequalityCondition(object):
 
 
 # Offer
-def offer_get(offer_uuid):
+def offer_get_by_uuid(offer_uuid):
     query = model_query(models.Offer, get_session())
     offer_ref = query.filter_by(uuid=offer_uuid).one_or_none()
-    if not offer_ref:
-        raise exception.OfferNotFound(offer_uuid=offer_uuid)
-
     return offer_ref
+
+
+def offer_get_by_name(name):
+    query = model_query(models.Offer, get_session())
+    offers = query.filter_by(name=name).all()
+    return offers
 
 
 def offer_get_all(filters):
@@ -257,14 +260,16 @@ def offer_destroy(offer_uuid):
 
 
 # Contracts
-def contract_get(contract_uuid):
+def contract_get_by_uuid(contract_uuid):
     query = model_query(models.Contract, get_session())
-
     result = query.filter_by(uuid=contract_uuid).one_or_none()
-
-    if not result:
-        raise exception.ContractNotFound(contract_uuid=contract_uuid)
     return result
+
+
+def contract_get_by_name(name):
+    query = model_query(models.Contract, get_session())
+    contracts = query.filter_by(name=name).all()
+    return contracts
 
 
 def contract_get_all(filters):

@@ -13,14 +13,15 @@
 
 class TestNode(object):
 
-    def __init__(self, uuid):
+    def __init__(self, uuid, project_id='12345'):
         self._uuid = uuid
+        self._project_id = project_id
 
     def get_contract_uuid(self):
         return '12345'
 
     def get_project_id(self):
-        return '12345'
+        return self._project_id
 
     def get_node_config(self):
         return {}
@@ -29,4 +30,4 @@ class TestNode(object):
         return
 
     def is_resource_admin(self, project_id):
-        return True
+        return project_id == self._project_id

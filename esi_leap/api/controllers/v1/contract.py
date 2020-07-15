@@ -11,6 +11,7 @@
 #    under the License.
 
 import datetime
+from oslo_policy import policy as oslo_policy
 import pecan
 from pecan import rest
 import wsme
@@ -28,6 +29,7 @@ from esi_leap.objects import offer
 
 class Contract(base.ESILEAPBase):
 
+    name = wsme.wsattr(wtypes.text)
     uuid = wsme.wsattr(wtypes.text, readonly=True)
     project_id = wsme.wsattr(wtypes.text, readonly=True)
     start_time = wsme.wsattr(datetime.datetime)
@@ -52,19 +54,15 @@ class ContractCollection(types.Collection):
 class ContractsController(rest.RestController):
 
     @wsme_pecan.wsexpose(Contract, wtypes.text)
-    def get_one(self, contract_uuid):
+    def get_one(self, contract_id):
         request = pecan.request.context
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:contract:get', cdict, cdict)
 
-        c = contract.Contract.get(request, contract_uuid)
+        permitted = ContractsController._contract_get_authorized_contract(
+            contract_id, cdict)
 
-        if c.project_id != request.project_id:
-            o = offer.Offer.get(request.project_id, c.offer_uuid)
-            if o.project_id != request.project_id:
-                policy.authorize('esi_leap:contract:get_admin', cdict, cdict)
-
-        return Contract(**c.to_dict())
+        return Contract(**permitted.to_dict())
 
     @wsme_pecan.wsexpose(ContractCollection, wtypes.text,
                          datetime.datetime, datetime.datetime, wtypes.text,
@@ -102,19 +100,48 @@ class ContractsController(rest.RestController):
         return Contract(**c.to_dict())
 
     @wsme_pecan.wsexpose(Contract, wtypes.text)
-    def delete(self, contract_uuid):
+    def delete(self, contract_id):
         request = pecan.request.context
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:contract:delete', cdict, cdict)
 
-        c = contract.Contract.get(request, contract_uuid)
-        if c.project_id != request.project_id:
-            o = offer.Offer.get(request.project_id, c.offer_uuid)
-            if o.project_id != request.project_id:
+        permitted = ContractsController._contract_get_authorized_contract(
+            contract_id, cdict)
+
+        permitted.cancel()
+
+    @staticmethod
+    def _contract_get_authorized_contract(contract_id, cdict):
+
+        contract_objs = contract.Contract.get(contract_id)
+        permitted = []
+        for c in contract_objs:
+            try:
+                ContractsController._contract_authorize_management(c, cdict)
+                permitted.append(c)
+            except oslo_policy.PolicyNotAuthorized:
+                continue
+
+            if len(permitted) > 1:
+                raise exception.ContractDuplicateName(name=contract_id)
+
+        if len(permitted) == 0:
+            raise exception.ContractNotFound(contract_id=contract_id)
+
+        return permitted[0]
+
+    @staticmethod
+    def _contract_authorize_management(c, cdict):
+
+        if c.project_id != cdict['project_id']:
+            try:
                 policy.authorize('esi_leap:contract:contract_admin',
                                  cdict, cdict)
-
-        c.cancel()
+            except oslo_policy.PolicyNotAuthorized:
+                o = offer.Offer.get_by_uuid(c.offer_uuid)
+                if o.project_id != cdict['project_id']:
+                    policy.authorize('esi_leap:offer:offer_admin',
+                                     cdict, cdict)
 
     @staticmethod
     def _contract_get_all_authorize_filters(cdict,
