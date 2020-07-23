@@ -42,8 +42,12 @@ class ContractNoPermission(ESILeapException):
                 "contract %(contract_uuid)s.")
 
 
+class ContractDuplicateName(ESILeapException):
+    msg_fmt = _("Duplicate contracts with name %(name)s.")
+
+
 class ContractNotFound(ESILeapException):
-    msg_fmt = _("Contract %(contract_uuid)s not found.")
+    msg_fmt = _("Contract with name or uuid %(contract_id)s not found.")
 
 
 class ContractNoOfferUUID(ESILeapException):
@@ -55,8 +59,12 @@ class OfferNoPermission(ESILeapException):
                 "offer %(offer_uuid)s.")
 
 
+class OfferDuplicateName(ESILeapException):
+    msg_fmt = _("Duplicate offers with name %(name)s.")
+
+
 class OfferNotFound(ESILeapException):
-    msg_fmt = _("Offer %(offer_uuid)s not found.")
+    msg_fmt = _("Offer with name or uuid %(offer_uuid)s not found.")
 
 
 class OfferNoTimeAvailabilities(ESILeapException):

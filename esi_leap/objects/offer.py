@@ -33,6 +33,7 @@ class Offer(base.ESILEAPObject):
 
     fields = {
         'id': fields.IntegerField(),
+        'name': fields.StringField(nullable=True),
         'uuid': fields.UUIDField(),
         'project_id': fields.StringField(),
         'resource_type': fields.StringField(),
@@ -44,9 +45,25 @@ class Offer(base.ESILEAPObject):
     }
 
     @classmethod
-    def get(cls, context, offer_uuid):
-        db_offer = cls.dbapi.offer_get(offer_uuid)
-        return cls._from_db_object(context, cls(), db_offer)
+    def get_by_uuid(cls, offer_uuid, context=None):
+        db_offer = cls.dbapi.offer_get_by_uuid(offer_uuid)
+        if db_offer:
+            return cls._from_db_object(context, cls(), db_offer)
+
+    @classmethod
+    def get_by_name(cls, offer_name, context=None):
+        db_contract = cls.dbapi.offer_get_by_name(offer_name)
+        return cls._from_db_object_list(context, db_contract)
+
+    @classmethod
+    def get(cls, offer_id, context=None):
+        o_uuid = cls.get_by_uuid(offer_id, context)
+        if o_uuid:
+            return [o_uuid]
+
+        o_name = cls.get_by_name(offer_id, context)
+
+        return o_name
 
     @classmethod
     def get_all(cls, context, filters):

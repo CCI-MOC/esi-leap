@@ -31,6 +31,7 @@ class Contract(base.ESILEAPObject):
 
     fields = {
         'id': fields.IntegerField(),
+        'name': fields.StringField(nullable=True),
         'uuid': fields.UUIDField(),
         'project_id': fields.StringField(),
         'start_time': fields.DateTimeField(nullable=True),
@@ -41,9 +42,26 @@ class Contract(base.ESILEAPObject):
     }
 
     @classmethod
-    def get(cls, context, contract_uuid):
-        db_contract = cls.dbapi.contract_get(contract_uuid)
-        return cls._from_db_object(context, cls(), db_contract)
+    def get_by_uuid(cls, contract_uuid, context=None):
+        db_contract = cls.dbapi.contract_get_by_uuid(contract_uuid)
+        if db_contract:
+            return cls._from_db_object(context, cls(), db_contract)
+
+    @classmethod
+    def get_by_name(cls, contract_name, context=None):
+        db_contract = cls.dbapi.contract_get_by_name(contract_name)
+        return cls._from_db_object_list(context, db_contract)
+
+    @classmethod
+    def get(cls, contract_id, context=None):
+
+        c_uuid = cls.get_by_uuid(contract_id, context)
+        if c_uuid:
+            return [c_uuid]
+
+        c_name = cls.get_by_name(contract_id, context)
+
+        return c_name
 
     @classmethod
     def get_all(cls, context, filters):
@@ -57,7 +75,7 @@ class Contract(base.ESILEAPObject):
         if 'offer_uuid' not in updates:
             raise exception.ContractNoOfferUUID()
 
-        related_offer = self.dbapi.offer_get(updates['offer_uuid'])
+        related_offer = self.dbapi.offer_get_by_uuid(updates['offer_uuid'])
         if related_offer is None:
             raise exception.OfferNotFound(offer_uuid=updates['offer_uuid'])
 
@@ -84,7 +102,7 @@ class Contract(base.ESILEAPObject):
         self._from_db_object(context, self, db_contract)
 
     def cancel(self):
-        o = esi_leap.objects.offer.Offer.get(None, self.offer_uuid)
+        o = esi_leap.objects.offer.Offer.get_by_uuid(self.offer_uuid)
 
         resource = o.resource_object()
         if resource.get_contract_uuid() == self.uuid:
@@ -105,19 +123,17 @@ class Contract(base.ESILEAPObject):
 
     def fulfill(self, context=None):
         # fulfill resource
-        o = esi_leap.objects.offer.Offer.get(
-            context, self.offer_uuid)
+        o = esi_leap.objects.offer.Offer.get_by_uuid(self.offer_uuid, context)
         resource = o.resource_object()
         resource.set_contract(self)
 
-        # expire contract
+        # activate contract
         self.status = statuses.ACTIVE
         self.save(context)
 
     def expire(self, context=None):
         # unassign resource
-        o = esi_leap.objects.offer.Offer.get(
-            context, self.offer_uuid)
+        o = esi_leap.objects.offer.Offer.get_by_uuid(self.offer_uuid, context)
         if o.status != statuses.AVAILABLE:
             raise exception.OfferNotAvailable(offer_uuid=o.uuid,
                                               status=o.status)
