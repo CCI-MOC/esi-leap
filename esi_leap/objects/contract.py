@@ -94,9 +94,9 @@ class Contract(base.ESILEAPObject):
             else:
                 updates['end_time'] = q.start_time
 
-        self.dbapi.offer_verify_availability(related_offer,
-                                             updates['start_time'],
-                                             updates['end_time'])
+        self.dbapi.offer_verify_contract_availability(related_offer,
+                                                      updates['start_time'],
+                                                      updates['end_time'])
 
         db_contract = self.dbapi.contract_create(updates)
         self._from_db_object(context, self, db_contract)

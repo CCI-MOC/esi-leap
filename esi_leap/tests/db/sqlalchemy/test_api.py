@@ -112,7 +112,7 @@ class TestAPI(base.DBTestCase):
         assert len(o) == 1
         assert o[0].to_dict() == offer.to_dict()
 
-    def test_offer_verify_availability(self):
+    def test_offer_verify_contract_availability(self):
         offer = api.offer_create(test_offer_1)
 
         test_contract_1['offer_uuid'] = offer.uuid
@@ -125,93 +125,105 @@ class TestAPI(base.DBTestCase):
 
         start = now + datetime.timedelta(days=35)
         end = now + datetime.timedelta(days=40)
-        api.offer_verify_availability(offer, start, end)
+        api.offer_verify_contract_availability(offer, start, end)
 
         start = now + datetime.timedelta(days=5)
         end = now + datetime.timedelta(days=10)
-        api.offer_verify_availability(offer, start, end)
+        api.offer_verify_contract_availability(offer, start, end)
 
         start = now
         end = now + datetime.timedelta(days=10)
-        api.offer_verify_availability(offer, start, end)
+        api.offer_verify_contract_availability(offer, start, end)
 
         start = now + datetime.timedelta(days=90)
         end = now + datetime.timedelta(days=100)
-        api.offer_verify_availability(offer, start, end)
+        api.offer_verify_contract_availability(offer, start, end)
 
         start = now + datetime.timedelta(days=60)
         end = now + datetime.timedelta(days=100)
-        api.offer_verify_availability(offer, start, end)
+        api.offer_verify_contract_availability(offer, start, end)
 
         start = now + datetime.timedelta(days=30)
         end = now + datetime.timedelta(days=50)
-        api.offer_verify_availability(offer, start, end)
+        api.offer_verify_contract_availability(offer, start, end)
 
         start = now + datetime.timedelta(days=15)
         end = now + datetime.timedelta(days=16)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_availability, offer, start, end)
+                          api.offer_verify_contract_availability,
+                          offer, start, end)
 
         start = now + datetime.timedelta(days=45)
         end = now + datetime.timedelta(days=55)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_availability, offer, start, end)
+                          api.offer_verify_contract_availability,
+                          offer, start, end)
 
         start = now + datetime.timedelta(days=55)
         end = now + datetime.timedelta(days=65)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_availability, offer, start, end)
+                          api.offer_verify_contract_availability,
+                          offer, start, end)
 
         start = now + datetime.timedelta(days=50)
         end = now + datetime.timedelta(days=65)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_availability, offer, start, end)
+                          api.offer_verify_contract_availability,
+                          offer, start, end)
 
         start = now + datetime.timedelta(days=45)
         end = now + datetime.timedelta(days=60)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_availability, offer, start, end)
+                          api.offer_verify_contract_availability,
+                          offer, start, end)
 
         start = now + datetime.timedelta(days=90)
         end = now + datetime.timedelta(days=105)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_availability, offer, start, end)
+                          api.offer_verify_contract_availability,
+                          offer, start, end)
 
         start = now + datetime.timedelta(days=100)
         end = now + datetime.timedelta(days=105)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_availability, offer, start, end)
+                          api.offer_verify_contract_availability,
+                          offer, start, end)
 
         start = now + datetime.timedelta(days=105)
         end = now + datetime.timedelta(days=110)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_availability, offer, start, end)
+                          api.offer_verify_contract_availability,
+                          offer, start, end)
 
         start = now - datetime.timedelta(days=1)
         end = now + datetime.timedelta(days=5)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_availability, offer, start, end)
+                          api.offer_verify_contract_availability,
+                          offer, start, end)
 
         start = now - datetime.timedelta(days=1)
         end = now
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_availability, offer, start, end)
+                          api.offer_verify_contract_availability,
+                          offer, start, end)
 
         start = now - datetime.timedelta(days=10)
         end = now - datetime.timedelta(days=5)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_availability, offer, start, end)
+                          api.offer_verify_contract_availability,
+                          offer, start, end)
 
         start = now + datetime.timedelta(days=45)
         end = now + datetime.timedelta(days=55)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_availability, offer, start, end)
+                          api.offer_verify_contract_availability,
+                          offer, start, end)
 
         test_contract_4['offer_uuid'] = offer.uuid
         api.contract_create(test_contract_4)
         start = now + datetime.timedelta(days=86)
         end = now + datetime.timedelta(days=87)
-        api.offer_verify_availability(offer, start, end)
+        api.offer_verify_contract_availability(offer, start, end)
 
     def test_offer_get_by_uuid(self):
 
