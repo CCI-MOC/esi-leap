@@ -46,6 +46,19 @@ test_node_1 = TestNode('aaa', owner_ctx.project_id)
 test_node_2 = TestNode('bbb', owner_ctx_2.project_id)
 
 
+def create_test_offer(context):
+    o = offer.Offer(
+        resource_type='test_node',
+        resource_uuid='1234567890',
+        uuid='aaaaaaaa',
+        start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
+        end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
+        project_id="111111111111"
+    )
+    o.create(context)
+    return o
+
+
 def get_offer_response(o):
     return {
         'resource_type': o.resource_type,
@@ -123,6 +136,7 @@ class TestListOffers(test_api_base.APITestCase):
         self.test_offer = offer.Offer(
             resource_type='test_node',
             resource_uuid='1234567890',
+            uuid='00000',
             start_time=start,
             end_time=end,
             project_id=owner_ctx.project_id
@@ -138,13 +152,15 @@ class TestListOffers(test_api_base.APITestCase):
         data = self.get_json('/offers')
         self.assertEqual(self.test_offer.uuid, data['offers'][0]["uuid"])
 
+    @mock.patch('esi_leap.api.controllers.v1.offer.uuidutils.generate_uuid')
     @mock.patch('esi_leap.objects.offer.Offer.create')
     @mock.patch('esi_leap.api.controllers.v1.offer.' +
                 'OffersController._verify_resource_permission')
     @mock.patch('esi_leap.api.controllers.v1.offer.' +
                 'OffersController._add_offer_availabilities')
-    def test_post(self, mock_aoa, mock_vrp, mock_create):
+    def test_post(self, mock_aoa, mock_vrp, mock_create, mock_generate_uuid):
 
+        mock_generate_uuid.return_value = '11111'
         mock_create.return_value = self.test_offer
         data = create_test_offer_data
         request = self.post_json('/offers', data)

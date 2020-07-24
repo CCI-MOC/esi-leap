@@ -12,6 +12,7 @@
 
 import datetime
 from oslo_policy import policy as oslo_policy
+from oslo_utils import uuidutils
 import pecan
 from pecan import rest
 import wsme
@@ -152,6 +153,19 @@ class OffersController(rest.RestController):
         offer_dict['project_id'] = request.project_id
 
         OffersController._verify_resource_permission(cdict, offer_dict)
+
+        offer_dict['uuid'] = uuidutils.generate_uuid()
+
+        if 'start_time' not in offer_dict:
+            offer_dict['start_time'] = datetime.datetime.now()
+        if 'end_time' not in offer_dict:
+            offer_dict['end_time'] = datetime.datetime.max
+
+        if offer_dict['start_time'] >= offer_dict['end_time']:
+            raise exception.\
+                InvalidTimeRange(resource="an offer",
+                                 start_time=str(offer_dict['start_time']),
+                                 end_time=str(offer_dict['end_time']))
 
         o = offer.Offer(**offer_dict)
         o.create(request)

@@ -223,16 +223,11 @@ class TestOfferObject(base.DBTestCase):
             self.context, **self.fake_offer)
         with mock.patch.object(self.db_api, 'offer_create',
                                autospec=True) as mock_offer_create:
-            with mock.patch(
-                    'esi_leap.objects.offer.uuidutils.generate_uuid') \
-                    as mock_uuid:
-                mock_uuid.return_value = '534653c9-880d-4c2d-6d6d-' \
-                                         '11111111111'
-                mock_offer_create.return_value = get_test_offer()
 
-                o.create(self.context)
-                mock_offer_create.assert_called_once_with(
-                    get_test_offer())
+            mock_offer_create.return_value = get_test_offer()
+
+            o.create(self.context)
+            mock_offer_create.assert_called_once_with(get_test_offer())
 
     def test_destroy(self):
         o = offer.Offer(self.context, **self.fake_offer)

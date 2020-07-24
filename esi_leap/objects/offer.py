@@ -10,9 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import datetime
 
-from esi_leap.common import exception
 from esi_leap.common import statuses
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
@@ -21,7 +19,6 @@ from esi_leap.objects import fields
 from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 from oslo_config import cfg
-from oslo_utils import uuidutils
 from oslo_versionedobjects import base as versioned_objects_base
 
 CONF = cfg.CONF
@@ -100,21 +97,11 @@ class Offer(base.ESILEAPObject):
 
         return a
 
+    def get_first_availability(self, start):
+        return self.dbapi.offer_get_first_availability(self.uuid, start)
+
     def create(self, context=None):
         updates = self.obj_get_changes()
-
-        updates['uuid'] = uuidutils.generate_uuid()
-
-        if 'start_time' not in updates:
-            updates['start_time'] = datetime.datetime.now()
-        if 'end_time' not in updates:
-            updates['end_time'] = datetime.datetime.max
-
-        if updates['start_time'] >= updates['end_time']:
-            raise exception.\
-                InvalidTimeRange(resource="an offer",
-                                 start_time=str(updates['start_time']),
-                                 end_time=str(updates['end_time']))
 
         self.dbapi.offer_verify_resource_availability(updates['resource_type'],
                                                       updates['resource_uuid'],
