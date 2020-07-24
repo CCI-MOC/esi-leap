@@ -109,9 +109,14 @@ def offer_get_conflict_times(offer_ref):
     return IMPL.offer_get_conflict_times(offer_ref)
 
 
-def offer_verify_availability(offer_ref, start, end):
-    return IMPL.offer_verify_availability(
+def offer_verify_contract_availability(offer_ref, start, end):
+    return IMPL.offer_verify_contract_availability(
         offer_ref, start, end)
+
+
+def offer_verify_resource_availability(r_type, r_uuid, start, end):
+    return IMPL.offer_verify_resource_availability(
+        r_type, r_uuid, start, end)
 
 
 def offer_create(values):

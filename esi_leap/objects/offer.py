@@ -116,6 +116,11 @@ class Offer(base.ESILEAPObject):
                                  start_time=str(updates['start_time']),
                                  end_time=str(updates['end_time']))
 
+        self.dbapi.offer_verify_resource_availability(updates['resource_type'],
+                                                      updates['resource_uuid'],
+                                                      updates['start_time'],
+                                                      updates['end_time'])
+
         db_offer = self.dbapi.offer_create(updates)
         self._from_db_object(context, self, db_offer)
 

@@ -147,7 +147,7 @@ def offer_get_all(filters):
     if a_start and a_end:
         for o in query:
             try:
-                offer_verify_availability(o, a_start, a_end)
+                offer_verify_contract_availability(o, a_start, a_end)
             except exception.OfferNoTimeAvailabilities:
                 query = query.filter(models.Offer.uuid != o.uuid)
 
@@ -182,7 +182,7 @@ def offer_get_first_availability(offer_ref, start):
         filter(models.Contract.end_time >= start).one_or_none()
 
 
-def offer_verify_availability(offer_ref, start, end):
+def offer_verify_contract_availability(offer_ref, start, end):
 
     if start < offer_ref.start_time or end > offer_ref.end_time:
         raise exception.OfferNoTimeAvailabilities(offer_uuid=offer_ref.uuid,
@@ -193,7 +193,6 @@ def offer_verify_availability(offer_ref, start, end):
 
     contracts = c_query.with_entities(
         models.Contract.start_time, models.Contract.end_time).\
-        join(models.Offer).\
         filter((models.Contract.offer_uuid == offer_ref.uuid),
                (models.Contract.status == statuses.CREATED) |
                (models.Contract.status == statuses.ACTIVE)
@@ -214,6 +213,33 @@ def offer_verify_availability(offer_ref, start, end):
         raise exception.OfferNoTimeAvailabilities(offer_uuid=offer_ref.uuid,
                                                   start_time=start,
                                                   end_time=end)
+
+
+def offer_verify_resource_availability(r_type, r_uuid, start, end):
+
+    o_query = model_query(models.Offer, get_session())
+
+    offers = o_query.with_entities(
+        models.Offer.start_time, models.Offer.end_time).\
+        filter((models.Offer.resource_uuid == r_uuid),
+               (models.Offer.resource_type == r_type),
+               (models.Offer.status == statuses.AVAILABLE))
+
+    conflict = offers.filter((
+        (start >= models.Offer.start_time) &
+        (start < models.Offer.end_time) |
+
+        (end > models.Offer.start_time) &
+        (end <= models.Offer.end_time) |
+
+        (start <= models.Offer.start_time) &
+        (end >= models.Offer.end_time)
+    )).first()
+
+    if conflict:
+        raise exception.OfferResourceTimeConflict(
+            resource_uuid=r_uuid,
+            resource_type=r_type)
 
 
 def offer_create(values):
