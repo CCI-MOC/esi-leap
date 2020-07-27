@@ -58,9 +58,34 @@ end_iso = '2016-10-24T00:00:00'
 test_node_1 = TestNode('111', owner_ctx.project_id)
 
 
+def create_test_offer(context):
+    o = offer.Offer(
+        resource_type='test_node',
+        resource_uuid='1234567890',
+        uuid='aaaaaaaa',
+        start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
+        end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
+        project_id="111111111111"
+    )
+    o.create(context)
+    return o
+
+
+def create_test_contract(context):
+    c = contract.Contract(
+        uuid='bbbbbbbb',
+        start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
+        end_date=datetime.datetime(2016, 8, 16, 19, 20, 30),
+        offer_uuid='1234567890',
+        project_id="222222222222"
+    )
+    c.create(context)
+    return c
+
+
 def create_test_contract_data():
     return {
-        "offer_uuid": "some_uuid",
+        "offer_uuid_or_name": "o",
         "start_time": "2016-07-16T19:20:30",
         "end_time": "2016-08-16T19:20:30"
     }
@@ -119,7 +144,7 @@ class TestContractsControllerAdmin(test_api_base.APITestCase):
 
         super(TestContractsControllerAdmin, self).setUp()
 
-        o = TestContractsControllerAdmin.create_test_offer(self.context)
+        o = create_test_offer(self.context)
 
         self.test_contract = contract.Contract(
             start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
@@ -141,19 +166,28 @@ class TestContractsControllerAdmin(test_api_base.APITestCase):
         self.assertEqual(self.test_contract.uuid,
                          data['contracts'][0]["uuid"])
 
+    @mock.patch('esi_leap.api.controllers.v1.contract.uuidutils.generate_uuid')
+    @mock.patch('esi_leap.api.controllers.v1.contract.offer.Offer.get')
     @mock.patch('esi_leap.objects.contract.Contract.create')
-    def test_post(self, mock_create):
+    def test_post(self, mock_create, mock_offer_get, mock_generate_uuid):
 
-        mock_create.return_value = self.test_contract
+        mock_generate_uuid.return_value = '22222'
+        mock_offer_get.return_value = [test_offer]
 
         data = create_test_contract_data()
         request = self.post_json('/contracts', data)
         self.assertEqual(1, mock_create.call_count)
 
+        data.pop('offer_uuid_or_name')
         data['project_id'] = lessee_ctx.project_id
+        data['uuid'] = '22222'
+        data['offer_uuid'] = '11111'
         self.assertEqual(request.json, data)
         # FIXME: post returns incorrect status code
         # self.assertEqual(http_client.CREATED, request.status_int)
+
+        mock_generate_uuid.assert_called_once()
+        mock_offer_get.assert_called_once_with('o')
 
 
 class TestContractControllerStaticMethods(testtools.TestCase):

@@ -168,18 +168,17 @@ def offer_get_conflict_times(offer_ref):
                ).all()
 
 
-def offer_get_first_availability(offer_ref, start):
+def offer_get_first_availability(offer_uuid, start):
     c_query = model_query(models.Contract, get_session())
 
     return c_query.with_entities(
         models.Contract.start_time).\
-        join(models.Offer).\
-        filter(models.Contract.offer_uuid == offer_ref.uuid,
+        filter(models.Contract.offer_uuid == offer_uuid,
                (models.Contract.status == statuses.CREATED) |
                (models.Contract.status == statuses.ACTIVE)
                ).\
         order_by(models.Contract.start_time).\
-        filter(models.Contract.end_time >= start).one_or_none()
+        filter(models.Contract.end_time >= start).first()
 
 
 def offer_verify_contract_availability(offer_ref, start, end):

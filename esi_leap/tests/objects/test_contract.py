@@ -199,25 +199,24 @@ class TestContractObject(base.DBTestCase):
                 contracts[0], contract.Contract)
             self.assertEqual(self.context, contracts[0]._context)
 
-    def test_create(self):
+    @mock.patch('esi_leap.objects.contract.Offer.get',
+                return_value=[get_offer()])
+    def test_create(self, mock_offer_get):
         c = contract.Contract(
             self.context, **self.fake_contract)
         with mock.patch.object(self.db_api, 'contract_create',
                                autospec=True) as mock_contract_create:
             with mock.patch.object(self.db_api, 'offer_get_by_uuid',
-                                   autospec=True) as mock_offer_get_by_uuid:
-                with mock.patch(
-                        'esi_leap.objects.contract.uuidutils.generate_uuid')\
-                        as mock_uuid:
-                    mock_offer_get_by_uuid.return_value = get_offer()
-                    mock_contract_create.return_value = get_test_contract_1()
-                    mock_uuid.return_value = '534653c9-880d-4c2d-6d6d-' \
-                                             '11111111111'
+                                   autospec=True) as mock_offer_get:
+                mock_contract_create.return_value = get_test_contract_1()
+                mock_offer_get.return_value = get_offer()
 
-                    c.create()
+                c.create('534653c9-880d-4c2d-6d6d-f4f2a09e384')
 
-                    mock_contract_create.assert_called_once_with(
-                        get_test_contract_1())
+                mock_contract_create.assert_called_once_with(
+                    get_test_contract_1())
+                mock_offer_get.assert_called_once_with(
+                    '534653c9-880d-4c2d-6d6d-f4f2a09e384')
 
     def test_destroy(self):
         c = contract.Contract(self.context, **self.fake_contract)

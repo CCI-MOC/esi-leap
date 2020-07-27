@@ -12,6 +12,7 @@
 
 import datetime
 from oslo_policy import policy as oslo_policy
+from oslo_utils import uuidutils
 import pecan
 from pecan import rest
 import wsme
@@ -36,7 +37,8 @@ class Contract(base.ESILEAPBase):
     end_time = wsme.wsattr(datetime.datetime)
     status = wsme.wsattr(wtypes.text, readonly=True)
     properties = {wtypes.text: types.jsontype}
-    offer_uuid = wsme.wsattr(wtypes.text, mandatory=True)
+    offer_uuid = wsme.wsattr(wtypes.text, readonly=True)
+    offer_uuid_or_name = wsme.wsattr(wtypes.text)
 
     def __init__(self, **kwargs):
         self.fields = contract.Contract.fields
@@ -93,10 +95,36 @@ class ContractsController(rest.RestController):
 
         contract_dict = new_contract.to_dict()
         contract_dict['project_id'] = request.project_id
+        contract_dict['uuid'] = uuidutils.generate_uuid()
+
+        if new_contract.offer_uuid_or_name is None:
+            raise exception.ContractNoOfferUUID()
+
+        o_objects = offer.Offer.get(new_contract.offer_uuid_or_name)
+        if len(o_objects) > 1:
+            raise exception.OfferDuplicateName(
+                name=new_contract.offer_uuid_or_name)
+        elif len(o_objects) == 0:
+            raise exception.OfferNotFound(
+                offer_uuid=new_contract.offer_uuid_or_name)
+
+        related_offer = o_objects[0]
+        contract_dict['offer_uuid'] = related_offer.uuid
+
+        if 'start_time' not in contract_dict:
+            contract_dict['start_time'] = datetime.datetime.now()
+
+        if 'end_time' not in contract_dict:
+            q = related_offer.offer_get_first_availability(
+                contract_dict['offer_uuid'],
+                contract_dict['start_time'])
+            if q is None:
+                contract_dict['end_time'] = related_offer.end_time
+            else:
+                contract_dict['end_time'] = q.start_time
 
         c = contract.Contract(**contract_dict)
         c.create(request)
-
         return Contract(**c.to_dict())
 
     @wsme_pecan.wsexpose(Contract, wtypes.text)
