@@ -114,9 +114,6 @@ class Contract(base.ESILEAPObject):
     def expire(self, context=None):
         # unassign resource
         o = Offer.get_by_uuid(self.offer_uuid, context)
-        if o.status != statuses.AVAILABLE:
-            raise exception.OfferNotAvailable(offer_uuid=o.uuid,
-                                              status=o.status)
 
         resource = o.resource_object()
         if resource.get_contract_uuid() == self.uuid:

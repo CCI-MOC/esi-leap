@@ -40,7 +40,6 @@ class ManagerService(service.Service):
         self._context = ctx.RequestContext(
             auth_token=None,
             project_id=None,
-            is_admin=True,
             overwrite=False)
 
     def start(self):
@@ -53,8 +52,6 @@ class ManagerService(service.Service):
         self.tg.add_timer(EVENT_INTERVAL, self._expire_contracts)
         LOG.info("Starting _expire_offers periodic job")
         self.tg.add_timer(EVENT_INTERVAL, self._expire_offers)
-        LOG.info("Starting _retrieve_contracts periodic job")
-        self.tg.add_timer(EVENT_INTERVAL, self._retrieve_contracts)
 
     def stop(self):
         super(ManagerService, self).stop()
@@ -63,28 +60,29 @@ class ManagerService(service.Service):
 
     def _fulfill_contracts(self):
         LOG.info("Checking for contracts to fulfill")
-        contracts = contract.Contract.get_all_by_status(
-            self._context, statuses.CREATED)
+        contracts = contract.Contract.get_all(
+            self._context, {'status': statuses.CREATED})
+        now = timeutils.utcnow()
         for c in contracts:
-            if c.start_time and \
-               c.start_time <= timeutils.utcnow():
+            if c.start_time <= now and now <= c.end_time:
                 LOG.info("Fulfilling contract %s", c.uuid)
                 c.fulfill(self._context)
 
     def _expire_contracts(self):
         LOG.info("Checking for expiring contracts")
-        contracts = contract.Contract.get_all_by_status(
-            self._context, statuses.ACTIVE)
+        contracts = contract.Contract.get_all(
+            self._context, {'status': [statuses.ACTIVE, statuses.CREATED]})
+        now = timeutils.utcnow()
         for c in contracts:
-            if c.end_time and \
-               c.end_time <= timeutils.utcnow():
+            if c.end_time <= now:
                 LOG.info("Expiring contract %s", c.uuid)
                 c.expire(self._context)
 
     def _expire_offers(self):
         LOG.info("Checking for expiring offers")
-        offers = offer.Offer.get_all_by_status(
-            self._context, statuses.AVAILABLE)
+        offers = offer.Offer.get_all(self._context,
+                                     {'status': statuses.AVAILABLE})
+
         for o in offers:
             if o.end_time and \
                o.end_time <= timeutils.utcnow():
