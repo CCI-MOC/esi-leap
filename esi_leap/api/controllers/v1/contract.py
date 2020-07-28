@@ -115,8 +115,7 @@ class ContractsController(rest.RestController):
             contract_dict['start_time'] = datetime.datetime.now()
 
         if 'end_time' not in contract_dict:
-            q = related_offer.offer_get_first_availability(
-                contract_dict['offer_uuid'],
+            q = related_offer.get_first_availability(
                 contract_dict['start_time'])
             if q is None:
                 contract_dict['end_time'] = related_offer.end_time
