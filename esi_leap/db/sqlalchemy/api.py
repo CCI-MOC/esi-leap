@@ -340,8 +340,8 @@ def contract_update(contract_uuid, values):
     values.pop('uuid', None)
     values.pop('project_id', None)
 
-    start = values.pop('start_time', None)
-    end = values.pop('end_time', None)
+    start = values.get('start_time', None)
+    end = values.get('end_time', None)
     if start is None:
         start = contract_ref.start_time
     if end is None:
@@ -362,4 +362,4 @@ def contract_destroy(contract_uuid):
 
     if not contract_ref:
         raise exception.ContractNotFound(contract_uuid=contract_uuid)
-    contract_ref.delete()
+    query.delete()
