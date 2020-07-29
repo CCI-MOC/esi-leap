@@ -234,12 +234,31 @@ class TestAPI(base.DBTestCase):
         end = now + datetime.timedelta(days=87)
         api.offer_verify_contract_availability(offer, start, end)
 
+    def test_offer_get_conflict_times(self):
+        o1 = api.offer_create(test_offer_1)
+        self.assertEqual(api.offer_get_conflict_times(o1), [])
+        test_contract_3['offer_uuid'] = o1.uuid
+        api.contract_create(test_contract_3)
+        self.assertEqual(api.offer_get_conflict_times(o1),
+                         [(now + datetime.timedelta(days=50),
+                          now + datetime.timedelta(days=60))])
+
+    def test_offer_get_first_availability(self):
+        o1 = api.offer_create(test_offer_1)
+        self.assertEqual(api.offer_get_first_availability
+                         (o1.uuid, o1.start_time,), None)
+        test_contract_3['offer_uuid'] = o1.uuid
+        api.contract_create(test_contract_3)
+        self.assertEqual(api.offer_get_first_availability
+                         (o1.uuid, o1.start_time), (now + datetime
+                                                    .timedelta(days=50),))
+
     def test_offer_get_by_uuid(self):
-        offer = api.offer_create(test_offer_1)
-        res = api.offer_get_by_uuid(offer.uuid)
-        self.assertEqual(offer.uuid, res.uuid)
-        self.assertEqual(offer.project_id, res.project_id)
-        self.assertEqual(offer.properties, res.properties)
+        o1 = api.offer_create(test_offer_1)
+        res = api.offer_get_by_uuid(o1.uuid)
+        self.assertEqual(o1.uuid, res.uuid)
+        self.assertEqual(o1.project_id, res.project_id)
+        self.assertEqual(o1.properties, res.properties)
 
     def test_offer_get_by_uuid_not_found(self):
         assert api.offer_get_by_uuid('some_uuid') is None
@@ -265,8 +284,8 @@ class TestAPI(base.DBTestCase):
         self.assertEqual(api.offer_get_by_name('some_name'), [])
 
     def test_offer_destroy(self):
-        offer = api.offer_create(test_offer_2)
-        api.offer_destroy(offer.uuid)
+        o1 = api.offer_create(test_offer_2)
+        api.offer_destroy(o1.uuid)
         self.assertEqual(api.offer_get_by_uuid('offer_2'), None)
 
     def test_offer_destroy_not_found(self):
@@ -280,6 +299,29 @@ class TestAPI(base.DBTestCase):
         self.assertEqual(test_offer_2['start_time'], o1.start_time)
         self.assertEqual(test_offer_2['end_time'], o1.end_time)
 
+    def test_offer_update_invalid_time(self):
+        o1 = api.offer_create(test_offer_3)
+        values = {'start_time': now + datetime.timedelta(days=101),
+                  'end_time': now}
+        self.assertRaises(e.InvalidTimeRange, api.offer_update,
+                          o1.uuid, values)
+
+    def test_offer_verify_resource_availability(self):
+        o1 = api.offer_create(test_offer_4)
+        r_type = o1.resource_type
+        r_uuid = o1.resource_uuid
+
+        start = now + datetime.timedelta(days=101)
+        end = now + datetime.timedelta(days=105)
+        api.offer_verify_resource_availability(r_type, r_uuid,
+                                               start, end)
+
+        start = now + datetime.timedelta(days=5)
+        end = now + datetime.timedelta(days=10)
+        self.assertRaises(e.OfferResourceTimeConflict,
+                          api.offer_verify_resource_availability,
+                          r_type, r_uuid, start, end)
+
     def test_offer_get_all(self):
         o1 = api.offer_create(test_offer_2)
         o2 = api.offer_create(test_offer_3)
@@ -288,11 +330,11 @@ class TestAPI(base.DBTestCase):
                          (res[0].to_dict(), res[1].to_dict()))
 
     def test_contract_get_by_uuid(self):
-        o = api.offer_create(test_offer_2)
-        test_contract_4['offer_uuid'] = o.uuid
-        contract = api.contract_create(test_contract_4)
-        res = api.contract_get_by_uuid(contract.uuid)
-        self.assertEqual(contract.uuid, res.uuid)
+        o1 = api.offer_create(test_offer_2)
+        test_contract_4['offer_uuid'] = o1.uuid
+        c1 = api.contract_create(test_contract_4)
+        res = api.contract_get_by_uuid(c1.uuid)
+        self.assertEqual(c1.uuid, res.uuid)
 
     def test_contract_get_by_uuid_not_found(self):
         assert api.contract_get_by_uuid('some_uuid') is None
@@ -336,8 +378,8 @@ class TestAPI(base.DBTestCase):
                          (res[0].to_dict(), res[1].to_dict()))
 
     def test_contract_create(db):
-        o = api.offer_create(test_offer_2)
-        test_contract_4['offer_uuid'] = o.uuid
+        o1 = api.offer_create(test_offer_2)
+        test_contract_4['offer_uuid'] = o1.uuid
         c1 = api.contract_create(test_contract_4)
         c2 = api.contract_get_all({}).all()
         assert len(c2) == 1
@@ -354,11 +396,20 @@ class TestAPI(base.DBTestCase):
         self.assertEqual(test_contract_5['start_time'], c1.start_time)
         self.assertEqual(test_contract_5['end_time'], c1.end_time)
 
+    def test_contract_update_invalid_time(self):
+        o1 = api.offer_create(test_offer_3)
+        test_contract_4['offer_uuid'] = o1.uuid
+        c1 = api.contract_create(test_contract_4)
+        values = {'start_time': now + datetime.timedelta(days=101),
+                  'end_time': now}
+        self.assertRaises(e.InvalidTimeRange, api.contract_update,
+                          c1.uuid, values)
+
     def test_contract_destroy(self):
-        o = api.offer_create(test_offer_2)
-        test_contract_4['offer_uuid'] = o.uuid
-        contract = api.contract_create(test_contract_4)
-        api.contract_destroy(contract.uuid)
+        o1 = api.offer_create(test_offer_2)
+        test_contract_4['offer_uuid'] = o1.uuid
+        c1 = api.contract_create(test_contract_4)
+        api.contract_destroy(c1.uuid)
         self.assertEqual(api.contract_get_by_uuid('contract_4'), None)
 
     def test_contract_destroy_not_found(self):
