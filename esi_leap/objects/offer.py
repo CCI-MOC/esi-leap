@@ -14,10 +14,11 @@
 from esi_leap.common import statuses
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
-import esi_leap.objects.contract
+from esi_leap.objects import contract
 from esi_leap.objects import fields
 from esi_leap.resource_objects import resource_object_factory as ro_factory
 
+from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_versionedobjects import base as versioned_objects_base
 
@@ -112,7 +113,7 @@ class Offer(base.ESILEAPObject):
         self._from_db_object(context, self, db_offer)
 
     def cancel(self):
-        contracts = esi_leap.objects.contract.Contract.get_all(
+        contracts = contract.Contract.get_all(
             None, {'offer_uuid': self.uuid})
         for c in contracts:
             if c.status == statuses.CREATED or c.status == statuses.ACTIVE:
@@ -137,11 +138,16 @@ class Offer(base.ESILEAPObject):
 
     def expire(self, context=None):
         # make sure all related contracts are expired
-        contracts = esi_leap.objects.contract.Contract.get_all(
+        contracts = contract.Contract.get_all(
             None, {'offer_uuid': self.uuid})
         for c in contracts:
-            if c.status != statuses.EXPIRED:
-                c.expire(context)
+
+            with lockutils.lock(c.uuid,
+                                lock_file_prefix='contract',
+                                external=True):
+                c_locked = contract.Contract.get_by_uuid(c.uuid)
+                if c_locked.status != statuses.EXPIRED:
+                    c_locked.expire(context)
 
         # expire offer
         self.status = statuses.EXPIRED

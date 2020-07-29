@@ -16,6 +16,8 @@ import esi_leap.conf
 from esi_leap.manager import utils
 from esi_leap.objects import contract
 from esi_leap.objects import offer
+
+from oslo_concurrency import lockutils
 from oslo_context import context as ctx
 from oslo_log import log as logging
 import oslo_messaging as messaging
@@ -75,8 +77,14 @@ class ManagerService(service.Service):
         now = timeutils.utcnow()
         for c in contracts:
             if c.end_time <= now:
-                LOG.info("Expiring contract %s", c.uuid)
-                c.expire(self._context)
+
+                with lockutils.lock(c.uuid,
+                                    lock_file_prefix='contract',
+                                    external=True):
+                    c_locked = contract.Contract.get_by_uuid(c.uuid)
+                    if c_locked.status != statuses.EXPIRED:
+                        c_locked.expire(self._context)
+                        LOG.info("Expiring contract %s", c.uuid)
 
     def _expire_offers(self):
         LOG.info("Checking for expiring offers")

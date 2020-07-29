@@ -16,6 +16,7 @@ from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 from esi_leap.objects import fields
 from esi_leap.objects.offer import Offer
+
 from oslo_config import cfg
 from oslo_versionedobjects import base as versioned_objects_base
 
@@ -112,8 +113,15 @@ class Contract(base.ESILEAPObject):
         self.save(context)
 
     def expire(self, context=None):
+
+        if self.status == statuses.EXPIRED:
+            raise Exception("Already expired " + self.uuid)
+
         # unassign resource
         o = Offer.get_by_uuid(self.offer_uuid, context)
+
+        if o.status != statuses.AVAILABLE:
+            raise Exception("Offer not available " + o.uuid)
 
         resource = o.resource_object()
         if resource.get_contract_uuid() == self.uuid:
