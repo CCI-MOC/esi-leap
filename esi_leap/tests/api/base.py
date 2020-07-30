@@ -13,6 +13,7 @@
 import mock
 import pecan
 import pecan.testing
+import tempfile
 
 from esi_leap.api import app
 import esi_leap.conf
@@ -40,6 +41,8 @@ class APITestCase(base.DBTestCase):
         self.mock_context = self.patch_context.start()
 
         self.mock_context.return_value = self.context
+
+        self.config(lock_path=tempfile.mkdtemp(), group='oslo_concurrency')
 
     # borrowed from Ironic
     def get_json(self, path, expect_errors=False, headers=None,

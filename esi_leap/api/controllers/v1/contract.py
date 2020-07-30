@@ -11,7 +11,6 @@
 #    under the License.
 
 import datetime
-from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 import pecan
 from pecan import rest
@@ -21,11 +20,11 @@ import wsmeext.pecan as wsme_pecan
 
 from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
+from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
 from esi_leap.common import policy
 from esi_leap.common import statuses
 from esi_leap.objects import contract
-from esi_leap.objects import offer
 
 
 class Contract(base.ESILEAPBase):
@@ -61,8 +60,7 @@ class ContractsController(rest.RestController):
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:contract:get', cdict, cdict)
 
-        permitted = ContractsController._contract_get_authorized_contract(
-            contract_id, cdict)
+        permitted = utils.get_contract_authorized(contract_id, cdict)
 
         return Contract(**permitted.to_dict())
 
@@ -82,7 +80,7 @@ class ContractsController(rest.RestController):
                 offer_uuid=offer_uuid, view=view, owner=owner)
 
         contract_collection = ContractCollection()
-        contracts = contract.Contract.get_all(request, filters)
+        contracts = contract.Contract.get_all(filters, request)
         contract_collection.contracts = [
             Contract(**c.to_dict()) for c in contracts]
         return contract_collection
@@ -100,15 +98,9 @@ class ContractsController(rest.RestController):
         if new_contract.offer_uuid_or_name is None:
             raise exception.ContractNoOfferUUID()
 
-        o_objects = offer.Offer.get(new_contract.offer_uuid_or_name)
-        if len(o_objects) > 1:
-            raise exception.OfferDuplicateName(
-                name=new_contract.offer_uuid_or_name)
-        elif len(o_objects) == 0:
-            raise exception.OfferNotFound(
-                offer_uuid=new_contract.offer_uuid_or_name)
+        related_offer = utils.get_offer(new_contract.offer_uuid_or_name,
+                                        statuses.AVAILABLE)
 
-        related_offer = o_objects[0]
         contract_dict['offer_uuid'] = related_offer.uuid
 
         if 'start_time' not in contract_dict:
@@ -132,43 +124,10 @@ class ContractsController(rest.RestController):
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:contract:delete', cdict, cdict)
 
-        permitted = ContractsController._contract_get_authorized_contract(
-            contract_id, cdict)
+        permitted = utils.get_contract_authorized(
+            contract_id, cdict, [statuses.CREATED, statuses.ACTIVE])
 
         permitted.cancel()
-
-    @staticmethod
-    def _contract_get_authorized_contract(contract_id, cdict):
-
-        contract_objs = contract.Contract.get(contract_id)
-        permitted = []
-        for c in contract_objs:
-            try:
-                ContractsController._contract_authorize_management(c, cdict)
-                permitted.append(c)
-            except oslo_policy.PolicyNotAuthorized:
-                continue
-
-            if len(permitted) > 1:
-                raise exception.ContractDuplicateName(name=contract_id)
-
-        if len(permitted) == 0:
-            raise exception.ContractNotFound(contract_id=contract_id)
-
-        return permitted[0]
-
-    @staticmethod
-    def _contract_authorize_management(c, cdict):
-
-        if c.project_id != cdict['project_id']:
-            try:
-                policy.authorize('esi_leap:contract:contract_admin',
-                                 cdict, cdict)
-            except oslo_policy.PolicyNotAuthorized:
-                o = offer.Offer.get_by_uuid(c.offer_uuid)
-                if o.project_id != cdict['project_id']:
-                    policy.authorize('esi_leap:offer:offer_admin',
-                                     cdict, cdict)
 
     @staticmethod
     def _contract_get_all_authorize_filters(cdict,
@@ -181,6 +140,8 @@ class ContractsController(rest.RestController):
             status = [statuses.CREATED, statuses.ACTIVE]
         elif status == 'any':
             status = None
+        else:
+            status = [status]
 
         possible_filters = {
             'status': status,

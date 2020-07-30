@@ -264,8 +264,8 @@ def offer_update(offer_uuid, values):
         end = offer_ref.end_time
     if start >= end:
         raise exception.InvalidTimeRange(resource="an offer",
-                                         start_time=str(values['start_time']),
-                                         end_time=str(values['end_time']))
+                                         start_time=str(start),
+                                         end_time=str(end))
 
     offer_ref.update(values)
     offer_ref.save(s)
@@ -308,11 +308,7 @@ def contract_get_all(filters):
     query = query.filter_by(**filters)
 
     if status:
-        if type(status) == list:
-            query = query.filter((models.Contract.status == status[0]) |
-                                 (models.Contract.status == status[1]))
-        else:
-            query = query.filter_by(status=status)
+        query = query.filter((models.Contract.status.in_(status)))
 
     if start and end:
         query = query.filter((start >= models.Contract.start_time) &
@@ -348,8 +344,8 @@ def contract_update(contract_uuid, values):
         end = contract_ref.end_time
     if start >= end:
         raise exception.InvalidTimeRange(resource="a contract",
-                                         start_time=str(values['start_time']),
-                                         end_time=str(values['end_time']))
+                                         start_time=str(start),
+                                         end_time=str(end))
 
     contract_ref.update(values)
     contract_ref.save(s)
