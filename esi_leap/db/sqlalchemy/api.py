@@ -256,8 +256,8 @@ def offer_update(offer_uuid, values):
     values.pop('uuid', None)
     values.pop('project_id', None)
 
-    start = values.pop('start_time', None)
-    end = values.pop('end_time', None)
+    start = values.get('start_time', None)
+    end = values.get('end_time', None)
     if start is None:
         start = offer_ref.start_time
     if end is None:
