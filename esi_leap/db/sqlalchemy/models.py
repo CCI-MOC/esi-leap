@@ -74,6 +74,8 @@ class Contract(Base):
     project_id = Column(String(255), nullable=False)
     start_time = Column(DateTime)
     end_time = Column(DateTime)
+    fulfill_time = Column(DateTime)
+    expire_time = Column(DateTime)
     status = Column(String(15), nullable=False, default=statuses.CREATED)
     properties = Column(db_types.JsonEncodedDict, nullable=True)
     offer_uuid = Column(String(36),

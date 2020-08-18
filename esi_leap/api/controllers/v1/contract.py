@@ -33,6 +33,8 @@ class Contract(base.ESILEAPBase):
     uuid = wsme.wsattr(wtypes.text, readonly=True)
     project_id = wsme.wsattr(wtypes.text, readonly=True)
     start_time = wsme.wsattr(datetime.datetime)
+    fulfill_time = wsme.wsattr(datetime.datetime, readonly=True)
+    expire_time = wsme.wsattr(datetime.datetime, readonly=True)
     end_time = wsme.wsattr(datetime.datetime)
     status = wsme.wsattr(wtypes.text, readonly=True)
     properties = {wtypes.text: types.jsontype}

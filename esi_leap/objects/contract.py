@@ -9,6 +9,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import datetime
 
 from esi_leap.common import exception
 from esi_leap.common import statuses
@@ -35,6 +36,8 @@ class Contract(base.ESILEAPObject):
         'project_id': fields.StringField(),
         'start_time': fields.DateTimeField(nullable=True),
         'end_time': fields.DateTimeField(nullable=True),
+        'fulfill_time': fields.DateTimeField(nullable=True),
+        'expire_time': fields.DateTimeField(nullable=True),
         'status': fields.StringField(),
         'properties': fields.FlexibleDictField(nullable=True),
         'offer_uuid': fields.UUIDField(),
@@ -82,6 +85,7 @@ class Contract(base.ESILEAPObject):
             resource.expire_contract(self)
 
         self.status = statuses.CANCELLED
+        self.expire_time = datetime.datetime.now()
         self.save(None)
 
     def destroy(self):
@@ -107,6 +111,7 @@ class Contract(base.ESILEAPObject):
 
             # activate contract
             self.status = statuses.ACTIVE
+            self.fulfill_time = datetime.datetime.now()
             self.save(context)
 
         _fulfill_contract()
@@ -121,4 +126,5 @@ class Contract(base.ESILEAPObject):
 
         # expire contract
         self.status = statuses.EXPIRED
+        self.expire_time = datetime.datetime.now()
         self.save(context)
