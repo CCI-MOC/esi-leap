@@ -86,7 +86,7 @@ class Contract(base.ESILEAPObject):
 
         resource = o.resource_object()
         if resource.get_contract_uuid() == self.uuid:
-            resource.set_contract(None)
+            resource.expire_contract(self)
 
         self.status = statuses.CANCELLED
         self.save(None)
@@ -117,7 +117,7 @@ class Contract(base.ESILEAPObject):
 
         resource = o.resource_object()
         if resource.get_contract_uuid() == self.uuid:
-            resource.set_contract(None)
+            resource.expire_contract(self)
 
         # expire contract
         self.status = statuses.EXPIRED

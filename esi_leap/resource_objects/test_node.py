@@ -29,5 +29,8 @@ class TestNode(object):
     def set_contract(self, contract):
         return
 
+    def expire_contract(self, contract):
+        return
+
     def is_resource_admin(self, project_id):
         return project_id == self._project_id
