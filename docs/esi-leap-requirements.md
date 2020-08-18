@@ -11,6 +11,7 @@ Ironic owners can bring up their nodes to ESI Leap with an offer. An offer consi
     {
         'id': 27,
         'uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
+        'name': 'o1',
         'project_id': '01d4e6a72f5c408813e02f664cc8c83e',
         'resource_type': 'ironic_node',
         'resource_uuid': '1718',
@@ -24,11 +25,72 @@ Ironic owners can bring up their nodes to ESI Leap with an offer. An offer consi
 ```
 The offer data model is designed to support the following basic APIs:
 * Get an offer by offer_uuid.
-* Get offer(s) with filters: [status, project_id, resource_uuid].
+* Get offer(s) with filters: [project_id, status, resource_uuid, resource_type, (start_time, end_time), (available_start_time, available_end_time)].
 * Create a new offer with given values.
-* Update an offer's fields. Such as update the status to 'AVAILABLE' or 'EXPIRED', etc.
+* Update an offer's fields. Such as update the status to 'available' or 'expired', etc.
 * Delete an offer by offer_uuid.
-Based on the aboving APIs, ESI Leap can provide various of functionalities for users. A leese can retrieve offers with their requirements and find the suitable offer(s). An owner can check their offers' status and make changes.
+Based on the above APIs, ESI Leap can provide various of functionalities for users. A leese can retrieve offers with their requirements and find the suitable offer(s). An owner can check their offers' status and make changes.
+
+The lifecycle of an offer is
+* 'available' on offer creation.
+* 'expired' once an offer's end_time has passed
+* 'cancelled' if an offer is prematurely deleted
+
+The offer api endpoint can be reached at /v1/offers
+
+An example offer response is shown below.
+
+```
+{
+    "uuid": "5d85b8e9-ad32-46b2-874e-969ec78e6e3d",
+    "name": "o1,
+    "project_id": "a78d93273b134c2fadf208a3e8c2da04",
+    "resource_type": "dummy_node",
+    "resource_uuid": "1718",
+    "start_time": "2030-06-30T00:00:00",
+    "end_time": "9999-12-31T23:59:59",
+    "status": "available",
+    "properties": {},
+    "availabilities": [
+        [
+            "2030-06-30T00:00:00",
+            "2050-06-30T00:00:00"
+        ],
+        [
+            "2051-06-30T00:00:00",
+            "2060-06-30T00:00:00"
+        ],
+        [
+            "2061-06-30T00:00:00",
+            "2070-06-30T00:00:00"
+        ],
+        [
+            "2071-06-30T00:00:00",
+            "2080-06-30T00:00:00"
+        ],
+        [
+            "2081-06-30T00:00:00",
+            "9999-12-31T23:59:59"
+        ]
+    ]
+}
+
+```
+An offer response has the following fields:
+* "uuid" is the primary key for an offer entry.
+* "name" is an identifier the user may set for an offer on creation. Can be used for offer management instead of 'uuid'. Does not have to be unique.
+* "project_id" is the project_id of the owner of the offer.
+* "resource_type" is the type of resource being made available for leasing. To use with ironic, set to 'ironic_node'. This is passed in as a string.
+* "start_time" is a datetime representing the time in which the offer can be leased.
+* "end_time" is a datetime representing the time in which the offer can no longer be leased.
+* "status" is the status of the offer. There are three valid statuses for an offer
+  * available: an offer can be leased. This is the state of an offer on creation.
+  * expired: an offer is no longer available for leasing. When an offer's end_time has passed, it's status is set to "expired".
+  * cancelled: an offer is no longer available for leasing. An offer is set to cancelled when it is manually revoked by a user before its end_time has passed.
+* "properties" is the baremetal properties of an offer.
+* "availabilities" is a list of [start, end] datetime pairings representing a continuous time range in which an offer is available for leasing.
+   * "availabilities" is not kept in the schema and is computed when retrieving an offer. 
+* "created_at", "updated_at", and "id" are only used in the schema and cannot be read or set.
 
 
 ### Contract
@@ -37,6 +99,7 @@ Users can choose available nodes offered up and make contracts to lease nodes. A
     {
         'id': 27,
         'uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
+        'name': 'c1',
         'project_id': '01d4e6a72f5c408813e02f664cc8c83e',
         'start_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
         'end_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
@@ -49,17 +112,55 @@ Users can choose available nodes offered up and make contracts to lease nodes. A
 ```
 The contract data model is designed to support the following basic APIs:
 * Get a contract by contract_uuid.
-* Get contract(s) with filters: [project_id, status, offer_uuid].
-* List a contract's relevant offers.
+* Get contract(s) with filters: [project_id, status, start_time, end_time, offer_uuid, owner].
+* List an offer's relevant contracts.
 * Create a new contract with given values.
-* Update a contract's fields. Such as update the status to 'OPEN' or 'FULFILLED', etc.
+* Update a contract's fields. Such as update the status to 'active' or 'expired', etc.
 * Delete a contract by contract_uuid.
+
+The lifecycle of a contract is
+* 'created' on contract creation.
+* 'active' once a contract's start_time has passed and its end_time has not yet passed.
+* 'expired' once a contracts's end_time has passed.
+* 'cancelled' if a contract is prematurely deleted.
+
+The contract api endpoint can be reached at /v1/contracts
+
+An example contract response is shown below.
+
+```
+{
+    "uuid": "ea5edb74-cafa-4281-913c-0a9fc66309d5",
+    "name": "c1",
+    "project_id": "a78d93273b134c2fadf208a3e8c2da04",
+    "start_time": "3030-07-08T00:00:00",
+    "end_time": "4030-07-08T00:00:00",
+    "status": "open",
+    "properties": {},
+    "offer_uuid": "c02c686e-e248-490e-9ba1-fdf9531d5d37"
+}
+```
+
+A contract response has the following fields:
+* "uuid" is the primary key for a contract entry.
+* "name" is an identifier the user may set for a contract on creation. Can be used for offer management instead of 'uuid'. Does not have to be unique.
+* "project_id" is the project_id of the owner of the contract and the that is leasing the offer.
+* "start_time" is a datetime representing the time in which the offer is being leased.
+* "end_time" is a datetime representing the time in which the offer is no longer being leased.
+* "status" is the status of the contract. There are three valid statuses for a contract.
+  * open: a contract is set. This is the state of a contract on creation.
+  * fulfilled: a user has leased the offer. When a contract's end_time has passed, it's status is set to "fulfilled".
+  * cancelled: a contract is no longer valid. A contract is set to cancelled when it is manually revoked by a user before its end_time has passed.
+* "properties" is the baremetal properties of a contract.
+* "offer_uuid" is the uuid of the offer which the contract is leased against.
+* "created_at", "updated_at", and "id" are only used in the schema and cannot be read or set.
+
 
 
 ### Manager Service
 An ESI Leap manager has periodic jobs to manage offers and contracts. 
 * expire offers: out-of-date offers, i.e, the current timestamp > offer's end_time, will be updated with an 'EXPIRED' status.
-* fulfill contracts: if a contract's start_time <= the current timestamp and is not expired, the manager service will fulfill the resources in the contracts and update the status of the contracts to 'FULFILLED'. 
+* fulfill contracts: if a contract's start_time <= the current timestamp and is not expired, the manager service will fulfill the resources in the contracts and update the status of the contracts to 'active'. 
 * expire contracts: same as 'expire offers', ESI Leap will expire contracts based on timestamp.
 * update offers: after the manager fulfills and expires contracts, it will update the relevant offers' status. The offers in a fulfilled contract should be unavailable to others. Likewise, when a contract expires, offers in the contract should be updated and be available again. 
 
