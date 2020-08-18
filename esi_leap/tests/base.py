@@ -12,6 +12,8 @@
 
 import fixtures
 
+from oslo_concurrency import lockutils
+from oslo_config import fixture as config
 from oslo_context import context as ctx
 from oslotest import base
 
@@ -39,6 +41,7 @@ class Database(fixtures.Fixture):
 class TestCase(base.BaseTestCase):
 
     def setUp(self):
+        self.config = self.useFixture(config.Config(lockutils.CONF)).config
         super(TestCase, self).setUp()
 
         if not hasattr(self, 'context'):

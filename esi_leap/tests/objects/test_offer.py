@@ -12,6 +12,8 @@
 
 import datetime
 import mock
+import tempfile
+import threading
 
 from esi_leap.common import statuses
 from esi_leap.objects import offer
@@ -82,64 +84,19 @@ class TestOfferObject(base.DBTestCase):
         self.fake_offer_2 = get_test_offer_2()
         self.fake_offer_3 = get_test_offer_3()
 
-    def test_get_by_uuid(self):
+        self.config(lock_path=tempfile.mkdtemp(), group='oslo_concurrency')
+
+    def test_get(self):
         offer_uuid = self.fake_offer['uuid']
         with mock.patch.object(self.db_api, 'offer_get_by_uuid',
                                autospec=True) as mock_offer_get_by_uuid:
             mock_offer_get_by_uuid.return_value = self.fake_offer
 
-            c = offer.Offer.get_by_uuid(
-                offer_uuid, self.context)
+            c = offer.Offer.get(offer_uuid, self.context)
 
             mock_offer_get_by_uuid.assert_called_once_with(
                 offer_uuid)
             self.assertEqual(self.context, c._context)
-
-    def test_get_by_name(self):
-        with mock.patch.object(self.db_api, 'offer_get_by_name',
-                               autospec=True) as mock_offer_get_by_name:
-            mock_offer_get_by_name.return_value = \
-                [self.fake_offer, self.fake_offer_2,
-                 self.fake_offer_3]
-
-            o = offer.Offer.get_by_name(
-                'o', self.context)
-
-            mock_offer_get_by_name.assert_called_once_with('o')
-            self.assertEqual(self.context, o[0]._context)
-
-    def test_get(self):
-        with mock.patch.object(self.db_api, 'offer_get_by_name',
-                               autospec=True) as mock_offer_get_by_name:
-            with mock.patch.object(self.db_api, 'offer_get_by_uuid',
-                                   autospec=True) as mock_offer_get_by_uuid:
-
-                mock_offer_get_by_name.return_value = \
-                    [self.fake_offer, self.fake_offer_2,
-                     self.fake_offer_3]
-                mock_offer_get_by_uuid.return_value = None
-
-                o = offer.Offer.get(
-                    'o', self.context)
-
-                mock_offer_get_by_uuid.assert_called_once_with('o')
-                mock_offer_get_by_name.assert_called_once_with('o')
-                assert len(o) == 3
-
-        with mock.patch.object(self.db_api, 'offer_get_by_name',
-                               autospec=True) as mock_offer_get_by_name:
-            with mock.patch.object(self.db_api, 'offer_get_by_uuid',
-                                   autospec=True) as mock_offer_get_by_uuid:
-
-                mock_offer_get_by_uuid.return_value = self.fake_offer
-                o = offer.Offer.get(
-                    self.fake_offer['uuid'], self.context)
-
-                mock_offer_get_by_uuid.assert_called_once_with(
-                    self.fake_offer['uuid']
-                )
-                assert not mock_offer_get_by_name.called
-                assert len(o) == 1
 
     def test_get_all(self):
         with mock.patch.object(
@@ -149,7 +106,7 @@ class TestOfferObject(base.DBTestCase):
                 self.fake_offer]
 
             offers = offer.Offer.get_all(
-                self.context, {})
+                {}, self.context)
 
             mock_offer_get_all.assert_called_once_with(
                 {})
@@ -228,6 +185,38 @@ class TestOfferObject(base.DBTestCase):
 
             o.create(self.context)
             mock_offer_create.assert_called_once_with(get_test_offer())
+
+    def test_create_concurrent(self):
+        o = offer.Offer(
+            self.context, **self.fake_offer)
+
+        o2 = offer.Offer(
+            self.context, **self.fake_offer)
+
+        o2.id = 28
+
+        with mock.patch.object(self.db_api, 'offer_create',
+                               autospec=True) as mock_offer_create:
+            with mock.patch.object(self.db_api,
+                                   'offer_verify_resource_availability',
+                                   autospec=True) as mock_ovra:
+
+                def update_mock(updates):
+                    mock_ovra.side_effect = Exception("bad")
+
+                mock_offer_create.side_effect = update_mock
+
+                thread = threading.Thread(target=o.create)
+                thread2 = threading.Thread(target=o2.create)
+
+                thread.start()
+                thread2.start()
+
+                thread.join()
+                thread2.join()
+
+                assert mock_ovra.call_count == 2
+                mock_offer_create.assert_called_once()
 
     def test_destroy(self):
         o = offer.Offer(self.context, **self.fake_offer)

@@ -12,6 +12,8 @@
 
 import datetime
 import mock
+import tempfile
+import threading
 
 from esi_leap.common import statuses
 from esi_leap.objects import contract
@@ -123,64 +125,19 @@ class TestContractObject(base.DBTestCase):
         self.fake_contract_3 = get_test_contract_3()
         self.fake_contract_4 = get_test_contract_4()
 
-    def test_get_by_uuid(self):
+        self.config(lock_path=tempfile.mkdtemp(), group='oslo_concurrency')
+
+    def test_get(self):
         contract_uuid = self.fake_contract['uuid']
         with mock.patch.object(self.db_api, 'contract_get_by_uuid',
                                autospec=True) as mock_contract_get_by_uuid:
             mock_contract_get_by_uuid.return_value = self.fake_contract
 
-            c = contract.Contract.get_by_uuid(
-                contract_uuid, self.context)
+            c = contract.Contract.get(contract_uuid, self.context)
 
             mock_contract_get_by_uuid.assert_called_once_with(
                 contract_uuid)
             self.assertEqual(self.context, c._context)
-
-    def test_get_by_name(self):
-        with mock.patch.object(self.db_api, 'contract_get_by_name',
-                               autospec=True) as mock_contract_get_by_name:
-            mock_contract_get_by_name.return_value = \
-                [self.fake_contract, self.fake_contract_2,
-                 self.fake_contract_3]
-
-            c = contract.Contract.get_by_name(
-                'c', self.context)
-
-            mock_contract_get_by_name.assert_called_once_with('c')
-            self.assertEqual(self.context, c[0]._context)
-
-    def test_get(self):
-        with mock.patch.object(self.db_api, 'contract_get_by_name',
-                               autospec=True) as mock_contract_get_by_name:
-            with mock.patch.object(self.db_api, 'contract_get_by_uuid',
-                                   autospec=True) as mock_contract_get_by_uuid:
-
-                mock_contract_get_by_name.return_value = \
-                    [self.fake_contract, self.fake_contract_2,
-                     self.fake_contract_3]
-                mock_contract_get_by_uuid.return_value = None
-
-                c = contract.Contract.get(
-                    'c', self.context)
-
-                mock_contract_get_by_uuid.assert_called_once_with('c')
-                mock_contract_get_by_name.assert_called_once_with('c')
-                assert len(c) == 3
-
-        with mock.patch.object(self.db_api, 'contract_get_by_name',
-                               autospec=True) as mock_contract_get_by_name:
-            with mock.patch.object(self.db_api, 'contract_get_by_uuid',
-                                   autospec=True) as mock_contract_get_by_uuid:
-
-                mock_contract_get_by_uuid.return_value = self.fake_contract
-                c = contract.Contract.get(
-                    self.fake_contract['uuid'], self.context)
-
-                mock_contract_get_by_uuid.assert_called_once_with(
-                    self.fake_contract['uuid']
-                )
-                assert not mock_contract_get_by_name.called
-                assert len(c) == 1
 
     def test_get_all(self):
         with mock.patch.object(
@@ -191,7 +148,7 @@ class TestContractObject(base.DBTestCase):
                  self.fake_contract_3, self.fake_contract_4]
 
             contracts = contract.Contract.get_all(
-                self.context, {})
+                {}, self.context)
 
             mock_contract_get_all.assert_called_once_with({})
             self.assertEqual(len(contracts), 4)
@@ -199,24 +156,64 @@ class TestContractObject(base.DBTestCase):
                 contracts[0], contract.Contract)
             self.assertEqual(self.context, contracts[0]._context)
 
-    @mock.patch('esi_leap.objects.contract.Offer.get',
-                return_value=[get_offer()])
-    def test_create(self, mock_offer_get):
+    def test_create(self):
         c = contract.Contract(
             self.context, **self.fake_contract)
         with mock.patch.object(self.db_api, 'contract_create',
                                autospec=True) as mock_contract_create:
             with mock.patch.object(self.db_api, 'offer_get_by_uuid',
                                    autospec=True) as mock_offer_get:
-                mock_contract_create.return_value = get_test_contract_1()
-                mock_offer_get.return_value = get_offer()
+                with mock.patch.object(self.db_api,
+                                       'offer_verify_contract_availability',
+                                       autospec=True):
 
-                c.create('534653c9-880d-4c2d-6d6d-f4f2a09e384')
+                    mock_contract_create.return_value = get_test_contract_1()
+                    mock_offer_get.return_value = get_offer()
 
-                mock_contract_create.assert_called_once_with(
-                    get_test_contract_1())
-                mock_offer_get.assert_called_once_with(
-                    '534653c9-880d-4c2d-6d6d-f4f2a09e384')
+                    c.create()
+
+                    mock_contract_create.assert_called_once_with(
+                        get_test_contract_1())
+                    mock_offer_get.assert_called_once()
+
+    def test_create_concurrent(self):
+        c = contract.Contract(
+            self.context, **self.fake_contract)
+
+        c2 = contract.Contract(
+            self.context, **self.fake_contract)
+
+        c2.id = 28
+
+        o = get_offer()
+
+        with mock.patch.object(self.db_api, 'contract_create',
+                               autospec=True) as mock_contract_create:
+            with mock.patch.object(self.db_api, 'offer_get_by_uuid',
+                                   autospec=True) as mock_offer_get:
+                with mock.patch.object(self.db_api,
+                                       'offer_verify_contract_availability',
+                                       autospec=True) as mock_ovca:
+
+                    mock_offer_get.return_value = o
+
+                    def update_mock(updates):
+                        mock_ovca.side_effect = Exception("bad")
+
+                    mock_contract_create.side_effect = update_mock
+
+                    thread = threading.Thread(target=c.create)
+                    thread2 = threading.Thread(target=c2.create)
+
+                    thread.start()
+                    thread2.start()
+
+                    thread.join()
+                    thread2.join()
+
+                    assert mock_offer_get.call_count == 2
+                    assert mock_ovca.call_count == 2
+                    mock_contract_create.assert_called_once()
 
     def test_destroy(self):
         c = contract.Contract(self.context, **self.fake_contract)

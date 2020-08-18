@@ -12,6 +12,7 @@
 
 
 from esi_leap.common import statuses
+from esi_leap.common import utils
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 import esi_leap.objects.contract
@@ -42,28 +43,13 @@ class Offer(base.ESILEAPObject):
     }
 
     @classmethod
-    def get_by_uuid(cls, offer_uuid, context=None):
+    def get(cls, offer_uuid, context=None):
         db_offer = cls.dbapi.offer_get_by_uuid(offer_uuid)
         if db_offer:
             return cls._from_db_object(context, cls(), db_offer)
 
     @classmethod
-    def get_by_name(cls, offer_name, context=None):
-        db_contract = cls.dbapi.offer_get_by_name(offer_name)
-        return cls._from_db_object_list(context, db_contract)
-
-    @classmethod
-    def get(cls, offer_id, context=None):
-        o_uuid = cls.get_by_uuid(offer_id, context)
-        if o_uuid:
-            return [o_uuid]
-
-        o_name = cls.get_by_name(offer_id, context)
-
-        return o_name
-
-    @classmethod
-    def get_all(cls, context, filters):
+    def get_all(cls, filters, context=None):
         db_offers = cls.dbapi.offer_get_all(filters)
         return cls._from_db_object_list(context, db_offers)
 
@@ -103,23 +89,54 @@ class Offer(base.ESILEAPObject):
     def create(self, context=None):
         updates = self.obj_get_changes()
 
-        self.dbapi.offer_verify_resource_availability(updates['resource_type'],
-                                                      updates['resource_uuid'],
-                                                      updates['start_time'],
-                                                      updates['end_time'])
+        @utils.synchronized(
+            utils.get_resource_lock_name(
+                updates['resource_type'], updates['resource_uuid']),
+            external=True)
+        def _create_offer():
+            self.dbapi.offer_verify_resource_availability(
+                updates['resource_type'],
+                updates['resource_uuid'],
+                updates['start_time'],
+                updates['end_time'])
 
-        db_offer = self.dbapi.offer_create(updates)
-        self._from_db_object(context, self, db_offer)
+            db_offer = self.dbapi.offer_create(updates)
+            self._from_db_object(context, self, db_offer)
+
+        _create_offer()
 
     def cancel(self):
-        contracts = esi_leap.objects.contract.Contract.get_all(
-            None, {'offer_uuid': self.uuid})
-        for c in contracts:
-            if c.status == statuses.CREATED or c.status == statuses.ACTIVE:
-                c.cancel()
 
-        self.status = statuses.CANCELLED
-        self.save(None)
+        @utils.synchronized(utils.get_offer_lock_name(self.uuid))
+        def _cancel_offer():
+
+            contracts = esi_leap.objects.contract.Contract.get_all(
+                {'offer_uuid': self.uuid}, None)
+            for c in contracts:
+                if c.status == statuses.CREATED or c.status == statuses.ACTIVE:
+                    c.cancel()
+
+            self.status = statuses.CANCELLED
+            self.save(None)
+
+        _cancel_offer()
+
+    def expire(self, context=None):
+
+        @utils.synchronized(utils.get_offer_lock_name(self.uuid))
+        def _expire_offer():
+
+            contracts = esi_leap.objects.contract.Contract.get_all(
+                {'offer_uuid': self.uuid}, None)
+            for c in contracts:
+                if c.status != statuses.EXPIRED:
+                    c.expire(context)
+
+            # expire offer
+            self.status = statuses.EXPIRED
+            self.save(context)
+
+        _expire_offer()
 
     def destroy(self):
         self.dbapi.offer_destroy(self.uuid)
@@ -134,15 +151,3 @@ class Offer(base.ESILEAPObject):
     def resource_object(self):
         return ro_factory.ResourceObjectFactory.get_resource_object(
             self.resource_type, self.resource_uuid)
-
-    def expire(self, context=None):
-        # make sure all related contracts are expired
-        contracts = esi_leap.objects.contract.Contract.get_all(
-            None, {'offer_uuid': self.uuid})
-        for c in contracts:
-            if c.status != statuses.EXPIRED:
-                c.expire(context)
-
-        # expire offer
-        self.status = statuses.EXPIRED
-        self.save(context)

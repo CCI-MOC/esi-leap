@@ -12,7 +12,6 @@
 import datetime
 import mock
 from oslo_context import context as ctx
-from oslo_policy import policy
 import testtools
 
 from esi_leap.api.controllers.v1.offer import OffersController
@@ -154,8 +153,8 @@ class TestListOffers(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.api.controllers.v1.offer.uuidutils.generate_uuid')
     @mock.patch('esi_leap.objects.offer.Offer.create')
-    @mock.patch('esi_leap.api.controllers.v1.offer.' +
-                'OffersController._verify_resource_permission')
+    @mock.patch('esi_leap.api.controllers.v1.offer.utils.'
+                'verify_resource_permission')
     @mock.patch('esi_leap.api.controllers.v1.offer.' +
                 'OffersController._add_offer_availabilities')
     def test_post(self, mock_aoa, mock_vrp, mock_create, mock_generate_uuid):
@@ -194,7 +193,7 @@ class TestOffersControllerOwner(test_api_base.APITestCase):
 
         request = self.get_json('/offers')
 
-        mock_get_all.assert_called_once_with(self.context, expected_filters)
+        mock_get_all.assert_called_once_with(expected_filters, self.context)
         assert mock_get_availabilities.call_count == 4
         self.assertEqual(request, expected_resp)
 
@@ -215,7 +214,7 @@ class TestOffersControllerOwner(test_api_base.APITestCase):
 
         request = self.get_json('/offers')
 
-        mock_get_all.assert_called_once_with(self.context, expected_filters)
+        mock_get_all.assert_called_once_with(expected_filters, self.context)
         assert mock_get_availabilities.call_count == 4
         self.assertEqual(request, expected_resp)
 
@@ -251,88 +250,3 @@ class TestOffersControllerStaticMethods(testtools.TestCase):
         }
 
         self.assertEqual(o_dict, expected_offer_dict)
-
-    @mock.patch.object(test_node_1, 'is_resource_admin',
-                       return_value=True)
-    @mock.patch('esi_leap.api.controllers.v1.offer.policy.authorize')
-    @mock.patch('esi_leap.api.controllers.v1.offer.ro_factory.'
-                'ResourceObjectFactory.get_resource_object',
-                return_value=test_node_1)
-    def test__verify_resource_permission_owner(self,
-                                               mock_gro,
-                                               mock_authorize,
-                                               mock_is_resource_admin):
-
-        OffersController._verify_resource_permission(
-            owner_ctx.to_policy_values(), test_offer.to_dict())
-
-        mock_gro.assert_called_once_with(
-            test_offer.resource_type,
-            test_offer.resource_uuid)
-        mock_is_resource_admin.assert_called_once_with(test_offer.project_id)
-        assert not mock_authorize.called
-
-    @mock.patch.object(test_node_2, 'is_resource_admin',
-                       return_value=False)
-    @mock.patch('esi_leap.api.controllers.v1.offer.policy.authorize')
-    @mock.patch('esi_leap.api.controllers.v1.offer.ro_factory.'
-                'ResourceObjectFactory.get_resource_object',
-                return_value=test_node_2)
-    def test__verify_resource_permission_invalid_owner(self,
-                                                       mock_gro,
-                                                       mock_authorize,
-                                                       mock_is_resource_admin):
-
-        mock_authorize.side_effect = policy.PolicyNotAuthorized(
-            'esi_leap:offer:offer_admin',
-            owner_ctx.to_dict(), owner_ctx.to_dict())
-
-        bad_test_offer = offer.Offer(
-            resource_type='test_node',
-            resource_uuid=test_node_2._uuid,
-            project_id=owner_ctx.project_id
-        )
-
-        self.assertRaises(policy.PolicyNotAuthorized,
-                          OffersController._verify_resource_permission,
-                          owner_ctx_2.to_policy_values(),
-                          bad_test_offer.to_dict())
-
-        mock_gro.assert_called_once_with(
-            bad_test_offer.resource_type,
-            bad_test_offer.resource_uuid)
-        mock_is_resource_admin.assert_called_once_with(
-            bad_test_offer.project_id)
-        mock_authorize.assert_called_once_with('esi_leap:offer:offer_admin',
-                                               owner_ctx_2.to_policy_values(),
-                                               owner_ctx_2.to_policy_values())
-
-    @mock.patch.object(test_node_2, 'is_resource_admin',
-                       return_value=False)
-    @mock.patch('esi_leap.api.controllers.v1.offer.policy.authorize')
-    @mock.patch('esi_leap.api.controllers.v1.offer.ro_factory.'
-                'ResourceObjectFactory.get_resource_object',
-                return_value=test_node_2)
-    def test__verify_resource_permission_admin(self,
-                                               mock_gro,
-                                               mock_authorize,
-                                               mock_is_resource_admin):
-
-        bad_test_offer = offer.Offer(
-            resource_type='test_node',
-            resource_uuid=test_node_2._uuid,
-            project_id=owner_ctx.project_id
-        )
-
-        assert OffersController._verify_resource_permission(
-            admin_ctx.to_policy_values(),
-            bad_test_offer.to_dict()) is None
-
-        mock_gro.assert_called_once_with(
-            bad_test_offer.resource_type,
-            bad_test_offer.resource_uuid)
-        mock_is_resource_admin.assert_called_once_with(
-            bad_test_offer.project_id)
-        mock_authorize.assert_called_once_with('esi_leap:offer:offer_admin',
-                                               admin_ctx.to_policy_values(),
-                                               admin_ctx.to_policy_values())
