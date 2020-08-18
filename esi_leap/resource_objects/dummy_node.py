@@ -43,12 +43,16 @@ class DummyNode(object):
     def set_contract(self, contract):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        if contract is None:
-            node_dict.pop("contract_uuid", None)
-            node_dict.pop("project_id", None)
-        else:
-            node_dict["contract_uuid"] = contract.uuid
-            node_dict["project_id"] = contract.project_id
+        node_dict["contract_uuid"] = contract.uuid
+        node_dict["project_id"] = contract.project_id
+        with open(self._path, 'w') as node_file:
+            json.dump(node_dict, node_file)
+
+    def expire_contract(self, contract):
+        with open(self._path) as node_file:
+            node_dict = json.load(node_file)
+        node_dict.pop("contract_uuid", None)
+        node_dict.pop("project_id", None)
         with open(self._path, 'w') as node_file:
             json.dump(node_dict, node_file)
 

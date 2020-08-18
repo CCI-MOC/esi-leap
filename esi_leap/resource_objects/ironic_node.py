@@ -59,30 +59,38 @@ class IronicNode(object):
 
     def set_contract(self, contract):
         patches = []
-        if contract is None:
-            if self.get_contract_uuid():
-                patches.append({
-                    "op": "remove",
-                    "path": "/properties/contract_uuid",
-                })
-            if self.get_project_id():
-                patches.append({
-                    "op": "remove",
-                    "path": "/lessee",
-                })
-        else:
+        patches.append({
+            "op": "add",
+            "path": "/properties/contract_uuid",
+            "value": contract.uuid,
+        })
+        patches.append({
+            "op": "add",
+            "path": "/lessee",
+            "value": contract.project_id,
+        })
+        if len(patches) > 0:
+            get_ironic_client().node.update(self._uuid, patches)
+
+    def expire_contract(self, contract):
+        patches = []
+        if self.get_contract_uuid() != contract.uuid:
+            return
+        if self.get_contract_uuid():
             patches.append({
-                "op": "add",
+                "op": "remove",
                 "path": "/properties/contract_uuid",
-                "value": contract.uuid,
             })
+        if self.get_project_id():
             patches.append({
-                "op": "add",
+                "op": "remove",
                 "path": "/lessee",
-                "value": contract.project_id,
             })
         if len(patches) > 0:
             get_ironic_client().node.update(self._uuid, patches)
+        state = get_ironic_client().node.get(self._uuid).provision_state
+        if state == "active":
+            get_ironic_client().node.set_provision_state(self._uuid, "deleted")
 
     def is_resource_admin(self, project_id):
         node = get_ironic_client().node.get(self._uuid)
