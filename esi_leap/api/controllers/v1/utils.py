@@ -27,7 +27,9 @@ def get_offer_authorized(uuid_or_name, cdict, status_filter=None):
 
         if not status_filter or o.status == status_filter:
             try:
-                policy.authorize('esi_leap:offer:offer_admin', cdict, cdict)
+                if o.project_id != cdict['project_id']:
+                    policy.authorize('esi_leap:offer:offer_admin',
+                                     cdict, cdict)
                 offer_objs.append(o)
             except oslo_policy.PolicyNotAuthorized:
                 pass
@@ -65,8 +67,11 @@ def verify_resource_permission(cdict, offer_dict):
 def get_offer(uuid_or_name, status_filter=None):
     if uuidutils.is_uuid_like(uuid_or_name):
         o = offer.Offer.get(uuid_or_name)
-        if o.status == status_filter:
+        if not status_filter or o.status == status_filter:
             return o
+        else:
+            raise exception.OfferNotFound(
+                offer_uuid=uuid_or_name)
     else:
         offer_objs = offer.Offer.get_all({'name': uuid_or_name,
                                           'status': status_filter})
