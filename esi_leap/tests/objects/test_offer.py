@@ -12,6 +12,7 @@
 
 import datetime
 import mock
+from oslo_utils import uuidutils
 import tempfile
 import threading
 
@@ -21,13 +22,17 @@ from esi_leap.tests import base
 
 start = datetime.datetime(2016, 7, 16, 19, 20, 30)
 
+o_uuid = uuidutils.generate_uuid()
+o_uuid_2 = uuidutils.generate_uuid()
+o_uuid_3 = uuidutils.generate_uuid()
+
 
 def get_test_offer():
 
     return {
         'id': 27,
         'name': "o",
-        'uuid': '534653c9-880d-4c2d-6d6d-11111111111',
+        'uuid': o_uuid,
         'project_id': '0wn5r',
         'resource_type': 'dummy_node',
         'resource_uuid': '1718',
@@ -45,7 +50,7 @@ def get_test_offer_2():
     return {
         'id': 28,
         'name': "o",
-        'uuid': '534653c9-880d-4c2d-6d6d-2222222222',
+        'uuid': o_uuid_2,
         'project_id': '0wn5r',
         'resource_type': 'dummy_node',
         'resource_uuid': '1718',
@@ -63,7 +68,7 @@ def get_test_offer_3():
     return {
         'id': 29,
         'name': "o",
-        'uuid': '534653c9-880d-4c2d-6d6d-3333333333',
+        'uuid': o_uuid_3,
         'project_id': '0wn5r2',
         'resource_type': 'dummy_node',
         'resource_uuid': '1718',

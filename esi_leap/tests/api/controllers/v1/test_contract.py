@@ -14,6 +14,7 @@ import datetime
 import mock
 from oslo_context import context as ctx
 from oslo_policy import policy
+from oslo_utils import uuidutils
 import testtools
 
 from esi_leap.api.controllers.v1.contract import ContractsController
@@ -54,15 +55,17 @@ start_iso = '2016-07-16T00:00:00'
 end = start + datetime.timedelta(days=100)
 end_iso = '2016-10-24T00:00:00'
 
-
 test_node_1 = TestNode('111', owner_ctx.project_id)
+
+o_uuid = uuidutils.generate_uuid()
+c_uuid = uuidutils.generate_uuid()
 
 
 def create_test_offer(context):
     o = offer.Offer(
         resource_type='test_node',
         resource_uuid='1234567890',
-        uuid='aaaaaaaa',
+        uuid=o_uuid,
         start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
         end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
         project_id="111111111111"
@@ -73,7 +76,7 @@ def create_test_offer(context):
 
 def create_test_contract(context):
     c = contract.Contract(
-        uuid='bbbbbbbb',
+        uuid=c_uuid,
         start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
         end_date=datetime.datetime(2016, 8, 16, 19, 20, 30),
         offer_uuid='1234567890',
@@ -95,7 +98,7 @@ test_offer = offer.Offer(
     resource_type='test_node',
     resource_uuid=test_node_1._uuid,
     name="o",
-    uuid='11111',
+    uuid=o_uuid,
     status=statuses.AVAILABLE,
     start_time=start,
     end_time=end,
@@ -103,34 +106,33 @@ test_offer = offer.Offer(
 )
 
 test_contract = contract.Contract(
-    offer_uuid="11111",
+    offer_uuid=o_uuid,
     name='c',
-    uuid='zzzzz',
+    uuid=c_uuid,
     project_id=lessee_ctx.project_id,
     status=statuses.CREATED
 )
 
 test_contract_2 = contract.Contract(
-    offer_uuid="11111",
+    offer_uuid=o_uuid,
     name='c',
-    uuid='yyyyy',
+    uuid=uuidutils.generate_uuid(),
     project_id=lessee_ctx.project_id,
     status=statuses.CREATED
 )
 
 test_contract_3 = contract.Contract(
-    offer_uuid="11111",
+    offer_uuid=o_uuid,
     name='c',
-    uuid='xxxxx',
+    uuid=uuidutils.generate_uuid(),
     project_id=lessee_ctx_2.project_id,
     status=statuses.CREATED
 )
 
-
 test_contract_4 = contract.Contract(
-    offer_uuid="11111",
+    offer_uuid=o_uuid,
     name='c2',
-    uuid='wwwww',
+    uuid=uuidutils.generate_uuid(),
     project_id=lessee_ctx_2.project_id,
     status=statuses.CREATED
 )
@@ -149,7 +151,7 @@ class TestContractsControllerAdmin(test_api_base.APITestCase):
         self.test_contract = contract.Contract(
             start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
             end_date=datetime.datetime(2016, 8, 16, 19, 20, 30),
-            uuid='1111111111',
+            uuid=c_uuid,
             offer_uuid=o.uuid,
             project_id=lessee_ctx.project_id
         )
@@ -171,7 +173,7 @@ class TestContractsControllerAdmin(test_api_base.APITestCase):
     @mock.patch('esi_leap.objects.contract.Contract.create')
     def test_post(self, mock_create, mock_offer_get, mock_generate_uuid):
 
-        mock_generate_uuid.return_value = '22222'
+        mock_generate_uuid.return_value = c_uuid
         mock_offer_get.return_value = test_offer
 
         data = create_test_contract_data()
@@ -180,8 +182,8 @@ class TestContractsControllerAdmin(test_api_base.APITestCase):
 
         data.pop('offer_uuid_or_name')
         data['project_id'] = lessee_ctx.project_id
-        data['uuid'] = '22222'
-        data['offer_uuid'] = '11111'
+        data['uuid'] = c_uuid
+        data['offer_uuid'] = o_uuid
         self.assertEqual(request.json, data)
         # FIXME: post returns incorrect status code
         # self.assertEqual(http_client.CREATED, request.status_int)

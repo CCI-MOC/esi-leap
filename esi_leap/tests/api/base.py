@@ -74,7 +74,6 @@ class APITestCase(base.DBTestCase):
         all_params.update(params)
         if q:
             all_params.update(query_params)
-        print('GET: %s %r' % (full_path, all_params))
         response = self.app.get(full_path,
                                 params=all_params,
                                 headers=headers,
@@ -82,7 +81,6 @@ class APITestCase(base.DBTestCase):
                                 expect_errors=expect_errors)
         if not expect_errors:
             response = response.json
-        print('GOT:%s' % response)
         return response
 
     # borrowed from Ironic
@@ -124,7 +122,6 @@ class APITestCase(base.DBTestCase):
         """
 
         full_path = path_prefix + path
-        print('%s: %s %s' % (method.upper(), full_path, params))
         response = getattr(self.app, "%s_json" % method)(
             str(full_path),
             params=params,
@@ -133,5 +130,4 @@ class APITestCase(base.DBTestCase):
             extra_environ=extra_environ,
             expect_errors=expect_errors
         )
-        print('GOT:%s' % response)
         return response

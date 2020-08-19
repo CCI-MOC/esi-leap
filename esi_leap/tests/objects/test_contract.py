@@ -12,6 +12,7 @@
 
 import datetime
 import mock
+from oslo_utils import uuidutils
 import tempfile
 import threading
 
@@ -22,12 +23,18 @@ from esi_leap.tests import base
 
 start = datetime.datetime(2016, 7, 16, 19, 20, 30)
 
+o_uuid = uuidutils.generate_uuid()
+c_uuid = uuidutils.generate_uuid()
+c_uuid_2 = uuidutils.generate_uuid()
+c_uuid_3 = uuidutils.generate_uuid()
+c_uuid_4 = uuidutils.generate_uuid()
+
 
 def get_test_contract_1():
     return {
         'id': 27,
         'name': 'c',
-        'uuid': '534653c9-880d-4c2d-6d6d-11111111111',
+        'uuid': c_uuid,
         'project_id': 'le55ee',
         'start_time': start + datetime.timedelta(days=5),
         'end_time': start + datetime.timedelta(days=10),
@@ -35,7 +42,7 @@ def get_test_contract_1():
         'expire_time': start + datetime.timedelta(days=10),
         'status': statuses.CREATED,
         'properties': {},
-        'offer_uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
+        'offer_uuid': o_uuid,
         'created_at': None,
         'updated_at': None
     }
@@ -46,7 +53,7 @@ def get_test_contract_2():
     return {
         'id': 28,
         'name': 'c',
-        'uuid': '534653c9-880d-4c2d-6d6d-22222222222',
+        'uuid': c_uuid_2,
         'project_id': 'le55ee',
         'start_time': start + datetime.timedelta(days=15),
         'end_time': start + datetime.timedelta(days=20),
@@ -54,7 +61,7 @@ def get_test_contract_2():
         'expire_time': start + datetime.timedelta(days=20),
         'status': statuses.CREATED,
         'properties': {},
-        'offer_uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
+        'offer_uuid': o_uuid,
         'created_at': None,
         'updated_at': None
     }
@@ -65,7 +72,7 @@ def get_test_contract_3():
     return {
         'id': 29,
         'name': 'c',
-        'uuid': '534653c9-880d-4c2d-6d6d-33333333333',
+        'uuid': c_uuid_3,
         'project_id': 'le55ee_2',
         'start_time': start + datetime.timedelta(days=25),
         'end_time': start + datetime.timedelta(days=30),
@@ -73,7 +80,7 @@ def get_test_contract_3():
         'expire_time': start + datetime.timedelta(days=30),
         'status': statuses.CREATED,
         'properties': {},
-        'offer_uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
+        'offer_uuid': o_uuid,
         'created_at': None,
         'updated_at': None
     }
@@ -84,7 +91,7 @@ def get_test_contract_4():
     return {
         'id': 30,
         'name': 'c2',
-        'uuid': '534653c9-880d-4c2d-6d6d-44444444444',
+        'uuid': c_uuid_4,
         'project_id': 'le55ee_2',
         'start_time': start + datetime.timedelta(days=35),
         'end_time': start + datetime.timedelta(days=40),
@@ -92,7 +99,7 @@ def get_test_contract_4():
         'expire_time': start + datetime.timedelta(days=40),
         'status': statuses.CREATED,
         'properties': {},
-        'offer_uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
+        'offer_uuid': o_uuid,
         'created_at': None,
         'updated_at': None
     }
@@ -106,7 +113,7 @@ def get_offer():
     o = Offer()
     offer = dict(
         id=27,
-        uuid='534653c9-880d-4c2d-6d6d-f4f2a09e384',
+        uuid=o_uuid,
         project_id='01d4e6a72f5c408813e02f664cc8c83e',
         resource_type='dummy_node',
         resource_uuid='1718',

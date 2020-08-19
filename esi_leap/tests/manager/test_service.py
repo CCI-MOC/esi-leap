@@ -13,6 +13,7 @@
 import datetime
 import mock
 from oslo_context import context as ctx
+from oslo_utils import uuidutils
 
 from esi_leap.common import statuses
 from esi_leap.manager.service import ManagerService
@@ -25,11 +26,13 @@ lessee_ctx = ctx.RequestContext(project_id="lesseeid",
 owner_ctx = ctx.RequestContext(project_id='ownerid',
                                roles=['owner'])
 
+o_uuid = uuidutils.generate_uuid()
+
 test_offer = offer.Offer(
     resource_type='test_node',
     resource_uuid='abc',
     name="o",
-    uuid='11111',
+    uuid=o_uuid,
     status=statuses.AVAILABLE,
     start_time=datetime.datetime(3000, 7, 16),
     end_time=datetime.datetime(4000, 7, 16),
@@ -37,9 +40,9 @@ test_offer = offer.Offer(
 )
 
 test_contract = contract.Contract(
-    offer_uuid="11111",
+    offer_uuid=o_uuid,
     name='c',
-    uuid='zzzzz',
+    uuid=uuidutils.generate_uuid(),
     project_id=lessee_ctx.project_id,
     status=statuses.CREATED,
     start_time=datetime.datetime(3000, 7, 16),
