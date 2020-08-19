@@ -14,6 +14,8 @@ import datetime
 import mock
 from oslo_context import context as ctx
 from oslo_policy import policy
+from oslo_utils import uuidutils
+
 import testtools
 
 from esi_leap.api.controllers.v1 import utils
@@ -47,49 +49,17 @@ start_iso = '2016-07-16T00:00:00'
 end = start + datetime.timedelta(days=100)
 end_iso = '2016-10-24T00:00:00'
 
-
 test_node_1 = TestNode('111', owner_ctx.project_id)
 test_node_2 = TestNode('bbb', owner_ctx_2.project_id)
 
-
-def create_test_offer(context):
-    o = offer.Offer(
-        resource_type='test_node',
-        resource_uuid='1234567890',
-        uuid='aaaaaaaa',
-        start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
-        end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
-        project_id="111111111111"
-    )
-    o.create(context)
-    return o
-
-
-def create_test_contract(context):
-    c = contract.Contract(
-        uuid='bbbbbbbb',
-        start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
-        end_date=datetime.datetime(2016, 8, 16, 19, 20, 30),
-        offer_uuid='1234567890',
-        project_id="222222222222"
-    )
-    c.create(context)
-    return c
-
-
-def create_test_contract_data():
-    return {
-        "offer_uuid_or_name": "o",
-        "start_time": "2016-07-16T19:20:30",
-        "end_time": "2016-08-16T19:20:30"
-    }
+o_uuid = uuidutils.generate_uuid()
 
 
 test_offer = offer.Offer(
     resource_type='test_node',
     resource_uuid=test_node_1._uuid,
     name="o",
-    uuid='11111',
+    uuid=o_uuid,
     status=statuses.AVAILABLE,
     start_time=start,
     end_time=end,
@@ -100,7 +70,7 @@ test_offer_2 = offer.Offer(
     resource_type='test_node',
     resource_uuid=test_node_1._uuid,
     name="o",
-    uuid='11111',
+    uuid=uuidutils.generate_uuid(),
     status=statuses.EXPIRED,
     start_time=start,
     end_time=end,
@@ -108,34 +78,33 @@ test_offer_2 = offer.Offer(
 )
 
 test_contract = contract.Contract(
-    offer_uuid="11111",
+    offer_uuid=o_uuid,
     name='c',
-    uuid='zzzzz',
+    uuid=uuidutils.generate_uuid(),
     project_id=lessee_ctx.project_id,
     status=statuses.CREATED
 )
 
 test_contract_2 = contract.Contract(
-    offer_uuid="11111",
+    offer_uuid=o_uuid,
     name='c',
-    uuid='yyyyy',
+    uuid=uuidutils.generate_uuid(),
     project_id=lessee_ctx.project_id,
     status=statuses.CREATED
 )
 
 test_contract_3 = contract.Contract(
-    offer_uuid="11111",
+    offer_uuid=o_uuid,
     name='c',
-    uuid='xxxxx',
+    uuid=uuidutils.generate_uuid(),
     project_id=lessee_ctx_2.project_id,
     status=statuses.CREATED
 )
 
-
 test_contract_4 = contract.Contract(
-    offer_uuid="11111",
+    offer_uuid=o_uuid,
     name='c2',
-    uuid='wwwww',
+    uuid=uuidutils.generate_uuid(),
     project_id=lessee_ctx_2.project_id,
     status=statuses.CREATED
 )

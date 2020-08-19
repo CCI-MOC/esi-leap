@@ -12,6 +12,7 @@
 import datetime
 import mock
 from oslo_context import context as ctx
+from oslo_utils import uuidutils
 import testtools
 
 from esi_leap.api.controllers.v1.offer import OffersController
@@ -40,16 +41,17 @@ start_iso = '2016-07-16T00:00:00'
 end = start + datetime.timedelta(days=100)
 end_iso = '2016-10-24T00:00:00'
 
-
 test_node_1 = TestNode('aaa', owner_ctx.project_id)
 test_node_2 = TestNode('bbb', owner_ctx_2.project_id)
+
+o_uuid = uuidutils.generate_uuid()
 
 
 def create_test_offer(context):
     o = offer.Offer(
         resource_type='test_node',
         resource_uuid='1234567890',
-        uuid='aaaaaaaa',
+        uuid=o_uuid,
         start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
         end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
         project_id="111111111111"
@@ -84,7 +86,7 @@ test_offer = offer.Offer(
     resource_type='test_node',
     resource_uuid=test_node_1._uuid,
     name="o",
-    uuid='11111',
+    uuid=o_uuid,
     status=statuses.AVAILABLE,
     start_time=start,
     end_time=end,
@@ -97,7 +99,7 @@ test_offer_2 = offer.Offer(
     start_time=start,
     status=statuses.CANCELLED,
     name="o",
-    uuid='22222',
+    uuid=uuidutils.generate_uuid(),
     end_time=end,
     project_id=owner_ctx.project_id
 )
@@ -107,7 +109,7 @@ test_offer_3 = offer.Offer(
     resource_type='test_node',
     resource_uuid=test_node_2._uuid,
     name="o",
-    uuid='33333',
+    uuid=uuidutils.generate_uuid(),
     status=statuses.AVAILABLE,
     start_time=start,
     end_time=end,
@@ -119,7 +121,7 @@ test_offer_4 = offer.Offer(
     resource_type='test_node',
     resource_uuid=test_node_2._uuid,
     name="o2",
-    uuid='44444',
+    uuid=uuidutils.generate_uuid(),
     status=statuses.AVAILABLE,
     start_time=start,
     end_time=end,
@@ -135,7 +137,7 @@ class TestListOffers(test_api_base.APITestCase):
         self.test_offer = offer.Offer(
             resource_type='test_node',
             resource_uuid='1234567890',
-            uuid='00000',
+            uuid=o_uuid,
             start_time=start,
             end_time=end,
             project_id=owner_ctx.project_id
@@ -159,7 +161,7 @@ class TestListOffers(test_api_base.APITestCase):
                 'OffersController._add_offer_availabilities')
     def test_post(self, mock_aoa, mock_vrp, mock_create, mock_generate_uuid):
 
-        mock_generate_uuid.return_value = '11111'
+        mock_generate_uuid.return_value = o_uuid
         mock_create.return_value = self.test_offer
         data = create_test_offer_data
         request = self.post_json('/offers', data)
