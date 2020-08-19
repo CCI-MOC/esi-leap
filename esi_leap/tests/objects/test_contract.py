@@ -16,6 +16,7 @@ from oslo_utils import uuidutils
 import tempfile
 import threading
 
+from esi_leap.common import exception
 from esi_leap.common import statuses
 from esi_leap.objects import contract
 from esi_leap.tests import base
@@ -190,6 +191,27 @@ class TestContractObject(base.DBTestCase):
                     mock_contract_create.assert_called_once_with(
                         get_test_contract_1())
                     mock_offer_get.assert_called_once()
+
+    def test_create_invalid_time(self):
+        bad_contract = {
+            'id': 30,
+            'name': 'c2',
+            'uuid': '534653c9-880d-4c2d-6d6d-44444444444',
+            'project_id': 'le55ee_2',
+            'start_time': start + datetime.timedelta(days=30),
+            'end_time': start + datetime.timedelta(days=20),
+            'fulfill_time': start + datetime.timedelta(days=35),
+            'expire_time': start + datetime.timedelta(days=40),
+            'status': statuses.CREATED,
+            'properties': {},
+            'offer_uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
+            'created_at': None,
+            'updated_at': None
+        }
+
+        c = contract.Contract(self.context, **bad_contract)
+
+        self.assertRaises(exception.InvalidTimeRange, c.create)
 
     def test_create_concurrent(self):
         c = contract.Contract(

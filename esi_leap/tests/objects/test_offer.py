@@ -16,6 +16,7 @@ from oslo_utils import uuidutils
 import tempfile
 import threading
 
+from esi_leap.common import exception
 from esi_leap.common import statuses
 from esi_leap.objects import offer
 from esi_leap.tests import base
@@ -190,6 +191,28 @@ class TestOfferObject(base.DBTestCase):
 
             o.create(self.context)
             mock_offer_create.assert_called_once_with(get_test_offer())
+
+    def test_create_invalid_time(self):
+
+        bad_offer = {
+            'id': 27,
+            'name': "o",
+            'uuid': '534653c9-880d-4c2d-6d6d-11111111111',
+            'project_id': '0wn5r',
+            'resource_type': 'dummy_node',
+            'resource_uuid': '1718',
+            'start_time': start + datetime.timedelta(days=100),
+            'end_time': start,
+            'status': statuses.AVAILABLE,
+            'properties': {'floor_price': 3},
+            'created_at': None,
+            'updated_at': None
+        }
+
+        o = offer.Offer(
+            self.context, **bad_offer)
+
+        self.assertRaises(exception.InvalidTimeRange, o.create)
 
     def test_create_concurrent(self):
         o = offer.Offer(
