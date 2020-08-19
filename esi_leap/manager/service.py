@@ -61,7 +61,7 @@ class ManagerService(service.Service):
     def _fulfill_contracts(self):
         LOG.info("Checking for contracts to fulfill")
         contracts = contract.Contract.get_all(
-            {'status': statuses.CREATED}, self._context)
+            {'status': [statuses.CREATED]}, self._context)
         now = timeutils.utcnow()
         for c in contracts:
             if c.start_time <= now and now <= c.end_time:
