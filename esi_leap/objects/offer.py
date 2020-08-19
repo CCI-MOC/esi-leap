@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
+from esi_leap.common import exception
 from esi_leap.common import statuses
 from esi_leap.common import utils
 from esi_leap.db import api as dbapi
@@ -94,6 +94,14 @@ class Offer(base.ESILEAPObject):
                 updates['resource_type'], updates['resource_uuid']),
             external=True)
         def _create_offer():
+
+            if updates['start_time'] >= updates['end_time']:
+                raise exception.InvalidTimeRange(
+                    resource='contract',
+                    start_time=str(updates['start_time']),
+                    end_time=str(updates['end_time'])
+                )
+
             self.dbapi.offer_verify_resource_availability(
                 updates['resource_type'],
                 updates['resource_uuid'],

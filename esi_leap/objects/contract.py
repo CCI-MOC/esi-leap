@@ -60,6 +60,14 @@ class Contract(base.ESILEAPObject):
         @utils.synchronized(utils.get_offer_lock_name(updates['offer_uuid']),
                             external=True)
         def _create_contract():
+
+            if updates['start_time'] >= updates['end_time']:
+                raise exception.InvalidTimeRange(
+                    resource='contract',
+                    start_time=str(updates['start_time']),
+                    end_time=str(updates['end_time'])
+                    )
+
             related_offer = self.dbapi.offer_get_by_uuid(updates['offer_uuid'])
 
             if related_offer.status != statuses.AVAILABLE:
