@@ -1,4 +1,4 @@
-##Offer API
+## Offer API
 
 The offer api endpoint can be reached at /v1/offers
 
@@ -70,7 +70,7 @@ curl -X POST -sH "X-Auth-Token: $token" http://localhost:7777/v1/offers  -H 'Con
 * Returns null on success.
 
 
-##Contract API
+## Contract API
 
 The contract api endpoint can be reached at /v1/contracts
 

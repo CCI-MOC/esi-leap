@@ -17,6 +17,11 @@ To  install the python code:
     $ sudo python setup.py install
 ```
 
+### Client
+
+esi-leap has a command line client which can be found here:
+https://github.com/CCI-MOC/python-esileapclient
+
 
 ### Configuration
 

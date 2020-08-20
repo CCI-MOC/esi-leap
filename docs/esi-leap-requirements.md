@@ -101,8 +101,10 @@ Users can choose available nodes offered up and make contracts to lease nodes. A
         'uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
         'name': 'c1',
         'project_id': '01d4e6a72f5c408813e02f664cc8c83e',
-        'start_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
-        'end_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
+        'start_time': '3030-07-08T00:00:00',
+        'fulfill_time': '3030-07-08T00:15:00',
+        'end_time': '4030-07-08T00:00:00',
+        'expire_time': '4030-07-08T00:10:00',
         'status': statuses.OPEN,
         'properties': {},
         'offer_uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
@@ -134,7 +136,9 @@ An example contract response is shown below.
     "name": "c1",
     "project_id": "a78d93273b134c2fadf208a3e8c2da04",
     "start_time": "3030-07-08T00:00:00",
+    "fulfill_time": "3030-07-08T00:15:00",
     "end_time": "4030-07-08T00:00:00",
+    "expire_time": "4030-07-08T00:10:00",
     "status": "open",
     "properties": {},
     "offer_uuid": "c02c686e-e248-490e-9ba1-fdf9531d5d37"
@@ -146,7 +150,9 @@ A contract response has the following fields:
 * "name" is an identifier the user may set for a contract on creation. Can be used for offer management instead of 'uuid'. Does not have to be unique.
 * "project_id" is the project_id of the owner of the contract and the that is leasing the offer.
 * "start_time" is a datetime representing the time in which the offer is being leased.
+* "fulfill_time" is a datetime representing the time in which the contract is set to active and the user gains access to the node.
 * "end_time" is a datetime representing the time in which the offer is no longer being leased.
+* "expire_time" is a datetime representing the time in which the lessee no longer has access to the resource.
 * "status" is the status of the contract. There are three valid statuses for a contract.
   * open: a contract is set. This is the state of a contract on creation.
   * fulfilled: a user has leased the offer. When a contract's end_time has passed, it's status is set to "fulfilled".
@@ -174,8 +180,10 @@ ESI Leap admin queries this API to learn about the usage of nodes given a period
         'offer_uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
         'resource_uuid': '1718',
         'resource_type': 'ironic_node',
-        'start_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
-        'end_time': datetime.datetime(2016, 7, 16, 19, 20, 30),
+        'start_time': "3030-07-08T00:00:00",
+        'fulfill_time': "3030-07-08T00:15:00",
+        'end_time': "4030-07-08T00:00:00",
+        'expire_time': "4030-07-08T00:10:00",
         'status': statuses.OPEN,
         'created_at': None,
         'updated_at': None
