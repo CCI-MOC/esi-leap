@@ -12,7 +12,6 @@
 
 from oslo_config import cfg
 from oslo_db import api as db_api
-from oslo_db import options as db_options
 from oslo_log import log as logging
 
 
@@ -20,31 +19,15 @@ _BACKEND_MAPPING = {
     'sqlalchemy': 'esi_leap.db.sqlalchemy.api',
 }
 
-db_options.set_defaults(cfg.CONF)
-IMPL = db_api.DBAPI(cfg.CONF.database.backend,
-                    backend_mapping=_BACKEND_MAPPING)
+IMPL = db_api.DBAPI.from_config(cfg.CONF,
+                                backend_mapping=_BACKEND_MAPPING,
+                                lazy=True)
 LOG = logging.getLogger(__name__)
 
 
 def get_instance():
     """Return a DB API instance."""
     return IMPL
-
-
-def setup_db():
-    """Set up database, create tables, etc.
-
-    Return True on success, False otherwise
-    """
-    return IMPL.setup_db()
-
-
-def drop_db():
-    """Drop database.
-
-    Return True on success, False otherwise
-    """
-    return IMPL.drop_db()
 
 
 # Helpers for building constraints / equality checks

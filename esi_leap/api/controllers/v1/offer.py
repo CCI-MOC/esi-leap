@@ -79,6 +79,7 @@ class OffersController(rest.RestController):
                 status=None):
 
         request = pecan.request.context
+
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:offer:get', cdict, cdict)
 

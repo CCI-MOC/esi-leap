@@ -11,9 +11,10 @@
 #    under the License.
 
 import sys
+import threading
 
 from oslo_config import cfg
-from oslo_db.sqlalchemy import session as db_session
+from oslo_db.sqlalchemy import enginefacade
 from oslo_log import log as logging
 
 import sqlalchemy as sa
@@ -25,24 +26,8 @@ from esi_leap.db.sqlalchemy import models
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
-_engine_facade = None
 
-
-def get_facade():
-    global _engine_facade
-    if not _engine_facade:
-        _engine_facade = db_session.EngineFacade.from_config(CONF)
-
-    return _engine_facade
-
-
-def get_session():
-    return get_facade().get_session()
-
-
-def reset_facade():
-    global _engine_facade
-    _engine_facade = None
+_CONTEXT = threading.local()
 
 
 def get_backend():
@@ -50,27 +35,22 @@ def get_backend():
     return sys.modules[__name__]
 
 
-def setup_db():
-    engine = get_facade().get_engine()
-    models.Base.metadata.create_all(engine)
-    return True
+def _session_for_read():
+    return enginefacade.reader.using(_CONTEXT)
 
 
-def drop_db():
-    engine = db_session.EngineFacade(CONF.database.connection,
-                                     sqlite_fk=True).get_engine()
-    models.Base.metadata.drop_all(engine)
-    return True
+def _session_for_write():
+    return enginefacade.writer.using(_CONTEXT)
 
 
-def model_query(model, session=None):
+def model_query(model, *args):
     """Query helper.
 
     :param model: base model to query
     """
-    session = session or get_session()
-
-    return session.query(model)
+    with _session_for_read() as session:
+        query = session.query(model, *args)
+        return query
 
 
 # Helpers for building constraints / equality checks
@@ -117,20 +97,20 @@ class InequalityCondition(object):
 
 # Offer
 def offer_get_by_uuid(offer_uuid):
-    query = model_query(models.Offer, get_session())
+    query = model_query(models.Offer)
     offer_ref = query.filter_by(uuid=offer_uuid).one_or_none()
     return offer_ref
 
 
 def offer_get_by_name(name):
-    query = model_query(models.Offer, get_session())
+    query = model_query(models.Offer)
     offers = query.filter_by(name=name).all()
     return offers
 
 
 def offer_get_all(filters):
 
-    query = model_query(models.Offer, get_session())
+    query = model_query(models.Offer)
 
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
@@ -156,7 +136,7 @@ def offer_get_all(filters):
 
 def offer_get_conflict_times(offer_ref):
 
-    c_query = model_query(models.Contract, get_session())
+    c_query = model_query(models.Contract)
 
     return c_query.with_entities(
         models.Contract.start_time, models.Contract.end_time).\
@@ -169,7 +149,7 @@ def offer_get_conflict_times(offer_ref):
 
 
 def offer_get_first_availability(offer_uuid, start):
-    c_query = model_query(models.Contract, get_session())
+    c_query = model_query(models.Contract)
 
     return c_query.with_entities(
         models.Contract.start_time).\
@@ -188,7 +168,7 @@ def offer_verify_contract_availability(offer_ref, start, end):
                                                   start_time=start,
                                                   end_time=end)
 
-    c_query = model_query(models.Contract, get_session())
+    c_query = model_query(models.Contract)
 
     contracts = c_query.with_entities(
         models.Contract.start_time, models.Contract.end_time).\
@@ -216,7 +196,7 @@ def offer_verify_contract_availability(offer_ref, start, end):
 
 def offer_verify_resource_availability(r_type, r_uuid, start, end):
 
-    o_query = model_query(models.Offer, get_session())
+    o_query = model_query(models.Offer)
 
     offers = o_query.with_entities(
         models.Offer.start_time, models.Offer.end_time).\
@@ -244,61 +224,66 @@ def offer_verify_resource_availability(r_type, r_uuid, start, end):
 def offer_create(values):
     offer_ref = models.Offer()
     offer_ref.update(values)
-    offer_ref.save(get_session())
-    return offer_ref
+
+    with _session_for_write() as session:
+        session.add(offer_ref)
+        session.flush()
+        return offer_ref
 
 
 def offer_update(offer_uuid, values):
-    s = get_session()
-    query = model_query(models.Offer, s)
-    offer_ref = query.filter_by(uuid=offer_uuid).one_or_none()
 
-    values.pop('uuid', None)
-    values.pop('project_id', None)
+    with _session_for_write() as session:
 
-    start = values.get('start_time', None)
-    end = values.get('end_time', None)
-    if start is None:
-        start = offer_ref.start_time
-    if end is None:
-        end = offer_ref.end_time
-    if start >= end:
-        raise exception.InvalidTimeRange(resource="an offer",
-                                         start_time=str(start),
-                                         end_time=str(end))
+        query = model_query(models.Offer)
+        offer_ref = query.filter_by(uuid=offer_uuid).one_or_none()
 
-    offer_ref.update(values)
-    offer_ref.save(s)
-    return offer_ref
+        values.pop('uuid', None)
+        values.pop('project_id', None)
+
+        start = values.get('start_time', None)
+        end = values.get('end_time', None)
+        if start is None:
+            start = offer_ref.start_time
+        if end is None:
+            end = offer_ref.end_time
+        if start >= end:
+            raise exception.InvalidTimeRange(resource="an offer",
+                                             start_time=str(start),
+                                             end_time=str(end))
+
+        offer_ref.update(values)
+        session.flush()
+        return offer_ref
 
 
 def offer_destroy(offer_uuid):
-    query = model_query(models.Offer, get_session())
-    offer_ref = query.filter_by(uuid=offer_uuid).one_or_none()
+    with _session_for_write() as session:
+        query = model_query(models.Offer)
+        offer_ref = query.filter_by(uuid=offer_uuid).one_or_none()
 
-    if not offer_ref:
-        raise exception.OfferNotFound(offer_uuid=offer_uuid)
+        if not offer_ref:
+            raise exception.OfferNotFound(offer_uuid=offer_uuid)
 
-    model_query(
-        models.Offer,
-        get_session()).filter_by(uuid=offer_uuid).delete()
+        model_query(models.Offer).filter_by(uuid=offer_uuid).delete()
+        session.flush()
 
 
 # Contracts
 def contract_get_by_uuid(contract_uuid):
-    query = model_query(models.Contract, get_session())
+    query = model_query(models.Contract)
     result = query.filter_by(uuid=contract_uuid).one_or_none()
     return result
 
 
 def contract_get_by_name(name):
-    query = model_query(models.Contract, get_session())
+    query = model_query(models.Contract)
     contracts = query.filter_by(name=name).all()
     return contracts
 
 
 def contract_get_all(filters):
-    query = model_query(models.Contract, get_session())
+    query = model_query(models.Contract)
 
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
@@ -324,38 +309,44 @@ def contract_get_all(filters):
 def contract_create(values):
     contract_ref = models.Contract()
     contract_ref.update(values)
-    contract_ref.save(get_session())
-    return contract_ref
+
+    with _session_for_write() as session:
+        session.add(contract_ref)
+        session.flush()
+        return contract_ref
 
 
 def contract_update(contract_uuid, values):
-    s = get_session()
-    query = model_query(models.Contract, s)
-    contract_ref = query.filter_by(uuid=contract_uuid).one_or_none()
+    with _session_for_write() as session:
+        query = model_query(models.Contract)
+        contract_ref = query.filter_by(uuid=contract_uuid).one_or_none()
 
-    values.pop('uuid', None)
-    values.pop('project_id', None)
+        values.pop('uuid', None)
+        values.pop('project_id', None)
 
-    start = values.get('start_time', None)
-    end = values.get('end_time', None)
-    if start is None:
-        start = contract_ref.start_time
-    if end is None:
-        end = contract_ref.end_time
-    if start >= end:
-        raise exception.InvalidTimeRange(resource="a contract",
-                                         start_time=str(start),
-                                         end_time=str(end))
+        start = values.get('start_time', None)
+        end = values.get('end_time', None)
+        if start is None:
+            start = contract_ref.start_time
+        if end is None:
+            end = contract_ref.end_time
+        if start >= end:
+            raise exception.InvalidTimeRange(resource="a contract",
+                                             start_time=str(start),
+                                             end_time=str(end))
 
-    contract_ref.update(values)
-    contract_ref.save(s)
-    return contract_ref
+        contract_ref.update(values)
+        session.flush()
+        return contract_ref
 
 
 def contract_destroy(contract_uuid):
-    query = model_query(models.Contract, get_session())
-    contract_ref = query.filter_by(uuid=contract_uuid).one_or_none()
+    with _session_for_write() as session:
 
-    if not contract_ref:
-        raise exception.ContractNotFound(contract_uuid=contract_uuid)
-    query.delete()
+        query = model_query(models.Contract)
+        contract_ref = query.filter_by(uuid=contract_uuid).one_or_none()
+
+        if not contract_ref:
+            raise exception.ContractNotFound(contract_uuid=contract_uuid)
+        query.delete()
+        session.flush()
