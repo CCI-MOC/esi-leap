@@ -161,7 +161,7 @@ class OffersController(rest.RestController):
                                  end_time=str(offer_dict['end_time']))
 
         o = offer.Offer(**offer_dict)
-        o.create(request)
+        o.create()
         o = OffersController._add_offer_availabilities(o)
         return Offer(**o)
 
