@@ -168,6 +168,8 @@ class TestListOffers(test_api_base.APITestCase):
         data['project_id'] = owner_ctx.project_id
         self.assertEqual(1, mock_create.call_count)
         self.assertEqual(request.json, {})
+
+        mock_create.assert_called_once_with()
         # FIXME: post returns incorrect status code
         # self.assertEqual(http_client.CREATED, request.status_int)
 
