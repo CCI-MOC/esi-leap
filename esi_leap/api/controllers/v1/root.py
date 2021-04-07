@@ -14,13 +14,13 @@ from oslo_serialization import jsonutils
 import pecan
 from pecan import rest
 
-from esi_leap.api.controllers.v1 import contract
+from esi_leap.api.controllers.v1 import lease
 from esi_leap.api.controllers.v1 import offer
 
 
 class Controller(rest.RestController):
 
-    contracts = contract.ContractsController()
+    leases = lease.LeasesController()
     offers = offer.OffersController()
 
     @pecan.expose(content_type='application/json')

@@ -17,7 +17,7 @@ from oslo_utils import uuidutils
 
 from esi_leap.common import statuses
 from esi_leap.manager.service import ManagerService
-from esi_leap.objects import contract
+from esi_leap.objects import lease
 from esi_leap.objects import offer
 
 
@@ -39,7 +39,7 @@ test_offer = offer.Offer(
     project_id=owner_ctx.project_id
 )
 
-test_contract = contract.Contract(
+test_lease = lease.Lease(
     offer_uuid=o_uuid,
     name='c',
     uuid=uuidutils.generate_uuid(),
@@ -52,15 +52,15 @@ test_contract = contract.Contract(
 
 @mock.patch('esi_leap.manager.service.timeutils.utcnow')
 @mock.patch('esi_leap.manager.service.LOG.info')
-@mock.patch('esi_leap.manager.service.contract.Contract.get_all')
-def test__fulfill_contracts(mock_ga, mock_log, mock_utcnow):
-    mock_ga.return_value = [test_contract]
+@mock.patch('esi_leap.manager.service.lease.Lease.get_all')
+def test__fulfill_leases(mock_ga, mock_log, mock_utcnow):
+    mock_ga.return_value = [test_lease]
     mock_utcnow.return_value = datetime.datetime(3500, 7, 16)
 
     s = ManagerService()
 
-    with mock.patch.object(test_contract, 'fulfill') as mock_fulfill:
-        s._fulfill_contracts()
+    with mock.patch.object(test_lease, 'fulfill') as mock_fulfill:
+        s._fulfill_leases()
 
         mock_fulfill.assert_called_once()
 
@@ -70,15 +70,15 @@ def test__fulfill_contracts(mock_ga, mock_log, mock_utcnow):
 
 @mock.patch('esi_leap.manager.service.timeutils.utcnow')
 @mock.patch('esi_leap.manager.service.LOG.info')
-@mock.patch('esi_leap.manager.service.contract.Contract.get_all')
-def test__expire_contracts(mock_ga, mock_log, mock_utcnow):
-    mock_ga.return_value = [test_contract]
+@mock.patch('esi_leap.manager.service.lease.Lease.get_all')
+def test__expire_leases(mock_ga, mock_log, mock_utcnow):
+    mock_ga.return_value = [test_lease]
     mock_utcnow.return_value = datetime.datetime(3500, 7, 16)
 
     s = ManagerService()
 
-    with mock.patch.object(test_contract, 'expire') as mock_expire:
-        s._expire_contracts()
+    with mock.patch.object(test_lease, 'expire') as mock_expire:
+        s._expire_leases()
 
         mock_expire.assert_called_once()
 

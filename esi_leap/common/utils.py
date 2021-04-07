@@ -25,5 +25,5 @@ def get_offer_lock_name(offer_uuid):
     return 'offer' + '-' + offer_uuid
 
 
-def get_contract_lock_name(contract_uuid):
-    return 'contract' + '-' + contract_uuid
+def get_lease_lock_name(lease_uuid):
+    return 'lease' + '-' + lease_uuid

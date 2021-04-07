@@ -24,7 +24,7 @@ def get_test_dummy_node_1():
     return {
         "project_owner_id": "123456",
         "project_id": "654321",
-        "contract_uuid": "001",
+        "lease_uuid": "001",
         "server_config": {
             "new attribute XYZ": "new attribute XYZ",
             "cpu_type": "Intel Xeon",
@@ -50,7 +50,7 @@ def get_test_dummy_node_2():
     }
 
 
-class FakeContract(object):
+class FakeLease(object):
     def __init__(self):
         self.uuid = '001'
         self.project_id = '654321'
@@ -70,11 +70,11 @@ class TestDummyNode(base.TestCase):
         self.fake_read_data_1 = json.dumps(get_test_dummy_node_1())
         self.fake_read_data_2 = json.dumps(get_test_dummy_node_2())
 
-    def test_get_contract_uuid(self):
+    def test_get_lease_uuid(self):
         mock_open = mock.mock_open(read_data=self.fake_read_data_1)
         with mock.patch('builtins.open', mock_open) as mock_file_open:
-            contract_uuid = self.fake_dummy_node.get_contract_uuid()
-            self.assertEqual(contract_uuid, '001')
+            lease_uuid = self.fake_dummy_node.get_lease_uuid()
+            self.assertEqual(lease_uuid, '001')
             mock_file_open.assert_called_once()
 
     def test_get_project_id(self):
@@ -91,18 +91,18 @@ class TestDummyNode(base.TestCase):
             self.assertEqual(config, get_test_dummy_node_1()['server_config'])
             mock_file_open.assert_called_once()
 
-    def test_set_contract(self):
+    def test_set_lease(self):
         mock_open = mock.mock_open(read_data=self.fake_read_data_2)
         with mock.patch('builtins.open', mock_open) as mock_file_open:
-            fake_contract = FakeContract()
-            self.fake_dummy_node.set_contract(fake_contract)
+            fake_lease = FakeLease()
+            self.fake_dummy_node.set_lease(fake_lease)
             self.assertEqual(mock_file_open.call_count, 2)
 
-    def test_expire_contract(self):
+    def test_expire_lease(self):
         mock_open = mock.mock_open(read_data=self.fake_read_data_1)
         with mock.patch('builtins.open', mock_open) as mock_file_open:
-            fake_contract = FakeContract()
-            self.fake_dummy_node.expire_contract(fake_contract)
+            fake_lease = FakeLease()
+            self.fake_dummy_node.expire_lease(fake_lease)
             self.assertEqual(mock_file_open.call_count, 2)
 
     def test_is_resource_admin(self):

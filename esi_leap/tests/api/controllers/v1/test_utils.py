@@ -13,15 +13,16 @@
 import datetime
 import mock
 from oslo_context import context as ctx
-from oslo_policy import policy
+from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 
 import testtools
 
 from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
+from esi_leap.common import policy
 from esi_leap.common import statuses
-from esi_leap.objects import contract
+from esi_leap.objects import lease
 from esi_leap.objects import offer
 from esi_leap.resource_objects.test_node import TestNode
 
@@ -77,7 +78,7 @@ test_offer_2 = offer.Offer(
     project_id=owner_ctx.project_id
 )
 
-test_contract = contract.Contract(
+test_lease = lease.Lease(
     offer_uuid=o_uuid,
     name='c',
     uuid=uuidutils.generate_uuid(),
@@ -85,7 +86,7 @@ test_contract = contract.Contract(
     status=statuses.CREATED
 )
 
-test_contract_2 = contract.Contract(
+test_lease_2 = lease.Lease(
     offer_uuid=o_uuid,
     name='c',
     uuid=uuidutils.generate_uuid(),
@@ -93,7 +94,7 @@ test_contract_2 = contract.Contract(
     status=statuses.CREATED
 )
 
-test_contract_3 = contract.Contract(
+test_lease_3 = lease.Lease(
     offer_uuid=o_uuid,
     name='c',
     uuid=uuidutils.generate_uuid(),
@@ -101,7 +102,7 @@ test_contract_3 = contract.Contract(
     status=statuses.CREATED
 )
 
-test_contract_4 = contract.Contract(
+test_lease_4 = lease.Lease(
     offer_uuid=o_uuid,
     name='c2',
     uuid=uuidutils.generate_uuid(),
@@ -112,40 +113,40 @@ test_contract_4 = contract.Contract(
 
 class TestManagementUtils(testtools.TestCase):
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get')
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy.authorize')
-    def test__contract_authorize_management_valid_lessee(self,
-                                                         mock_authorize,
-                                                         mock_get):
-        utils.contract_authorize_management(
-            test_contract, lessee_ctx.to_policy_values()
+    @mock.patch('esi_leap.objects.offer.Offer.get')
+    @mock.patch.object(policy, 'authorize', spec=True)
+    def test_lease_authorize_management_valid_lessee(self,
+                                                     mock_authorize,
+                                                     mock_get):
+        utils.lease_authorize_management(
+            test_lease, lessee_ctx.to_policy_values()
         )
 
         assert not mock_authorize.called
         assert not mock_get.called
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get')
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy.authorize')
-    def test__contract_authorize_management_invalid_lessee(self,
-                                                           mock_authorize,
-                                                           mock_get):
+    @mock.patch('esi_leap.objects.offer.Offer.get')
+    @mock.patch.object(policy, 'authorize', spec=True)
+    def test_lease_authorize_management_invalid_lessee(self,
+                                                       mock_authorize,
+                                                       mock_get):
         mock_get.return_value = test_offer
         mock_authorize.side_effect = [
-            policy.PolicyNotAuthorized('esi_leap:contract:contract_admin',
-                                       lessee_ctx.to_policy_values(),
-                                       lessee_ctx.to_policy_values()),
-            policy.PolicyNotAuthorized('esi_leap:offer:offer_admin',
-                                       lessee_ctx.to_policy_values(),
-                                       lessee_ctx.to_policy_values())
+            oslo_policy.PolicyNotAuthorized('esi_leap:lease:lease_admin',
+                                            lessee_ctx.to_policy_values(),
+                                            lessee_ctx.to_policy_values()),
+            oslo_policy.PolicyNotAuthorized('esi_leap:offer:offer_admin',
+                                            lessee_ctx.to_policy_values(),
+                                            lessee_ctx.to_policy_values())
         ]
 
-        self.assertRaises(policy.PolicyNotAuthorized,
-                          utils.contract_authorize_management,
-                          test_contract_3, lessee_ctx.to_policy_values())
+        self.assertRaises(oslo_policy.PolicyNotAuthorized,
+                          utils.lease_authorize_management,
+                          test_lease_3, lessee_ctx.to_policy_values())
 
         mock_authorize.assert_has_calls(
             [
-                mock.call('esi_leap:contract:contract_admin',
+                mock.call('esi_leap:lease:lease_admin',
                           lessee_ctx.to_policy_values(),
                           lessee_ctx.to_policy_values()),
                 mock.call('esi_leap:offer:offer_admin',
@@ -153,53 +154,53 @@ class TestManagementUtils(testtools.TestCase):
                           lessee_ctx.to_policy_values())
             ])
 
-        mock_get.assert_called_with(test_contract_3.offer_uuid)
+        mock_get.assert_called_with(test_lease_3.offer_uuid)
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get')
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy.authorize')
-    def test__contract_authorize_management_valid_owner(self,
-                                                        mock_authorize,
-                                                        mock_get):
+    @mock.patch('esi_leap.objects.offer.Offer.get')
+    @mock.patch.object(policy, 'authorize', spec=True)
+    def test_lease_authorize_management_valid_owner(self,
+                                                    mock_authorize,
+                                                    mock_get):
         mock_get.return_value = test_offer
         mock_authorize.side_effect = [
-            policy.PolicyNotAuthorized('esi_leap:contract:contract_admin',
-                                       lessee_ctx.to_policy_values(),
-                                       lessee_ctx.to_policy_values()),
+            oslo_policy.PolicyNotAuthorized('esi_leap:lease:lease_admin',
+                                            lessee_ctx.to_policy_values(),
+                                            lessee_ctx.to_policy_values()),
             None]
 
-        utils.contract_authorize_management(
-            test_contract, owner_ctx.to_policy_values()
+        utils.lease_authorize_management(
+            test_lease, owner_ctx.to_policy_values()
         )
 
         mock_authorize.assert_called_once_with(
-            'esi_leap:contract:contract_admin',
+            'esi_leap:lease:lease_admin',
             owner_ctx.to_policy_values(),
             owner_ctx.to_policy_values())
 
-        mock_get.assert_called_with(test_contract.offer_uuid)
+        mock_get.assert_called_with(test_lease.offer_uuid)
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get')
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy.authorize')
-    def test__contract_authorize_management_invalid_owner(self,
-                                                          mock_authorize,
-                                                          mock_get):
+    @mock.patch('esi_leap.objects.offer.Offer.get')
+    @mock.patch.object(policy, 'authorize', spec=True)
+    def test_lease_authorize_management_invalid_owner(self,
+                                                      mock_authorize,
+                                                      mock_get):
         mock_get.return_value = test_offer
         mock_authorize.side_effect = [
-            policy.PolicyNotAuthorized('esi_leap:contract:contract_admin',
-                                       owner_ctx_2.to_policy_values(),
-                                       owner_ctx_2.to_policy_values()),
-            policy.PolicyNotAuthorized('esi_leap:offer:offer_admin',
-                                       owner_ctx_2.to_policy_values(),
-                                       owner_ctx_2.to_policy_values())
+            oslo_policy.PolicyNotAuthorized('esi_leap:lease:lease_admin',
+                                            owner_ctx_2.to_policy_values(),
+                                            owner_ctx_2.to_policy_values()),
+            oslo_policy.PolicyNotAuthorized('esi_leap:offer:offer_admin',
+                                            owner_ctx_2.to_policy_values(),
+                                            owner_ctx_2.to_policy_values())
         ]
 
-        self.assertRaises(policy.PolicyNotAuthorized,
-                          utils.contract_authorize_management,
-                          test_contract_3, owner_ctx_2.to_policy_values())
+        self.assertRaises(oslo_policy.PolicyNotAuthorized,
+                          utils.lease_authorize_management,
+                          test_lease_3, owner_ctx_2.to_policy_values())
 
         mock_authorize.assert_has_calls(
             [
-                mock.call('esi_leap:contract:contract_admin',
+                mock.call('esi_leap:lease:lease_admin',
                           owner_ctx_2.to_policy_values(),
                           owner_ctx_2.to_policy_values()),
                 mock.call('esi_leap:offer:offer_admin',
@@ -207,14 +208,14 @@ class TestManagementUtils(testtools.TestCase):
                           owner_ctx_2.to_policy_values())
             ])
 
-        mock_get.assert_called_with(test_contract_3.offer_uuid)
+        mock_get.assert_called_with(test_lease_3.offer_uuid)
 
 
 class TestGetObjectUtils(testtools.TestCase):
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy.authorize')
-    @mock.patch('esi_leap.api.controllers.v1.utils.uuidutils.is_uuid_like')
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get')
+    @mock.patch.object(policy, 'authorize', spec=True)
+    @mock.patch('oslo_utils.uuidutils.is_uuid_like')
+    @mock.patch('esi_leap.objects.offer.Offer.get')
     def test_get_offer_authorized_uuid_owner(self,
                                              mock_offer_get,
                                              mock_is_uuid_like,
@@ -232,9 +233,9 @@ class TestGetObjectUtils(testtools.TestCase):
         mock_offer_get.assert_called_once_with(test_offer.uuid)
         assert not mock_authorize.called
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy.authorize')
-    @mock.patch('esi_leap.api.controllers.v1.utils.uuidutils.is_uuid_like')
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get')
+    @mock.patch.object(policy, 'authorize', spec=True)
+    @mock.patch('oslo_utils.uuidutils.is_uuid_like')
+    @mock.patch('esi_leap.objects.offer.Offer.get')
     def test_get_offer_authorized_uuid_available_owner(self,
                                                        mock_offer_get,
                                                        mock_is_uuid_like,
@@ -253,18 +254,18 @@ class TestGetObjectUtils(testtools.TestCase):
         mock_offer_get.assert_called_once_with(test_offer.uuid)
         assert not mock_authorize.called
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy.authorize')
-    @mock.patch('esi_leap.api.controllers.v1.utils.uuidutils.is_uuid_like')
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get')
+    @mock.patch.object(policy, 'authorize', spec=True)
+    @mock.patch('oslo_utils.uuidutils.is_uuid_like')
+    @mock.patch('esi_leap.objects.offer.Offer.get')
     def test_get_offer_authorized_uuid_available_invalid_owner(
             self, mock_offer_get, mock_is_uuid_like, mock_authorize):
 
         mock_is_uuid_like.return_value = True
         mock_offer_get.return_value = test_offer
         mock_authorize.side_effect = [
-            policy.PolicyNotAuthorized('esi_leap:offer:offer_admin',
-                                       owner_ctx_2.to_policy_values(),
-                                       owner_ctx_2.to_policy_values())
+            oslo_policy.PolicyNotAuthorized('esi_leap:offer:offer_admin',
+                                            owner_ctx_2.to_policy_values(),
+                                            owner_ctx_2.to_policy_values())
         ]
 
         self.assertRaises(exception.OfferNotFound,
@@ -279,9 +280,9 @@ class TestGetObjectUtils(testtools.TestCase):
                                                owner_ctx_2.to_policy_values(),
                                                owner_ctx_2.to_policy_values())
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy.authorize')
-    @mock.patch('esi_leap.api.controllers.v1.utils.uuidutils.is_uuid_like')
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get')
+    @mock.patch.object(policy, 'authorize', spec=True)
+    @mock.patch('oslo_utils.uuidutils.is_uuid_like')
+    @mock.patch('esi_leap.objects.offer.Offer.get')
     def test_get_offer_authorized_uuid_available_admin(self,
                                                        mock_offer_get,
                                                        mock_is_uuid_like,
@@ -300,9 +301,9 @@ class TestGetObjectUtils(testtools.TestCase):
                                                admin_ctx.to_policy_values(),
                                                admin_ctx.to_policy_values())
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy.authorize')
-    @mock.patch('esi_leap.api.controllers.v1.utils.uuidutils.is_uuid_like')
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get_all')
+    @mock.patch.object(policy, 'authorize', spec=True)
+    @mock.patch('oslo_utils.uuidutils.is_uuid_like')
+    @mock.patch('esi_leap.objects.offer.Offer.get_all')
     def test_get_offer_authorized_name_available_owner(self,
                                                        mock_offer_get_all,
                                                        mock_is_uuid_like,
@@ -324,8 +325,8 @@ class TestGetObjectUtils(testtools.TestCase):
         )
         mock_authorize.assert_called_once()
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.uuidutils.is_uuid_like')
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get')
+    @mock.patch('oslo_utils.uuidutils.is_uuid_like')
+    @mock.patch('esi_leap.objects.offer.Offer.get')
     def test_get_offer_uuid(self, mock_offer_get, mock_is_uuid_like):
 
         mock_is_uuid_like.return_value = True
@@ -338,8 +339,8 @@ class TestGetObjectUtils(testtools.TestCase):
         mock_is_uuid_like.assert_called_once_with(test_offer.uuid)
         mock_offer_get.assert_called_once_with(test_offer.uuid)
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.uuidutils.is_uuid_like')
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get')
+    @mock.patch('oslo_utils.uuidutils.is_uuid_like')
+    @mock.patch('esi_leap.objects.offer.Offer.get')
     def test_get_offer_uuid_available(self,
                                       mock_offer_get,
                                       mock_is_uuid_like):
@@ -354,8 +355,8 @@ class TestGetObjectUtils(testtools.TestCase):
         mock_is_uuid_like.assert_called_once_with(test_offer.uuid)
         mock_offer_get.assert_called_once_with(test_offer.uuid)
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.uuidutils.is_uuid_like')
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get')
+    @mock.patch('oslo_utils.uuidutils.is_uuid_like')
+    @mock.patch('esi_leap.objects.offer.Offer.get')
     def test_get_offer_uuid_bad_status(self,
                                        mock_offer_get,
                                        mock_is_uuid_like):
@@ -370,8 +371,8 @@ class TestGetObjectUtils(testtools.TestCase):
         mock_is_uuid_like.assert_called_once_with(test_offer.uuid)
         mock_offer_get.assert_called_once_with(test_offer.uuid)
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.uuidutils.is_uuid_like')
-    @mock.patch('esi_leap.api.controllers.v1.utils.offer.Offer.get_all')
+    @mock.patch('oslo_utils.uuidutils.is_uuid_like')
+    @mock.patch('esi_leap.objects.offer.Offer.get_all')
     def test_get_offer_name_available(self,
                                       mock_offer_get_all,
                                       mock_is_uuid_like):
@@ -390,47 +391,47 @@ class TestGetObjectUtils(testtools.TestCase):
         )
 
     @mock.patch('esi_leap.api.controllers.v1.utils.'
-                'contract_authorize_management')
-    @mock.patch('esi_leap.api.controllers.v1.utils.uuidutils.is_uuid_like')
-    @mock.patch('esi_leap.api.controllers.v1.utils.contract.Contract.get')
-    def test_get_contract_authorized_uuid(self,
-                                          mock_contract_get,
-                                          mock_is_uuid_like,
-                                          mock_authorize):
+                'lease_authorize_management')
+    @mock.patch('oslo_utils.uuidutils.is_uuid_like')
+    @mock.patch('esi_leap.objects.lease.Lease.get')
+    def test_get_lease_authorized_uuid(self,
+                                       mock_lease_get,
+                                       mock_is_uuid_like,
+                                       mock_authorize):
 
         mock_is_uuid_like.return_value = True
-        mock_contract_get.return_value = test_contract
+        mock_lease_get.return_value = test_lease
 
-        res = utils.get_contract_authorized(test_contract.uuid,
-                                            lessee_ctx.to_policy_values())
+        res = utils.get_lease_authorized(test_lease.uuid,
+                                         lessee_ctx.to_policy_values())
 
-        self.assertEqual(res, test_contract)
+        self.assertEqual(res, test_lease)
 
-        mock_is_uuid_like.assert_called_once_with(test_contract.uuid)
-        mock_contract_get.assert_called_once_with(test_contract.uuid)
+        mock_is_uuid_like.assert_called_once_with(test_lease.uuid)
+        mock_lease_get.assert_called_once_with(test_lease.uuid)
 
     @mock.patch('esi_leap.api.controllers.v1.utils.'
-                'contract_authorize_management')
-    @mock.patch('esi_leap.api.controllers.v1.utils.uuidutils.is_uuid_like')
-    @mock.patch('esi_leap.api.controllers.v1.utils.contract.Contract.get_all')
-    def test_get_contract_authorized_name(self,
-                                          mock_contract_get_all,
-                                          mock_is_uuid_like,
-                                          mock_authorize):
+                'lease_authorize_management')
+    @mock.patch('oslo_utils.uuidutils.is_uuid_like')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    def test_get_lease_authorized_name(self,
+                                       mock_lease_get_all,
+                                       mock_is_uuid_like,
+                                       mock_authorize):
 
         mock_is_uuid_like.return_value = False
-        mock_contract_get_all.return_value = [test_contract]
+        mock_lease_get_all.return_value = [test_lease]
 
-        res = utils.get_contract_authorized(
-            test_contract.name,
+        res = utils.get_lease_authorized(
+            test_lease.name,
             lessee_ctx.to_policy_values(),
             [statuses.CREATED, statuses.ACTIVE])
 
-        self.assertEqual(res, test_contract)
+        self.assertEqual(res, test_lease)
 
-        mock_is_uuid_like.assert_called_once_with(test_contract.name)
-        mock_contract_get_all.assert_called_once_with(
-            {'name': test_contract.name,
+        mock_is_uuid_like.assert_called_once_with(test_lease.name)
+        mock_lease_get_all.assert_called_once_with(
+            {'name': test_lease.name,
              'status': [statuses.CREATED, statuses.ACTIVE]}
         )
 
@@ -439,14 +440,14 @@ class TestOffersControllerStaticMethods(testtools.TestCase):
 
     @mock.patch.object(test_node_1, 'is_resource_admin',
                        return_value=True)
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy.authorize')
+    @mock.patch.object(policy, 'authorize', spec=True)
     @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
                 'ResourceObjectFactory.get_resource_object',
                 return_value=test_node_1)
-    def test__verify_resource_permission_owner(self,
-                                               mock_gro,
-                                               mock_authorize,
-                                               mock_is_resource_admin):
+    def test_verify_resource_permission_owner(self,
+                                              mock_gro,
+                                              mock_authorize,
+                                              mock_is_resource_admin):
 
         utils.verify_resource_permission(
             owner_ctx.to_policy_values(), test_offer.to_dict())
@@ -459,14 +460,14 @@ class TestOffersControllerStaticMethods(testtools.TestCase):
 
     @mock.patch.object(test_node_2, 'is_resource_admin',
                        return_value=False)
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy.authorize')
+    @mock.patch.object(policy, 'authorize', spec=True)
     @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
                 'ResourceObjectFactory.get_resource_object',
                 return_value=test_node_2)
-    def test__verify_resource_permission_admin(self,
-                                               mock_gro,
-                                               mock_authorize,
-                                               mock_is_resource_admin):
+    def test_verify_resource_permission_admin(self,
+                                              mock_gro,
+                                              mock_authorize,
+                                              mock_is_resource_admin):
 
         bad_test_offer = offer.Offer(
             resource_type='test_node',
@@ -488,16 +489,16 @@ class TestOffersControllerStaticMethods(testtools.TestCase):
 
     @mock.patch.object(test_node_2, 'is_resource_admin',
                        return_value=False)
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy.authorize')
+    @mock.patch.object(policy, 'authorize', spec=True)
     @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
                 'ResourceObjectFactory.get_resource_object',
                 return_value=test_node_2)
-    def test__verify_resource_permission_invalid_owner(self,
-                                                       mock_gro,
-                                                       mock_authorize,
-                                                       mock_is_resource_admin):
+    def test_verify_resource_permission_invalid_owner(self,
+                                                      mock_gro,
+                                                      mock_authorize,
+                                                      mock_is_resource_admin):
 
-        mock_authorize.side_effect = policy.PolicyNotAuthorized(
+        mock_authorize.side_effect = oslo_policy.PolicyNotAuthorized(
             'esi_leap:offer:offer_admin',
             owner_ctx.to_dict(), owner_ctx.to_dict())
 
@@ -507,7 +508,7 @@ class TestOffersControllerStaticMethods(testtools.TestCase):
             project_id=owner_ctx.project_id
         )
 
-        self.assertRaises(policy.PolicyNotAuthorized,
+        self.assertRaises(oslo_policy.PolicyNotAuthorized,
                           utils.verify_resource_permission,
                           owner_ctx_2.to_policy_values(),
                           bad_test_offer.to_dict())

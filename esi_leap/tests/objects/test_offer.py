@@ -98,11 +98,11 @@ class TestOfferObject(base.DBTestCase):
                                autospec=True) as mock_offer_get_by_uuid:
             mock_offer_get_by_uuid.return_value = self.fake_offer
 
-            c = offer.Offer.get(offer_uuid, self.context)
+            o = offer.Offer.get(offer_uuid, self.context)
 
             mock_offer_get_by_uuid.assert_called_once_with(
                 offer_uuid)
-            self.assertEqual(self.context, c._context)
+            self.assertEqual(self.context, o._context)
 
     def test_get_all(self):
         with mock.patch.object(

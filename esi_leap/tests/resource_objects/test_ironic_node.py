@@ -23,12 +23,12 @@ class FakeIronicNode(object):
         self.created_at = start
         self.lessee = "abcdef"
         self.owner = "123456"
-        self.properties = {"contract_uuid": "001"}
+        self.properties = {"lease_uuid": "001"}
         self.provision_state = "available"
         self.uuid = "1111"
 
 
-class FakeContract(object):
+class FakeLease(object):
     def __init__(self):
         self.uuid = '001'
         self.project_id = '654321'
@@ -46,13 +46,13 @@ class TestIronicNode(base.TestCase):
         self.fake_admin_project_id_2 = '123456'
 
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
-    def test_get_contract_uuid(self, client_mock):
+    def test_get_lease_uuid(self, client_mock):
         fake_get_node = FakeIronicNode()
         client_mock.return_value.node.get.return_value = fake_get_node
         test_ironic_node = ironic_node.IronicNode("1111")
-        contract_uuid = test_ironic_node.get_contract_uuid()
-        expected_contract_uuid = fake_get_node.properties.get("contract_uuid")
-        self.assertEqual(contract_uuid, expected_contract_uuid)
+        lease_uuid = test_ironic_node.get_lease_uuid()
+        expected_lease_uuid = fake_get_node.properties.get("lease_uuid")
+        self.assertEqual(lease_uuid, expected_lease_uuid)
         client_mock.assert_called_once()
         client_mock.return_value.node.get.assert_called_once_with(
             test_ironic_node._uuid)
@@ -76,40 +76,40 @@ class TestIronicNode(base.TestCase):
         test_ironic_node = ironic_node.IronicNode("1111")
         config = test_ironic_node.get_node_config()
         expected_config = fake_get_node.properties
-        expected_config.pop('contract_uuid', None)
+        expected_config.pop('lease_uuid', None)
         self.assertEqual(config, expected_config)
         client_mock.assert_called_once()
         client_mock.return_value.node.get.assert_called_once_with(
             test_ironic_node._uuid)
 
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
-    def test_set_contract(self, client_mock):
+    def test_set_lease(self, client_mock):
         test_ironic_node = ironic_node.IronicNode("1111")
-        fake_contract = FakeContract()
-        test_ironic_node.set_contract(fake_contract)
+        fake_lease = FakeLease()
+        test_ironic_node.set_lease(fake_lease)
         client_mock.assert_called_once()
         client_mock.return_value.node.update.assert_called_once()
 
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
-    def test_expire_contract(self, client_mock):
+    def test_expire_lease(self, client_mock):
         client_mock.return_value.node.get.return_value.\
             provision_state = "active"
         with mock.patch.object(
-            ironic_node.IronicNode, 'get_contract_uuid', autospec=True
-        ) as mock_contract_uuid_true:
-            fake_contract = FakeContract()
-            mock_contract_uuid_true.return_value = fake_contract.uuid
+            ironic_node.IronicNode, 'get_lease_uuid', autospec=True
+        ) as mock_lease_uuid_true:
+            fake_lease = FakeLease()
+            mock_lease_uuid_true.return_value = fake_lease.uuid
             with mock.patch.object(
                 ironic_node.IronicNode, 'get_project_id', autospec=True
             ) as mock_project_id_get:
                 mock_project_id_get.return_value = \
-                    fake_contract.project_id
+                    fake_lease.project_id
 
                 test_ironic_node = ironic_node.IronicNode("1111")
-                test_ironic_node.expire_contract(fake_contract)
+                test_ironic_node.expire_lease(fake_lease)
 
                 mock_project_id_get.assert_called_once()
-                self.assertEqual(mock_contract_uuid_true.call_count, 2)
+                self.assertEqual(mock_lease_uuid_true.call_count, 2)
                 self.assertEqual(client_mock.call_count, 3)
                 client_mock.return_value.node.update.assert_called_once()
                 client_mock.return_value.node.get.assert_called_once_with(
@@ -119,13 +119,13 @@ class TestIronicNode(base.TestCase):
                         test_ironic_node._uuid, "deleted")
 
         with mock.patch.object(
-            ironic_node.IronicNode, 'get_contract_uuid', autospec=True
-        ) as mock_contract_uuid_false:
-            mock_contract_uuid_false.return_value = "none"
+            ironic_node.IronicNode, 'get_lease_uuid', autospec=True
+        ) as mock_lease_uuid_false:
+            mock_lease_uuid_false.return_value = "none"
             test_ironic_node = ironic_node.IronicNode("1111")
-            fake_contract = FakeContract()
-            test_ironic_node.expire_contract(fake_contract)
-            mock_contract_uuid_false.assert_called_once()
+            fake_lease = FakeLease()
+            test_ironic_node.expire_lease(fake_lease)
+            mock_lease_uuid_false.assert_called_once()
 
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
     def test_is_resource_admin(self, client_mock):

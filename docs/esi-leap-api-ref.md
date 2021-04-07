@@ -66,29 +66,29 @@ curl -X POST -sH "X-Auth-Token: $token" http://localhost:7777/v1/offers  -H 'Con
 ##### DELETE
 * The /v1/offers/\<uuid> endpoint supports DELETE requests for offer cancellation.
 * Offers will have their "status" set to 'cancelled'.
-* All contracts on this offer will also have their "status" set to 'cancelled'.
+* All leases on this offer will also have their "status" set to 'cancelled'.
 * Returns null on success.
 
 
-## Contract API
+## Lease API
 
-The contract api endpoint can be reached at /v1/contracts
+The lease api endpoint can be reached at /v1/leases
 
 
 ##### GET
-* The /v1/contracts/\<uuid_or_name> endpoint is used to retrieve the contract with the given uuid. The response type is 'application/json'.
-* The /v1/contracts endpoint is used to retrieve a list of contracts. This url supports several url variables for retrieving offers filtered by given values. The response type is 'application/json'.
-  * project_id: Returns all contracts with given project_id.
+* The /v1/leases/\<uuid_or_name> endpoint is used to retrieve the lease with the given uuid. The response type is 'application/json'.
+* The /v1/leases endpoint is used to retrieve a list of leases. This url supports several url variables for retrieving offers filtered by given values. The response type is 'application/json'.
+  * project_id: Returns all leases with given project_id.
     * This value will default to the project_id of the request.
   * status: Returns all offers with given status. 
-    * This value will default to returning contracts with status 'open'.
-    * This value can be set to 'any' to return contracts without filtering by status.
-  * start_time and end_time: Passing in values for the start_time and end_time variables will return all contracts with a start_time and end_time which completely span the given values. These two url variables must be used together. Passing in only one will throw an error. 
-  * owner: Returns all contracts which are related to offers with project_id 'owner'.
-  * view: Setting view to 'all' will return all contracts in the database. This value can be used in combination with other filters.
+    * This value will default to returning leases with status 'open'.
+    * This value can be set to 'any' to return leases without filtering by status.
+  * start_time and end_time: Passing in values for the start_time and end_time variables will return all leases with a start_time and end_time which completely span the given values. These two url variables must be used together. Passing in only one will throw an error. 
+  * owner: Returns all leases which are related to offers with project_id 'owner'.
+  * view: Setting view to 'all' will return all leases in the database. This value can be used in combination with other filters.
 
 ##### POST
-* The /v1/contracts endpoint supports POST requests for contract creation with values passed through the body.
+* The /v1/leases endpoint supports POST requests for lease creation with values passed through the body.
   * start_time:
     * A datetime string.
     * This field is optional. Not setting it will default start_time to the time when the request was sent.
@@ -102,11 +102,11 @@ The contract api endpoint can be reached at /v1/contracts
     * A string.
     * This field is required.
 * 'status' and 'uuid' are read only. 
-* The response to a POST request will be the newly created contract. The response type is 'application/json'.
+* The response to a POST request will be the newly created lease. The response type is 'application/json'.
 
 An example curl request is shown below.
 ```
-curl -X POST -sH "X-Auth-Token: $token" http://localhost:7777/v1/contracts  -H 'Content-Type: application/json' -d '{
+curl -X POST -sH "X-Auth-Token: $token" http://localhost:7777/v1/leases  -H 'Content-Type: application/json' -d '{
   "start_time": "2020-04-07 05:45:02",
   "end_time": "2020-04-09 05:45:02",
   "name": "c1",
@@ -117,7 +117,7 @@ curl -X POST -sH "X-Auth-Token: $token" http://localhost:7777/v1/contracts  -H '
 ```
 
 ##### DELETE
-* The /v1/contracts/\<uuid> endpoint supports DELETE requests for contract cancellation.
-* Contracts will have their "status" set to 'cancelled'.
-* Cancelling a contract does not affect any other contracts. The related offer will have its availabilities updated to reflect the newly freed time range.
+* The /v1/leases/\<uuid> endpoint supports DELETE requests for lease cancellation.
+* Leases will have their "status" set to 'cancelled'.
+* Cancelling a lease does not affect any other leases. The related offer will have its availabilities updated to reflect the newly freed time range.
 * Returns null on success.

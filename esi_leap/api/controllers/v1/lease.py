@@ -24,10 +24,10 @@ from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
 from esi_leap.common import policy
 from esi_leap.common import statuses
-from esi_leap.objects import contract
+from esi_leap.objects import lease as lease_obj
 
 
-class Contract(base.ESILEAPBase):
+class Lease(base.ESILEAPBase):
 
     name = wsme.wsattr(wtypes.text)
     uuid = wsme.wsattr(wtypes.text, readonly=True)
@@ -42,31 +42,31 @@ class Contract(base.ESILEAPBase):
     offer_uuid_or_name = wsme.wsattr(wtypes.text)
 
     def __init__(self, **kwargs):
-        self.fields = contract.Contract.fields
+        self.fields = lease_obj.Lease.fields
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
 
-class ContractCollection(types.Collection):
-    contracts = [Contract]
+class LeaseCollection(types.Collection):
+    leases = [Lease]
 
     def __init__(self, **kwargs):
-        self._type = 'contracts'
+        self._type = 'leases'
 
 
-class ContractsController(rest.RestController):
+class LeasesController(rest.RestController):
 
-    @wsme_pecan.wsexpose(Contract, wtypes.text)
-    def get_one(self, contract_id):
+    @wsme_pecan.wsexpose(Lease, wtypes.text)
+    def get_one(self, lease_id):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        policy.authorize('esi_leap:contract:get', cdict, cdict)
+        policy.authorize('esi_leap:lease:get', cdict, cdict)
 
-        permitted = utils.get_contract_authorized(contract_id, cdict)
+        permitted = utils.get_lease_authorized(lease_id, cdict)
 
-        return Contract(**permitted.to_dict())
+        return Lease(**permitted.to_dict())
 
-    @wsme_pecan.wsexpose(ContractCollection, wtypes.text,
+    @wsme_pecan.wsexpose(LeaseCollection, wtypes.text,
                          datetime.datetime, datetime.datetime, wtypes.text,
                          wtypes.text, wtypes.text, wtypes.text)
     def get_all(self, project_id=None, start_time=None, end_time=None,
@@ -74,69 +74,69 @@ class ContractsController(rest.RestController):
         request = pecan.request.context
         cdict = request.to_policy_values()
 
-        filters = ContractsController.\
-            _contract_get_all_authorize_filters(
+        filters = LeasesController.\
+            _lease_get_all_authorize_filters(
                 cdict,
                 project_id=project_id, start_time=start_time,
                 end_time=end_time, status=status,
                 offer_uuid=offer_uuid, view=view, owner=owner)
 
-        contract_collection = ContractCollection()
-        contracts = contract.Contract.get_all(filters, request)
-        contract_collection.contracts = [
-            Contract(**c.to_dict()) for c in contracts]
-        return contract_collection
+        lease_collection = LeaseCollection()
+        leases = lease_obj.Lease.get_all(filters, request)
+        lease_collection.leases = [
+            Lease(**lease.to_dict()) for lease in leases]
+        return lease_collection
 
-    @wsme_pecan.wsexpose(Contract, body=Contract)
-    def post(self, new_contract):
+    @wsme_pecan.wsexpose(Lease, body=Lease)
+    def post(self, new_lease):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        policy.authorize('esi_leap:contract:create', cdict, cdict)
+        policy.authorize('esi_leap:lease:create', cdict, cdict)
 
-        contract_dict = new_contract.to_dict()
-        contract_dict['project_id'] = request.project_id
-        contract_dict['uuid'] = uuidutils.generate_uuid()
+        lease_dict = new_lease.to_dict()
+        lease_dict['project_id'] = request.project_id
+        lease_dict['uuid'] = uuidutils.generate_uuid()
 
-        if new_contract.offer_uuid_or_name is None:
-            raise exception.ContractNoOfferUUID()
+        if new_lease.offer_uuid_or_name is None:
+            raise exception.LeaseNoOfferUUID()
 
-        related_offer = utils.get_offer(new_contract.offer_uuid_or_name,
+        related_offer = utils.get_offer(new_lease.offer_uuid_or_name,
                                         statuses.AVAILABLE)
 
-        contract_dict['offer_uuid'] = related_offer.uuid
+        lease_dict['offer_uuid'] = related_offer.uuid
 
-        if 'start_time' not in contract_dict:
-            contract_dict['start_time'] = datetime.datetime.now()
+        if 'start_time' not in lease_dict:
+            lease_dict['start_time'] = datetime.datetime.now()
 
-        if 'end_time' not in contract_dict:
+        if 'end_time' not in lease_dict:
             q = related_offer.get_first_availability(
-                contract_dict['start_time'])
+                lease_dict['start_time'])
             if q is None:
-                contract_dict['end_time'] = related_offer.end_time
+                lease_dict['end_time'] = related_offer.end_time
             else:
-                contract_dict['end_time'] = q.start_time
+                lease_dict['end_time'] = q.start_time
 
-        c = contract.Contract(**contract_dict)
-        c.create(request)
-        return Contract(**c.to_dict())
+        lease = lease_obj.Lease(**lease_dict)
+        lease.create(request)
+        return Lease(**lease.to_dict())
 
-    @wsme_pecan.wsexpose(Contract, wtypes.text)
-    def delete(self, contract_id):
+    @wsme_pecan.wsexpose(Lease, wtypes.text)
+    def delete(self, lease_id):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        policy.authorize('esi_leap:contract:delete', cdict, cdict)
+        policy.authorize('esi_leap:lease:delete', cdict, cdict)
 
-        permitted = utils.get_contract_authorized(
-            contract_id, cdict, [statuses.CREATED, statuses.ACTIVE])
+        permitted = utils.get_lease_authorized(
+            lease_id, cdict, [statuses.CREATED, statuses.ACTIVE])
 
         permitted.cancel()
 
     @staticmethod
-    def _contract_get_all_authorize_filters(cdict,
-                                            start_time=None, end_time=None,
-                                            status=None, offer_uuid=None,
-                                            project_id=None, view=None,
-                                            owner=None):
+    def _lease_get_all_authorize_filters(cdict,
+                                         start_time=None, end_time=None,
+                                         status=None, offer_uuid=None,
+                                         project_id=None, view=None,
+                                         owner=None):
 
         if status is None:
             status = [statuses.CREATED, statuses.ACTIVE]
@@ -153,15 +153,15 @@ class ContractsController(rest.RestController):
         }
 
         if view == 'all':
-            policy.authorize('esi_leap:contract:contract_admin', cdict, cdict)
+            policy.authorize('esi_leap:lease:lease_admin', cdict, cdict)
             possible_filters['owner'] = owner
             possible_filters['project_id'] = project_id
         else:
-            policy.authorize('esi_leap:contract:get', cdict, cdict)
+            policy.authorize('esi_leap:lease:get', cdict, cdict)
 
             if owner:
                 if cdict['project_id'] != owner:
-                    policy.authorize('esi_leap:contract:contract_admin',
+                    policy.authorize('esi_leap:lease:lease_admin',
                                      cdict, cdict)
 
                 possible_filters['owner'] = owner
@@ -171,20 +171,20 @@ class ContractsController(rest.RestController):
                 if project_id is None:
                     project_id = cdict['project_id']
                 elif project_id != cdict['project_id']:
-                    policy.authorize('esi_leap:contract:contract_admin',
+                    policy.authorize('esi_leap:lease:lease_admin',
                                      cdict, cdict)
 
                 possible_filters['project_id'] = project_id
 
         if (start_time and end_time is None) or \
                 (end_time and start_time is None):
-            raise exception.InvalidTimeAPICommand(resource="a contract",
+            raise exception.InvalidTimeAPICommand(resource="a lease",
                                                   start_time=str(start_time),
                                                   end_time=str(end_time))
 
         if start_time and end_time and\
            end_time <= start_time:
-            raise exception.InvalidTimeAPICommand(resource='a contract',
+            raise exception.InvalidTimeAPICommand(resource='a lease',
                                                   start_time=str(start_time),
                                                   end_time=str(end_time))
 
