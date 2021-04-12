@@ -26,7 +26,7 @@ CONF = cfg.CONF
 
 
 @versioned_objects_base.VersionedObjectRegistry.register
-class Contract(base.ESILEAPObject):
+class Lease(base.ESILEAPObject):
     dbapi = dbapi.get_instance()
 
     fields = {
@@ -44,26 +44,26 @@ class Contract(base.ESILEAPObject):
     }
 
     @classmethod
-    def get(cls, contract_uuid, context=None):
-        db_contract = cls.dbapi.contract_get_by_uuid(contract_uuid)
-        if db_contract:
-            return cls._from_db_object(context, cls(), db_contract)
+    def get(cls, lease_uuid, context=None):
+        db_lease = cls.dbapi.lease_get_by_uuid(lease_uuid)
+        if db_lease:
+            return cls._from_db_object(context, cls(), db_lease)
 
     @classmethod
     def get_all(cls, filters, context=None):
-        db_contracts = cls.dbapi.contract_get_all(filters)
-        return cls._from_db_object_list(context, db_contracts)
+        db_leases = cls.dbapi.lease_get_all(filters)
+        return cls._from_db_object_list(context, db_leases)
 
     def create(self, context=None):
         updates = self.obj_get_changes()
 
         @utils.synchronized(utils.get_offer_lock_name(updates['offer_uuid']),
                             external=True)
-        def _create_contract():
+        def _create_lease():
 
             if updates['start_time'] >= updates['end_time']:
                 raise exception.InvalidTimeRange(
-                    resource='contract',
+                    resource='lease',
                     start_time=str(updates['start_time']),
                     end_time=str(updates['end_time'])
                     )
@@ -75,64 +75,64 @@ class Contract(base.ESILEAPObject):
                     offer_uuid=related_offer.uuid,
                     status=related_offer.status)
 
-            self.dbapi.offer_verify_contract_availability(
+            self.dbapi.offer_verify_lease_availability(
                 related_offer,
                 updates['start_time'],
                 updates['end_time'])
 
-            db_contract = self.dbapi.contract_create(updates)
-            self._from_db_object(context, self, db_contract)
+            db_lease = self.dbapi.lease_create(updates)
+            self._from_db_object(context, self, db_lease)
 
-        _create_contract()
+        _create_lease()
 
     def cancel(self):
         o = Offer.get(self.offer_uuid)
 
         resource = o.resource_object()
-        if resource.get_contract_uuid() == self.uuid:
-            resource.expire_contract(self)
+        if resource.get_lease_uuid() == self.uuid:
+            resource.expire_lease(self)
 
         self.status = statuses.CANCELLED
         self.expire_time = datetime.datetime.now()
         self.save(None)
 
     def destroy(self):
-        self.dbapi.contract_destroy(self.uuid)
+        self.dbapi.lease_destroy(self.uuid)
         self.obj_reset_changes()
 
     def save(self, context=None):
         updates = self.obj_get_changes()
-        db_contract = self.dbapi.contract_update(
+        db_lease = self.dbapi.lease_update(
             self.uuid, updates)
-        self._from_db_object(context, self, db_contract)
+        self._from_db_object(context, self, db_lease)
 
     def fulfill(self, context=None):
 
         @utils.synchronized(utils.get_offer_lock_name(self.offer_uuid),
                             external=True)
-        def _fulfill_contract():
+        def _fulfill_lease():
 
             o = Offer.get(self.offer_uuid, context)
 
             resource = o.resource_object()
-            resource.set_contract(self)
+            resource.set_lease(self)
 
-            # activate contract
+            # activate lease
             self.status = statuses.ACTIVE
             self.fulfill_time = datetime.datetime.now()
             self.save(context)
 
-        _fulfill_contract()
+        _fulfill_lease()
 
     def expire(self, context=None):
         # unassign resource
         o = Offer.get(self.offer_uuid, context)
 
         resource = o.resource_object()
-        if resource.get_contract_uuid() == self.uuid:
-            resource.expire_contract(self)
+        if resource.get_lease_uuid() == self.uuid:
+            resource.expire_lease(self)
 
-        # expire contract
+        # expire lease
         self.status = statuses.EXPIRED
         self.expire_time = datetime.datetime.now()
         self.save(context)

@@ -18,7 +18,7 @@ import threading
 
 from esi_leap.common import exception
 from esi_leap.common import statuses
-from esi_leap.objects import contract
+from esi_leap.objects import lease as lease_obj
 from esi_leap.tests import base
 
 
@@ -31,7 +31,7 @@ c_uuid_3 = uuidutils.generate_uuid()
 c_uuid_4 = uuidutils.generate_uuid()
 
 
-def get_test_contract_1():
+def get_test_lease_1():
     return {
         'id': 27,
         'name': 'c',
@@ -49,7 +49,7 @@ def get_test_contract_1():
     }
 
 
-def get_test_contract_2():
+def get_test_lease_2():
 
     return {
         'id': 28,
@@ -68,7 +68,7 @@ def get_test_contract_2():
     }
 
 
-def get_test_contract_3():
+def get_test_lease_3():
 
     return {
         'id': 29,
@@ -87,11 +87,11 @@ def get_test_contract_3():
     }
 
 
-def get_test_contract_4():
+def get_test_lease_4():
 
     return {
         'id': 30,
-        'name': 'c2',
+        'name': 'l2',
         'uuid': c_uuid_4,
         'project_id': 'le55ee_2',
         'start_time': start + datetime.timedelta(days=35),
@@ -132,70 +132,70 @@ def get_offer():
     return o
 
 
-class TestContractObject(base.DBTestCase):
+class TestLeaseObject(base.DBTestCase):
 
     def setUp(self):
-        super(TestContractObject, self).setUp()
-        self.fake_contract = get_test_contract_1()
-        self.fake_contract_2 = get_test_contract_2()
-        self.fake_contract_3 = get_test_contract_3()
-        self.fake_contract_4 = get_test_contract_4()
+        super(TestLeaseObject, self).setUp()
+        self.fake_lease = get_test_lease_1()
+        self.fake_lease_2 = get_test_lease_2()
+        self.fake_lease_3 = get_test_lease_3()
+        self.fake_lease_4 = get_test_lease_4()
 
         self.config(lock_path=tempfile.mkdtemp(), group='oslo_concurrency')
 
     def test_get(self):
-        contract_uuid = self.fake_contract['uuid']
-        with mock.patch.object(self.db_api, 'contract_get_by_uuid',
-                               autospec=True) as mock_contract_get_by_uuid:
-            mock_contract_get_by_uuid.return_value = self.fake_contract
+        lease_uuid = self.fake_lease['uuid']
+        with mock.patch.object(self.db_api, 'lease_get_by_uuid',
+                               autospec=True) as mock_lease_get_by_uuid:
+            mock_lease_get_by_uuid.return_value = self.fake_lease
 
-            c = contract.Contract.get(contract_uuid, self.context)
+            lease = lease_obj.Lease.get(lease_uuid, self.context)
 
-            mock_contract_get_by_uuid.assert_called_once_with(
-                contract_uuid)
-            self.assertEqual(self.context, c._context)
+            mock_lease_get_by_uuid.assert_called_once_with(
+                lease_uuid)
+            self.assertEqual(self.context, lease._context)
 
     def test_get_all(self):
         with mock.patch.object(
-                self.db_api, 'contract_get_all', autospec=True
-        ) as mock_contract_get_all:
-            mock_contract_get_all.return_value = \
-                [self.fake_contract, self.fake_contract_2,
-                 self.fake_contract_3, self.fake_contract_4]
+                self.db_api, 'lease_get_all', autospec=True
+        ) as mock_lease_get_all:
+            mock_lease_get_all.return_value = \
+                [self.fake_lease, self.fake_lease_2,
+                 self.fake_lease_3, self.fake_lease_4]
 
-            contracts = contract.Contract.get_all(
+            leases = lease_obj.Lease.get_all(
                 {}, self.context)
 
-            mock_contract_get_all.assert_called_once_with({})
-            self.assertEqual(len(contracts), 4)
+            mock_lease_get_all.assert_called_once_with({})
+            self.assertEqual(len(leases), 4)
             self.assertIsInstance(
-                contracts[0], contract.Contract)
-            self.assertEqual(self.context, contracts[0]._context)
+                leases[0], lease_obj.Lease)
+            self.assertEqual(self.context, leases[0]._context)
 
     def test_create(self):
-        c = contract.Contract(
-            self.context, **self.fake_contract)
-        with mock.patch.object(self.db_api, 'contract_create',
-                               autospec=True) as mock_contract_create:
+        lease = lease_obj.Lease(
+            self.context, **self.fake_lease)
+        with mock.patch.object(self.db_api, 'lease_create',
+                               autospec=True) as mock_lease_create:
             with mock.patch.object(self.db_api, 'offer_get_by_uuid',
                                    autospec=True) as mock_offer_get:
                 with mock.patch.object(self.db_api,
-                                       'offer_verify_contract_availability',
+                                       'offer_verify_lease_availability',
                                        autospec=True):
 
-                    mock_contract_create.return_value = get_test_contract_1()
+                    mock_lease_create.return_value = get_test_lease_1()
                     mock_offer_get.return_value = get_offer()
 
-                    c.create()
+                    lease.create()
 
-                    mock_contract_create.assert_called_once_with(
-                        get_test_contract_1())
+                    mock_lease_create.assert_called_once_with(
+                        get_test_lease_1())
                     mock_offer_get.assert_called_once()
 
     def test_create_invalid_time(self):
-        bad_contract = {
+        bad_lease = {
             'id': 30,
-            'name': 'c2',
+            'name': 'l2',
             'uuid': '534653c9-880d-4c2d-6d6d-44444444444',
             'project_id': 'le55ee_2',
             'start_time': start + datetime.timedelta(days=30),
@@ -209,38 +209,38 @@ class TestContractObject(base.DBTestCase):
             'updated_at': None
         }
 
-        c = contract.Contract(self.context, **bad_contract)
+        lease = lease_obj.Lease(self.context, **bad_lease)
 
-        self.assertRaises(exception.InvalidTimeRange, c.create)
+        self.assertRaises(exception.InvalidTimeRange, lease.create)
 
     def test_create_concurrent(self):
-        c = contract.Contract(
-            self.context, **self.fake_contract)
+        lease = lease_obj.Lease(
+            self.context, **self.fake_lease)
 
-        c2 = contract.Contract(
-            self.context, **self.fake_contract)
+        lease2 = lease_obj.Lease(
+            self.context, **self.fake_lease)
 
-        c2.id = 28
+        lease2.id = 28
 
-        o = get_offer()
+        offer = get_offer()
 
-        with mock.patch.object(self.db_api, 'contract_create',
-                               autospec=True) as mock_contract_create:
+        with mock.patch.object(self.db_api, 'lease_create',
+                               autospec=True) as mock_lease_create:
             with mock.patch.object(self.db_api, 'offer_get_by_uuid',
                                    autospec=True) as mock_offer_get:
                 with mock.patch.object(self.db_api,
-                                       'offer_verify_contract_availability',
+                                       'offer_verify_lease_availability',
                                        autospec=True) as mock_ovca:
 
-                    mock_offer_get.return_value = o
+                    mock_offer_get.return_value = offer
 
                     def update_mock(updates):
                         mock_ovca.side_effect = Exception("bad")
 
-                    mock_contract_create.side_effect = update_mock
+                    mock_lease_create.side_effect = update_mock
 
-                    thread = threading.Thread(target=c.create)
-                    thread2 = threading.Thread(target=c2.create)
+                    thread = threading.Thread(target=lease.create)
+                    thread2 = threading.Thread(target=lease2.create)
 
                     thread.start()
                     thread2.start()
@@ -250,35 +250,35 @@ class TestContractObject(base.DBTestCase):
 
                     assert mock_offer_get.call_count == 2
                     assert mock_ovca.call_count == 2
-                    mock_contract_create.assert_called_once()
+                    mock_lease_create.assert_called_once()
 
     def test_destroy(self):
-        c = contract.Contract(self.context, **self.fake_contract)
-        with mock.patch.object(self.db_api, 'contract_destroy',
-                               autospec=True) as mock_contract_cancel:
+        lease = lease_obj.Lease(self.context, **self.fake_lease)
+        with mock.patch.object(self.db_api, 'lease_destroy',
+                               autospec=True) as mock_lease_cancel:
 
-            c.destroy()
+            lease.destroy()
 
-            mock_contract_cancel.assert_called_once_with(
-                c.uuid)
+            mock_lease_cancel.assert_called_once_with(
+                lease.uuid)
 
     def test_save(self):
-        c = contract.Contract(self.context, **self.fake_contract)
+        lease = lease_obj.Lease(self.context, **self.fake_lease)
         new_status = statuses.ACTIVE
         updated_at = datetime.datetime(2006, 12, 11, 0, 0)
-        with mock.patch.object(self.db_api, 'contract_update',
-                               autospec=True) as mock_contract_update:
-            updated_contract = get_test_contract_1()
-            updated_contract['status'] = new_status
-            updated_contract['updated_at'] = updated_at
-            mock_contract_update.return_value = updated_contract
+        with mock.patch.object(self.db_api, 'lease_update',
+                               autospec=True) as mock_lease_update:
+            updated_lease = get_test_lease_1()
+            updated_lease['status'] = new_status
+            updated_lease['updated_at'] = updated_at
+            mock_lease_update.return_value = updated_lease
 
-            c.status = new_status
-            c.save(self.context)
+            lease.status = new_status
+            lease.save(self.context)
 
-            updated_values = get_test_contract_1()
+            updated_values = get_test_lease_1()
             updated_values['status'] = new_status
-            mock_contract_update.assert_called_once_with(
-                c.uuid, updated_values)
-            self.assertEqual(self.context, c._context)
-            self.assertEqual(updated_at, c.updated_at)
+            mock_lease_update.assert_called_once_with(
+                lease.uuid, updated_values)
+            self.assertEqual(self.context, lease._context)
+            self.assertEqual(updated_at, lease.updated_at)

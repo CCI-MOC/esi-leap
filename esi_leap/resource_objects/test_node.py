@@ -17,7 +17,7 @@ class TestNode(object):
         self._uuid = uuid
         self._project_id = project_id
 
-    def get_contract_uuid(self):
+    def get_lease_uuid(self):
         return '12345'
 
     def get_project_id(self):
@@ -26,10 +26,10 @@ class TestNode(object):
     def get_node_config(self):
         return {}
 
-    def set_contract(self, contract):
+    def set_lease(self, lease):
         return
 
-    def expire_contract(self, contract):
+    def expire_lease(self, lease):
         return
 
     def is_resource_admin(self, project_id):

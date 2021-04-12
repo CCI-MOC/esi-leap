@@ -37,21 +37,21 @@ class ESILeapException(Exception):
         super(ESILeapException, self).__init__(message)
 
 
-class ContractNoPermission(ESILeapException):
+class LeaseNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on "
-                "contract %(contract_uuid)s.")
+                "lease %(lease_uuid)s.")
 
 
-class ContractDuplicateName(ESILeapException):
-    msg_fmt = _("Duplicate contracts with name %(name)s.")
+class LeaseDuplicateName(ESILeapException):
+    msg_fmt = _("Duplicate leases with name %(name)s.")
 
 
-class ContractNotFound(ESILeapException):
-    msg_fmt = _("Contract with name or uuid %(contract_id)s not found.")
+class LeaseNotFound(ESILeapException):
+    msg_fmt = _("Lease with name or uuid %(lease_id)s not found.")
 
 
-class ContractNoOfferUUID(ESILeapException):
-    msg_fmt = _("Cannot create contract without parameter offer_uuid.")
+class LeaseNoOfferUUID(ESILeapException):
+    msg_fmt = _("Cannot create lease without parameter offer_uuid.")
 
 
 class OfferNoPermission(ESILeapException):

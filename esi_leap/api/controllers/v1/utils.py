@@ -15,14 +15,14 @@ from oslo_utils import uuidutils
 
 from esi_leap.common import exception
 from esi_leap.common import policy
-from esi_leap.objects import contract
-from esi_leap.objects import offer
+from esi_leap.objects import lease as lease_obj
+from esi_leap.objects import offer as offer_obj
 from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 
 def get_offer_authorized(uuid_or_name, cdict, status_filter=None):
     if uuidutils.is_uuid_like(uuid_or_name):
-        o = offer.Offer.get(uuid_or_name)
+        o = offer_obj.Offer.get(uuid_or_name)
         offer_objs = []
 
         if not status_filter or o.status == status_filter:
@@ -37,11 +37,11 @@ def get_offer_authorized(uuid_or_name, cdict, status_filter=None):
     else:
         try:
             policy.authorize('esi_leap:offer:offer_admin', cdict, cdict)
-            offer_objs = offer.Offer.get_all({'name': uuid_or_name,
-                                              'status': status_filter})
+            offer_objs = offer_obj.Offer.get_all({'name': uuid_or_name,
+                                                  'status': status_filter})
 
         except oslo_policy.PolicyNotAuthorized:
-            offer_objs = offer.Offer.get_all(
+            offer_objs = offer_obj.Offer.get_all(
                 {'name': uuid_or_name,
                  'project_id': cdict['project_id'],
                  'status': status_filter}
@@ -66,15 +66,15 @@ def verify_resource_permission(cdict, offer_dict):
 
 def get_offer(uuid_or_name, status_filter=None):
     if uuidutils.is_uuid_like(uuid_or_name):
-        o = offer.Offer.get(uuid_or_name)
+        o = offer_obj.Offer.get(uuid_or_name)
         if not status_filter or o.status == status_filter:
             return o
         else:
             raise exception.OfferNotFound(
                 offer_uuid=uuid_or_name)
     else:
-        offer_objs = offer.Offer.get_all({'name': uuid_or_name,
-                                          'status': status_filter})
+        offer_objs = offer_obj.Offer.get_all({'name': uuid_or_name,
+                                              'status': status_filter})
 
         if len(offer_objs) > 1:
             raise exception.OfferDuplicateName(
@@ -86,43 +86,43 @@ def get_offer(uuid_or_name, status_filter=None):
         return offer_objs[0]
 
 
-def get_contract_authorized(uuid_or_name, cdict, status_filters=[]):
+def get_lease_authorized(uuid_or_name, cdict, status_filters=[]):
 
     if uuidutils.is_uuid_like(uuid_or_name):
-        c = contract.Contract.get(uuid_or_name)
-        contract_objs = []
-        if not status_filters or c.status in status_filters:
-            contract_objs.append(c)
+        lease = lease_obj.Lease.get(uuid_or_name)
+        leases = []
+        if not status_filters or lease.status in status_filters:
+            leases.append(lease)
 
     else:
-        contract_objs = contract.Contract.get_all({'name': uuid_or_name,
-                                                   'status': status_filters})
+        leases = lease_obj.Lease.get_all({'name': uuid_or_name,
+                                          'status': status_filters})
 
     permitted = []
-    for c in contract_objs:
+    for lease in leases:
         try:
-            contract_authorize_management(c, cdict)
-            permitted.append(c)
+            lease_authorize_management(lease, cdict)
+            permitted.append(lease)
         except oslo_policy.PolicyNotAuthorized:
             continue
 
         if len(permitted) > 1:
-            raise exception.ContractDuplicateName(name=uuid_or_name)
+            raise exception.LeaseDuplicateName(name=uuid_or_name)
 
     if len(permitted) == 0:
-        raise exception.ContractNotFound(contract_id=uuid_or_name)
+        raise exception.LeaseNotFound(lease_id=uuid_or_name)
 
     return permitted[0]
 
 
-def contract_authorize_management(c, cdict):
+def lease_authorize_management(lease, cdict):
 
-    if c.project_id != cdict['project_id']:
+    if lease.project_id != cdict['project_id']:
         try:
-            policy.authorize('esi_leap:contract:contract_admin',
+            policy.authorize('esi_leap:lease:lease_admin',
                              cdict, cdict)
         except oslo_policy.PolicyNotAuthorized:
-            o = offer.Offer.get(c.offer_uuid)
+            o = offer_obj.Offer.get(lease.offer_uuid)
             if o.project_id != cdict['project_id']:
                 policy.authorize('esi_leap:offer:offer_admin',
                                  cdict, cdict)

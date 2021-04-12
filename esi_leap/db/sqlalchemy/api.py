@@ -127,7 +127,7 @@ def offer_get_all(filters):
     if a_start and a_end:
         for o in query:
             try:
-                offer_verify_contract_availability(o, a_start, a_end)
+                offer_verify_lease_availability(o, a_start, a_end)
             except exception.OfferNoTimeAvailabilities:
                 query = query.filter(models.Offer.uuid != o.uuid)
 
@@ -136,56 +136,56 @@ def offer_get_all(filters):
 
 def offer_get_conflict_times(offer_ref):
 
-    c_query = model_query(models.Contract)
+    l_query = model_query(models.Lease)
 
-    return c_query.with_entities(
-        models.Contract.start_time, models.Contract.end_time).\
+    return l_query.with_entities(
+        models.Lease.start_time, models.Lease.end_time).\
         join(models.Offer).\
-        order_by(models.Contract.start_time).\
-        filter(models.Contract.offer_uuid == offer_ref.uuid,
-               (models.Contract.status == statuses.CREATED) |
-               (models.Contract.status == statuses.ACTIVE)
+        order_by(models.Lease.start_time).\
+        filter(models.Lease.offer_uuid == offer_ref.uuid,
+               (models.Lease.status == statuses.CREATED) |
+               (models.Lease.status == statuses.ACTIVE)
                ).all()
 
 
 def offer_get_first_availability(offer_uuid, start):
-    c_query = model_query(models.Contract)
+    l_query = model_query(models.Lease)
 
-    return c_query.with_entities(
-        models.Contract.start_time).\
-        filter(models.Contract.offer_uuid == offer_uuid,
-               (models.Contract.status == statuses.CREATED) |
-               (models.Contract.status == statuses.ACTIVE)
+    return l_query.with_entities(
+        models.Lease.start_time).\
+        filter(models.Lease.offer_uuid == offer_uuid,
+               (models.Lease.status == statuses.CREATED) |
+               (models.Lease.status == statuses.ACTIVE)
                ).\
-        order_by(models.Contract.start_time).\
-        filter(models.Contract.end_time >= start).first()
+        order_by(models.Lease.start_time).\
+        filter(models.Lease.end_time >= start).first()
 
 
-def offer_verify_contract_availability(offer_ref, start, end):
+def offer_verify_lease_availability(offer_ref, start, end):
 
     if start < offer_ref.start_time or end > offer_ref.end_time:
         raise exception.OfferNoTimeAvailabilities(offer_uuid=offer_ref.uuid,
                                                   start_time=start,
                                                   end_time=end)
 
-    c_query = model_query(models.Contract)
+    l_query = model_query(models.Lease)
 
-    contracts = c_query.with_entities(
-        models.Contract.start_time, models.Contract.end_time).\
-        filter((models.Contract.offer_uuid == offer_ref.uuid),
-               (models.Contract.status == statuses.CREATED) |
-               (models.Contract.status == statuses.ACTIVE)
+    leases = l_query.with_entities(
+        models.Lease.start_time, models.Lease.end_time).\
+        filter((models.Lease.offer_uuid == offer_ref.uuid),
+               (models.Lease.status == statuses.CREATED) |
+               (models.Lease.status == statuses.ACTIVE)
                )
 
-    conflict = contracts.filter((
-        (start >= models.Contract.start_time) &
-        (start < models.Contract.end_time) |
+    conflict = leases.filter((
+        (start >= models.Lease.start_time) &
+        (start < models.Lease.end_time) |
 
-        (end > models.Contract.start_time) &
-        (end <= models.Contract.end_time) |
+        (end > models.Lease.start_time) &
+        (end <= models.Lease.end_time) |
 
-        (start <= models.Contract.start_time) &
-        (end >= models.Contract.end_time)
+        (start <= models.Lease.start_time) &
+        (end >= models.Lease.end_time)
     )).first()
 
     if conflict:
@@ -269,21 +269,21 @@ def offer_destroy(offer_uuid):
         session.flush()
 
 
-# Contracts
-def contract_get_by_uuid(contract_uuid):
-    query = model_query(models.Contract)
-    result = query.filter_by(uuid=contract_uuid).one_or_none()
+# Leases
+def lease_get_by_uuid(lease_uuid):
+    query = model_query(models.Lease)
+    result = query.filter_by(uuid=lease_uuid).one_or_none()
     return result
 
 
-def contract_get_by_name(name):
-    query = model_query(models.Contract)
-    contracts = query.filter_by(name=name).all()
-    return contracts
+def lease_get_by_name(name):
+    query = model_query(models.Lease)
+    leases = query.filter_by(name=name).all()
+    return leases
 
 
-def contract_get_all(filters):
-    query = model_query(models.Contract)
+def lease_get_all(filters):
+    query = model_query(models.Lease)
 
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
@@ -293,11 +293,11 @@ def contract_get_all(filters):
     query = query.filter_by(**filters)
 
     if status:
-        query = query.filter((models.Contract.status.in_(status)))
+        query = query.filter((models.Lease.status.in_(status)))
 
     if start and end:
-        query = query.filter((start >= models.Contract.start_time) &
-                             (end <= models.Contract.end_time))
+        query = query.filter((start >= models.Lease.start_time) &
+                             (end <= models.Lease.end_time))
 
     if owner:
         query = query.join(models.Offer).\
@@ -306,20 +306,20 @@ def contract_get_all(filters):
     return query
 
 
-def contract_create(values):
-    contract_ref = models.Contract()
-    contract_ref.update(values)
+def lease_create(values):
+    lease_ref = models.Lease()
+    lease_ref.update(values)
 
     with _session_for_write() as session:
-        session.add(contract_ref)
+        session.add(lease_ref)
         session.flush()
-        return contract_ref
+        return lease_ref
 
 
-def contract_update(contract_uuid, values):
+def lease_update(lease_uuid, values):
     with _session_for_write() as session:
-        query = model_query(models.Contract)
-        contract_ref = query.filter_by(uuid=contract_uuid).one_or_none()
+        query = model_query(models.Lease)
+        lease_ref = query.filter_by(uuid=lease_uuid).one_or_none()
 
         values.pop('uuid', None)
         values.pop('project_id', None)
@@ -327,26 +327,26 @@ def contract_update(contract_uuid, values):
         start = values.get('start_time', None)
         end = values.get('end_time', None)
         if start is None:
-            start = contract_ref.start_time
+            start = lease_ref.start_time
         if end is None:
-            end = contract_ref.end_time
+            end = lease_ref.end_time
         if start >= end:
-            raise exception.InvalidTimeRange(resource="a contract",
+            raise exception.InvalidTimeRange(resource="a lease",
                                              start_time=str(start),
                                              end_time=str(end))
 
-        contract_ref.update(values)
+        lease_ref.update(values)
         session.flush()
-        return contract_ref
+        return lease_ref
 
 
-def contract_destroy(contract_uuid):
+def lease_destroy(lease_uuid):
     with _session_for_write() as session:
 
-        query = model_query(models.Contract)
-        contract_ref = query.filter_by(uuid=contract_uuid).one_or_none()
+        query = model_query(models.Lease)
+        lease_ref = query.filter_by(uuid=lease_uuid).one_or_none()
 
-        if not contract_ref:
-            raise exception.ContractNotFound(contract_uuid=contract_uuid)
+        if not lease_ref:
+            raise exception.LeaseNotFound(lease_uuid=lease_uuid)
         query.delete()
         session.flush()

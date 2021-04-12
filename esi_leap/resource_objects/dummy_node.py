@@ -25,10 +25,10 @@ class DummyNode(object):
         self._uuid = uuid
         self._path = DUMMY_NODE_DIR + "/" + uuid
 
-    def get_contract_uuid(self):
+    def get_lease_uuid(self):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        return node_dict.get("contract_uuid", None)
+        return node_dict.get("lease_uuid", None)
 
     def get_project_id(self):
         with open(self._path) as node_file:
@@ -40,18 +40,18 @@ class DummyNode(object):
             node_dict = json.load(node_file)
         return node_dict.get("server_config", None)
 
-    def set_contract(self, contract):
+    def set_lease(self, lease):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        node_dict["contract_uuid"] = contract.uuid
-        node_dict["project_id"] = contract.project_id
+        node_dict["lease_uuid"] = lease.uuid
+        node_dict["project_id"] = lease.project_id
         with open(self._path, 'w') as node_file:
             json.dump(node_dict, node_file)
 
-    def expire_contract(self, contract):
+    def expire_lease(self, lease):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        node_dict.pop("contract_uuid", None)
+        node_dict.pop("lease_uuid", None)
         node_dict.pop("project_id", None)
         with open(self._path, 'w') as node_file:
             json.dump(node_dict, node_file)

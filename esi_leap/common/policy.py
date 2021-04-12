@@ -31,31 +31,31 @@ default_policies = [
                        description='Lessee API access'),
 ]
 
-contract_policies = [
+lease_policies = [
     policy.DocumentedRuleDefault(
-        'esi_leap:contract:contract_admin',
+        'esi_leap:lease:lease_admin',
         'rule:is_admin',
-        'Complete permissions over contracts',
-        [{'path': '/contracts', 'method': 'POST'},
-         {'path': '/contracts', 'method': 'GET'},
-         {'path': '/contracts/{contract_ident}', 'method': 'GET'},
-         {'path': '/contracts/{contract_ident}', 'method': 'DELETE'}]),
+        'Complete permissions over leases',
+        [{'path': '/leases', 'method': 'POST'},
+         {'path': '/leases', 'method': 'GET'},
+         {'path': '/leases/{lease_ident}', 'method': 'GET'},
+         {'path': '/leases/{lease_ident}', 'method': 'DELETE'}]),
     policy.DocumentedRuleDefault(
-        'esi_leap:contract:create',
+        'esi_leap:lease:create',
         'rule:is_admin or rule:is_lessee',
-        'Create contract',
-        [{'path': '/contracts', 'method': 'POST'}]),
+        'Create lease',
+        [{'path': '/leases', 'method': 'POST'}]),
     policy.DocumentedRuleDefault(
-        'esi_leap:contract:get',
+        'esi_leap:lease:get',
         'rule:is_admin or rule:is_lessee or rule:is_owner',
-        'Retrieve all contracts owned by project_id',
-        [{'path': '/contracts', 'method': 'GET'},
-         {'path': '/contracts/{contract_ident}', 'method': 'GET'}]),
+        'Retrieve all leases owned by project_id',
+        [{'path': '/leases', 'method': 'GET'},
+         {'path': '/leases/{lease_ident}', 'method': 'GET'}]),
     policy.DocumentedRuleDefault(
-        'esi_leap:contract:delete',
+        'esi_leap:lease:delete',
         'rule:is_admin or rule:is_owner or rule:is_lessee',
-        'Delete contract',
-        [{'path': '/contracts/{contract_ident}', 'method': 'DELETE'}]),
+        'Delete lease',
+        [{'path': '/leases/{lease_ident}', 'method': 'DELETE'}]),
 ]
 
 offer_policies = [
@@ -89,7 +89,7 @@ offer_policies = [
 def list_rules():
     policies = itertools.chain(
         default_policies,
-        contract_policies,
+        lease_policies,
         offer_policies,
     )
     return policies

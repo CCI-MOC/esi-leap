@@ -15,8 +15,8 @@ from esi_leap.common import statuses
 from esi_leap.common import utils
 from esi_leap.db import api as dbapi
 from esi_leap.objects import base
-import esi_leap.objects.contract
 from esi_leap.objects import fields
+from esi_leap.objects import lease as lease_obj
 from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 from oslo_config import cfg
@@ -97,7 +97,7 @@ class Offer(base.ESILEAPObject):
 
             if updates['start_time'] >= updates['end_time']:
                 raise exception.InvalidTimeRange(
-                    resource='contract',
+                    resource='lease',
                     start_time=str(updates['start_time']),
                     end_time=str(updates['end_time'])
                 )
@@ -118,11 +118,11 @@ class Offer(base.ESILEAPObject):
         @utils.synchronized(utils.get_offer_lock_name(self.uuid))
         def _cancel_offer():
 
-            contracts = esi_leap.objects.contract.Contract.get_all(
+            leases = lease_obj.Lease.get_all(
                 {'offer_uuid': self.uuid}, None)
-            for c in contracts:
-                if c.status == statuses.CREATED or c.status == statuses.ACTIVE:
-                    c.cancel()
+            for lease in leases:
+                if lease.status in [statuses.CREATED, statuses.ACTIVE]:
+                    lease.cancel()
 
             self.status = statuses.CANCELLED
             self.save(None)
@@ -134,11 +134,11 @@ class Offer(base.ESILEAPObject):
         @utils.synchronized(utils.get_offer_lock_name(self.uuid))
         def _expire_offer():
 
-            contracts = esi_leap.objects.contract.Contract.get_all(
+            leases = lease_obj.Lease.get_all(
                 {'offer_uuid': self.uuid}, None)
-            for c in contracts:
-                if c.status != statuses.EXPIRED:
-                    c.expire(context)
+            for lease in leases:
+                if lease.status != statuses.EXPIRED:
+                    lease.expire(context)
 
             # expire offer
             self.status = statuses.EXPIRED

@@ -97,8 +97,8 @@ def offer_get_first_availability(offer_uuid, start, end):
         offer_uuid, start, end)
 
 
-def offer_verify_contract_availability(offer_ref, start, end):
-    return IMPL.offer_verify_contract_availability(
+def offer_verify_lease_availability(offer_ref, start, end):
+    return IMPL.offer_verify_lease_availability(
         offer_ref, start, end)
 
 
@@ -119,29 +119,29 @@ def offer_destroy(offer_uuid):
     return IMPL.offer_destroy(offer_uuid)
 
 
-# Contract
+# Lease
 @to_dict
-def contract_get_by_uuid(contract_uuid):
-    return IMPL.contract_get(contract_uuid)
-
-
-@to_dict
-def contract_get_by_name(contract_name):
-    return IMPL.contract_get(contract_name)
+def lease_get_by_uuid(lease_uuid):
+    return IMPL.lease_get(lease_uuid)
 
 
 @to_dict
-def contract_get_all():
-    return IMPL.contract_get_all()
+def lease_get_by_name(lease_name):
+    return IMPL.lease_get(lease_name)
 
 
-def contract_create(values):
-    return IMPL.contract_create(values)
+@to_dict
+def lease_get_all():
+    return IMPL.lease_get_all()
 
 
-def contract_update(contract_uuid, values):
-    return IMPL.contract_update(contract_uuid, values)
+def lease_create(values):
+    return IMPL.lease_create(values)
 
 
-def contract_destroy(contract_uuid):
-    return IMPL.contract_destroy(contract_uuid)
+def lease_update(lease_uuid, values):
+    return IMPL.lease_update(lease_uuid, values)
+
+
+def lease_destroy(lease_uuid):
+    return IMPL.lease_destroy(lease_uuid)

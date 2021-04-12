@@ -1,7 +1,7 @@
 # ESI Leap Requirements
 
 ## Overview
-ESI Leap is a leasing service for bare metal. Ironic nodes owners can offer up their nodes to other users, while lesees can view offers and create a contract for available nodes.
+ESI Leap is a leasing service for bare metal. Ironic nodes owners can offer up their nodes to other users, while lesees can view offers and create a lease for available nodes.
 
 ## Definitions
 
@@ -93,8 +93,8 @@ An offer response has the following fields:
 * "created_at", "updated_at", and "id" are only used in the schema and cannot be read or set.
 
 
-### Contract
-Users can choose available nodes offered up and make contracts to lease nodes. A contract example is shown below:
+### Lease
+Users can choose available nodes offered up and make leases to lease nodes. A lease example is shown below:
 ```
     {
         'id': 27,
@@ -112,23 +112,23 @@ Users can choose available nodes offered up and make contracts to lease nodes. A
         'updated_at': None
     }
 ```
-The contract data model is designed to support the following basic APIs:
-* Get a contract by contract_uuid.
-* Get contract(s) with filters: [project_id, status, start_time, end_time, offer_uuid, owner].
-* List an offer's relevant contracts.
-* Create a new contract with given values.
-* Update a contract's fields. Such as update the status to 'active' or 'expired', etc.
-* Delete a contract by contract_uuid.
+The lease data model is designed to support the following basic APIs:
+* Get a lease by lease_uuid.
+* Get lease(s) with filters: [project_id, status, start_time, end_time, offer_uuid, owner].
+* List an offer's relevant leases.
+* Create a new lease with given values.
+* Update a lease's fields. Such as update the status to 'active' or 'expired', etc.
+* Delete a lease by lease_uuid.
 
-The lifecycle of a contract is
-* 'created' on contract creation.
-* 'active' once a contract's start_time has passed and its end_time has not yet passed.
-* 'expired' once a contracts's end_time has passed.
-* 'cancelled' if a contract is prematurely deleted.
+The lifecycle of a lease is
+* 'created' on lease creation.
+* 'active' once a lease's start_time has passed and its end_time has not yet passed.
+* 'expired' once a leases's end_time has passed.
+* 'cancelled' if a lease is prematurely deleted.
 
-The contract api endpoint can be reached at /v1/contracts
+The lease api endpoint can be reached at /v1/leases
 
-An example contract response is shown below.
+An example lease response is shown below.
 
 ```
 {
@@ -145,37 +145,37 @@ An example contract response is shown below.
 }
 ```
 
-A contract response has the following fields:
-* "uuid" is the primary key for a contract entry.
-* "name" is an identifier the user may set for a contract on creation. Can be used for offer management instead of 'uuid'. Does not have to be unique.
-* "project_id" is the project_id of the owner of the contract and the that is leasing the offer.
+A lease response has the following fields:
+* "uuid" is the primary key for a lease entry.
+* "name" is an identifier the user may set for a lease on creation. Can be used for offer management instead of 'uuid'. Does not have to be unique.
+* "project_id" is the project_id of the owner of the lease and the that is leasing the offer.
 * "start_time" is a datetime representing the time in which the offer is being leased.
-* "fulfill_time" is a datetime representing the time in which the contract is set to active and the user gains access to the node.
+* "fulfill_time" is a datetime representing the time in which the lease is set to active and the user gains access to the node.
 * "end_time" is a datetime representing the time in which the offer is no longer being leased.
 * "expire_time" is a datetime representing the time in which the lessee no longer has access to the resource.
-* "status" is the status of the contract. There are three valid statuses for a contract.
-  * open: a contract is set. This is the state of a contract on creation.
-  * fulfilled: a user has leased the offer. When a contract's end_time has passed, it's status is set to "fulfilled".
-  * cancelled: a contract is no longer valid. A contract is set to cancelled when it is manually revoked by a user before its end_time has passed.
-* "properties" is the baremetal properties of a contract.
-* "offer_uuid" is the uuid of the offer which the contract is leased against.
+* "status" is the status of the lease. There are three valid statuses for a lease.
+  * open: a lease is set. This is the state of a lease on creation.
+  * fulfilled: a user has leased the offer. When a lease's end_time has passed, it's status is set to "fulfilled".
+  * cancelled: a lease is no longer valid. A lease is set to cancelled when it is manually revoked by a user before its end_time has passed.
+* "properties" is the baremetal properties of a lease.
+* "offer_uuid" is the uuid of the offer which the lease is leased against.
 * "created_at", "updated_at", and "id" are only used in the schema and cannot be read or set.
 
 
 
 ### Manager Service
-An ESI Leap manager has periodic jobs to manage offers and contracts. 
+An ESI Leap manager has periodic jobs to manage offers and leases. 
 * expire offers: out-of-date offers, i.e, the current timestamp > offer's end_time, will be updated with an 'EXPIRED' status.
-* fulfill contracts: if a contract's start_time <= the current timestamp and is not expired, the manager service will fulfill the resources in the contracts and update the status of the contracts to 'active'. 
-* expire contracts: same as 'expire offers', ESI Leap will expire contracts based on timestamp.
-* update offers: after the manager fulfills and expires contracts, it will update the relevant offers' status. The offers in a fulfilled contract should be unavailable to others. Likewise, when a contract expires, offers in the contract should be updated and be available again. 
+* fulfill leases: if a lease's start_time <= the current timestamp and is not expired, the manager service will fulfill the resources in the leases and update the status of the leases to 'active'. 
+* expire leases: same as 'expire offers', ESI Leap will expire leases based on timestamp.
+* update offers: after the manager fulfills and expires leases, it will update the relevant offers' status. The offers in a fulfilled lease should be unavailable to others. Likewise, when a lease expires, offers in the lease should be updated and be available again. 
 
 ## Reporting API
-ESI Leap admin queries this API to learn about the usage of nodes given a period. The admin enters a date range to get all contracts' information within that range. The results could be like this:
+ESI Leap admin queries this API to learn about the usage of nodes given a period. The admin enters a date range to get all leases' information within that range. The results could be like this:
 ```
     [
         {
-        'contract_uuid':'634653c9-880d-4c2d-6d6d-f4f2a09e384',
+        'lease_uuid':'634653c9-880d-4c2d-6d6d-f4f2a09e384',
         'project_id': '01d4e6a72f5c408813e02f664cc8c83e',
         'offer_uuid': '534653c9-880d-4c2d-6d6d-f4f2a09e384',
         'resource_uuid': '1718',
@@ -189,9 +189,9 @@ ESI Leap admin queries this API to learn about the usage of nodes given a period
         'updated_at': None
         },
         {
-        'contract_uuid':...,
+        'lease_uuid':...,
         ...
         }
     ]
 ```
-With the contracts and nodes information, admin can inform owners about the status of the node and who leases their nodes during a date range.
+With the leases and nodes information, admin can inform owners about the status of the node and who leases their nodes during a date range.

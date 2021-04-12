@@ -14,8 +14,8 @@
 from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.manager import utils
-from esi_leap.objects import contract
-from esi_leap.objects import offer
+from esi_leap.objects import lease as lease_obj
+from esi_leap.objects import offer as offer_obj
 from oslo_context import context as ctx
 from oslo_log import log as logging
 import oslo_messaging as messaging
@@ -46,10 +46,10 @@ class ManagerService(service.Service):
         super(ManagerService, self).start()
         LOG.info("Starting esi-leap manager RPC server")
         self.tg.add_thread(self._server.start)
-        LOG.info("Starting _fulfill_contracts periodic job")
-        self.tg.add_timer(EVENT_INTERVAL, self._fulfill_contracts)
-        LOG.info("Starting _expire_contracts periodic job")
-        self.tg.add_timer(EVENT_INTERVAL, self._expire_contracts)
+        LOG.info("Starting _fulfill_leases periodic job")
+        self.tg.add_timer(EVENT_INTERVAL, self._fulfill_leases)
+        LOG.info("Starting _expire_leases periodic job")
+        self.tg.add_timer(EVENT_INTERVAL, self._expire_leases)
         LOG.info("Starting _expire_offers periodic job")
         self.tg.add_timer(EVENT_INTERVAL, self._expire_offers)
 
@@ -58,37 +58,37 @@ class ManagerService(service.Service):
         LOG.info("Shutting down esi-leap manager RPC server")
         self._server.stop()
 
-    def _fulfill_contracts(self):
-        LOG.info("Checking for contracts to fulfill")
-        contracts = contract.Contract.get_all(
+    def _fulfill_leases(self):
+        LOG.info("Checking for leases to fulfill")
+        leases = lease_obj.Lease.get_all(
             {'status': [statuses.CREATED]}, self._context)
         now = timeutils.utcnow()
-        for c in contracts:
-            if c.start_time <= now and now <= c.end_time:
-                LOG.info("Fulfilling contract %s", c.uuid)
-                c.fulfill(self._context)
+        for lease in leases:
+            if lease.start_time <= now and now <= lease.end_time:
+                LOG.info("Fulfilling lease %s", lease.uuid)
+                lease.fulfill(self._context)
 
-    def _expire_contracts(self):
-        LOG.info("Checking for expiring contracts")
-        contracts = contract.Contract.get_all(
+    def _expire_leases(self):
+        LOG.info("Checking for expiring leases")
+        leases = lease_obj.Lease.get_all(
             {'status': [statuses.ACTIVE, statuses.CREATED]}, self._context)
         now = timeutils.utcnow()
-        for c in contracts:
-            if c.end_time <= now:
-                LOG.info("Expiring contract %s", c.uuid)
-                c.expire(self._context)
+        for lease in leases:
+            if lease.end_time <= now:
+                LOG.info("Expiring lease %s", lease.uuid)
+                lease.expire(self._context)
 
     def _expire_offers(self):
         LOG.info("Checking for expiring offers")
-        offers = offer.Offer.get_all({'status': statuses.AVAILABLE},
-                                     self._context)
+        offers = offer_obj.Offer.get_all({'status': statuses.AVAILABLE},
+                                         self._context)
 
-        for o in offers:
-            if o.end_time and \
-               o.end_time <= timeutils.utcnow():
+        for offer in offers:
+            if offer.end_time and \
+               offer.end_time <= timeutils.utcnow():
                 LOG.info("Expiring offer %s for %s %s",
-                         o.uuid, o.resource_type, o.resource_uuid)
-                o.expire(self._context)
+                         offer.uuid, offer.resource_type, offer.resource_uuid)
+                offer.expire(self._context)
 
 
 class ManagerEndpoint(object):

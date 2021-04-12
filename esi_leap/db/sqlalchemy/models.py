@@ -58,14 +58,14 @@ class Offer(Base):
     properties = Column(db_types.JsonEncodedDict, nullable=True)
 
 
-class Contract(Base):
-    """Represents an accepted contract."""
+class Lease(Base):
+    """Represents an accepted lease."""
 
-    __tablename__ = 'contracts'
+    __tablename__ = 'leases'
     __table_args__ = (
-        Index('contract_uuid_idx', 'uuid'),
-        Index('contract_project_id_idx', 'project_id'),
-        Index('contract_status_idx', 'status'),
+        Index('lease_uuid_idx', 'uuid'),
+        Index('lease_project_id_idx', 'project_id'),
+        Index('lease_status_idx', 'status'),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)

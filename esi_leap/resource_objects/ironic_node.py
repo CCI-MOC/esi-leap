@@ -43,9 +43,9 @@ class IronicNode(object):
     def __init__(self, uuid):
         self._uuid = uuid
 
-    def get_contract_uuid(self):
+    def get_lease_uuid(self):
         node = get_ironic_client().node.get(self._uuid)
-        return node.properties.get('contract_uuid', None)
+        return node.properties.get('lease_uuid', None)
 
     def get_project_id(self):
         node = get_ironic_client().node.get(self._uuid)
@@ -54,32 +54,32 @@ class IronicNode(object):
     def get_node_config(self):
         node = get_ironic_client().node.get(self._uuid)
         config = node.properties
-        config.pop('contract_uuid', None)
+        config.pop('lease_uuid', None)
         return config
 
-    def set_contract(self, contract):
+    def set_lease(self, lease):
         patches = []
         patches.append({
             "op": "add",
-            "path": "/properties/contract_uuid",
-            "value": contract.uuid,
+            "path": "/properties/lease_uuid",
+            "value": lease.uuid,
         })
         patches.append({
             "op": "add",
             "path": "/lessee",
-            "value": contract.project_id,
+            "value": lease.project_id,
         })
         if len(patches) > 0:
             get_ironic_client().node.update(self._uuid, patches)
 
-    def expire_contract(self, contract):
+    def expire_lease(self, lease):
         patches = []
-        if self.get_contract_uuid() != contract.uuid:
+        if self.get_lease_uuid() != lease.uuid:
             return
-        if self.get_contract_uuid():
+        if self.get_lease_uuid():
             patches.append({
                 "op": "remove",
-                "path": "/properties/contract_uuid",
+                "path": "/properties/lease_uuid",
             })
         if self.get_project_id():
             patches.append({

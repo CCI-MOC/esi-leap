@@ -17,7 +17,7 @@ from esi_leap.tests import base
 start = datetime.datetime(2016, 7, 16, 19, 20, 30)
 
 
-def get_test_contract():
+def get_test_lease():
     return {
         'id': 12345,
         'name': 'c',
@@ -43,9 +43,9 @@ class TestTestNode(base.TestCase):
         self.fake_admin_project_id_1 = '123'
         self.fake_admin_project_id_2 = '123456'
 
-    def test_get_contract_uuid(self):
-        contract_uuid = self.fake_test_node.get_contract_uuid()
-        self.assertEqual(contract_uuid, '12345')
+    def test_get_lease_uuid(self):
+        lease_uuid = self.fake_test_node.get_lease_uuid()
+        self.assertEqual(lease_uuid, '12345')
 
     def test_get_project_id(self):
         project_id = self.fake_test_node.get_project_id()
@@ -55,17 +55,17 @@ class TestTestNode(base.TestCase):
         config = self.fake_test_node.get_node_config()
         self.assertEqual(config, {})
 
-    def test_set_contract(self):
-        fake_contract = get_test_contract()
+    def test_set_lease(self):
+        fake_lease = get_test_lease()
         self.assertEqual(
-            self.fake_test_node.set_contract(
-                fake_contract), None)
+            self.fake_test_node.set_lease(
+                fake_lease), None)
 
-    def test_expire_contract(self):
-        fake_contract = get_test_contract()
+    def test_expire_lease(self):
+        fake_lease = get_test_lease()
         self.assertEqual(
-            self.fake_test_node.expire_contract(
-                fake_contract), None)
+            self.fake_test_node.expire_lease(
+                fake_lease), None)
 
     def test_is_resource_admin(self):
         res1 = self.fake_test_node.is_resource_admin(

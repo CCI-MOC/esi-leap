@@ -5,7 +5,7 @@ of a resource over time.
 
 To generate a csv file with data on all lessees' usage on different nodes:
 ```
-openstack lease contract list --all --long -f csv > report.csv
+openstack esi lease list --all --long -f csv > report.csv
 ```
 
 The Esi-Leap api allows users to retrieve data based on certain parameters. 
@@ -15,19 +15,19 @@ projects type ``openstack project list`` and from there grab the desired project
 
 
 ```
-openstack lease contract list --project-id <project_id> --all --long -f csv > report.csv
+openstack esi lease list --project-id <project_id> --all --long -f csv > report.csv
 ```
 
 To generate a report based on usage of a particular owner's resources, run the command:
 
 ```
-openstack lease contract list --owner <project_id> --all --long -f csv > report.csv
+openstack esi lease list --owner <project_id> --all --long -f csv > report.csv
 ```
 
 To generate a report based on usage over a particular date range, run the command:
 
 ```
-opensack lease contract list --time-range <datetime string> <datetime string> --all --long -f csv > report.csv
+opensack esi lease list --time-range <datetime string> <datetime string> --all --long -f csv > report.csv
 ```
 
 These different arguments can be combined together for report generation.

@@ -10,13 +10,13 @@ By default, the is_admin policy is given to any openstack user with the role 'ad
   * offers can be created with any resource_uuid.
 * DELETE: an admin can cancel offers on behalf of any user.
 
-##### Contract
-* GET: an admin can view any contract with the /v1/contracts/\<uuid> endpoint. The admin has access to all GET filters.
+##### Lease
+* GET: an admin can view any lease with the /v1/leases/\<uuid> endpoint. The admin has access to all GET filters.
   * 'owner' can be set to any value
   * 'project_id' can be set to any value
   * 'view' variable to 'all'
-* POST: an admin can post contracts.
-* DELETE: an admin can cancel any contract with the /v1/contracts/\<uuid> endpoint.
+* POST: an admin can post leases.
+* DELETE: an admin can cancel any lease with the /v1/leases/\<uuid> endpoint.
 
 ### is_owner
 By default, the is_owner policy is given to any openstack user with the role 'owner' or 'esi_leap_owner'.
@@ -29,14 +29,14 @@ By default, the is_owner policy is given to any openstack user with the role 'ow
   * The resource corresponding to resource_uuid must have project_owner_id = the user's project_id.
 * DELETE: an owner can cancel any offer they own. IE, the offer's project_id = user's project_id and the resource's project_owner_id = user's project_id.
 
-##### Contract
-* GET: an owner can view any contract which is related to an offer owned by the the owner or any contract owned by the owner. The owner has restricted access to the GET filters.
+##### Lease
+* GET: an owner can view any lease which is related to an offer owned by the the owner or any lease owned by the owner. The owner has restricted access to the GET filters.
   * 'owner' must be set to the user's project_id
-    * The default behavior of GET is to retrieve contracts owned. Not using this variable will return all contracts owned, and because an owner may not create contracts, will thus be an empty list.
+    * The default behavior of GET is to retrieve leases owned. Not using this variable will return all leases owned, and because an owner may not create leases, will thus be an empty list.
   * 'project_id' can be set to any value if used with the 'owner' variable. If used without the 'owner' variable, project_id must equal user's project_id.
   * 'view' variable is not allowed to be set.
-* POST: an owner cannot post contracts.
-* DELETE: an owner can cancel any contract tied to an offer which is owned by the user.
+* POST: an owner cannot post leases.
+* DELETE: an owner can cancel any lease tied to an offer which is owned by the user.
 
 
 ### is_lessee
@@ -49,14 +49,14 @@ By default, the is_lessee policy is given to any openstack user with the role 'l
 * POST: a lessee cannot create an offer.
 * DELETE: a lessee cannot delete an offer.
 
-##### Contract
-* GET: a lessee can view any contract which is related to an offer owned by the the lessee or any contract owned by the lessee. The lessee has restricted access to the GET filters.
+##### Lease
+* GET: a lessee can view any lease which is related to an offer owned by the the lessee or any lease owned by the lessee. The lessee has restricted access to the GET filters.
   * 'owner' must be set to the user's project_id
-    * The default behavior of GET is to retrieve contracts owned. Not using this variable will return all contracts owned by the lessee.
+    * The default behavior of GET is to retrieve leases owned. Not using this variable will return all leases owned by the lessee.
   * 'project_id' can be set to any value if used with the 'owner' variable. If used without the 'owner' variable, project_id must equal user's project_id.
   * 'view' variable is not allowed to be set.
-* POST: a lessee can create contracts.
-* DELETE: a lessee can cancel any contract they own.
+* POST: a lessee can create leases.
+* DELETE: a lessee can cancel any lease they own.
 
 
 The default policies are listed below.
@@ -73,31 +73,31 @@ default_policies = [
                        description='Lessee API access'),
 ]
 
-contract_policies = [
+lease_policies = [
     policy.DocumentedRuleDefault(
-        'esi_leap:contract:contract_admin',
+        'esi_leap:lease:lease_admin',
         'rule:is_admin',
-        'Complete permissions over contracts',
-        [{'path': '/contracts', 'method': 'POST'},
-         {'path': '/contracts', 'method': 'GET'},
-         {'path': '/contracts/{contract_ident}', 'method': 'GET'},
-         {'path': '/contracts/{contract_ident}', 'method': 'DELETE'}]),
+        'Complete permissions over leases',
+        [{'path': '/leases', 'method': 'POST'},
+         {'path': '/leases', 'method': 'GET'},
+         {'path': '/leases/{lease_ident}', 'method': 'GET'},
+         {'path': '/leases/{lease_ident}', 'method': 'DELETE'}]),
     policy.DocumentedRuleDefault(
-        'esi_leap:contract:create',
+        'esi_leap:lease:create',
         'rule:is_admin or rule:is_lessee',
-        'Create contract',
-        [{'path': '/contracts', 'method': 'POST'}]),
+        'Create lease',
+        [{'path': '/leases', 'method': 'POST'}]),
     policy.DocumentedRuleDefault(
-        'esi_leap:contract:get',
+        'esi_leap:lease:get',
         'rule:is_admin or rule:is_lessee or rule:is_owner',
-        'Retrieve all contracts owned by project_id',
-        [{'path': '/contracts', 'method': 'GET'},
-         {'path': '/contracts/{contract_ident}', 'method': 'GET'}]),
+        'Retrieve all leases owned by project_id',
+        [{'path': '/leases', 'method': 'GET'},
+         {'path': '/leases/{lease_ident}', 'method': 'GET'}]),
     policy.DocumentedRuleDefault(
-        'esi_leap:contract:delete',
+        'esi_leap:lease:delete',
         'rule:is_admin or rule:is_owner or rule:is_lessee',
-        'Delete contract',
-        [{'path': '/contracts/{contract_ident}', 'method': 'DELETE'}]),
+        'Delete lease',
+        [{'path': '/leases/{lease_ident}', 'method': 'DELETE'}]),
 ]
 
 offer_policies = [
