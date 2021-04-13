@@ -34,6 +34,7 @@ class Lease(base.ESILEAPObject):
         'name': fields.StringField(nullable=True),
         'uuid': fields.UUIDField(),
         'project_id': fields.StringField(),
+        'owner_id': fields.StringField(),
         'start_time': fields.DateTimeField(nullable=True),
         'end_time': fields.DateTimeField(nullable=True),
         'fulfill_time': fields.DateTimeField(nullable=True),

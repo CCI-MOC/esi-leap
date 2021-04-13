@@ -70,6 +70,7 @@ test_offer_4 = dict(
 test_lease_1 = dict(
     uuid='11111',
     project_id='1e5533',
+    owner_id='0wn3r',
     name='l1',
     start_time=now + datetime.timedelta(days=10),
     end_time=now + datetime.timedelta(days=20),
@@ -79,6 +80,7 @@ test_lease_1 = dict(
 test_lease_2 = dict(
     uuid='22222',
     project_id='1e5533',
+    owner_id='0wn3r',
     name='l1',
     start_time=now + datetime.timedelta(days=20),
     end_time=now + datetime.timedelta(days=30),
@@ -88,6 +90,7 @@ test_lease_2 = dict(
 test_lease_3 = dict(
     uuid='33333',
     project_id='1e5533_2',
+    owner_id='0wn3r_2',
     name='l1',
     start_time=now + datetime.timedelta(days=50),
     end_time=now + datetime.timedelta(days=60),
@@ -97,6 +100,7 @@ test_lease_3 = dict(
 test_lease_4 = dict(
     uuid='44444',
     project_id='1e5533_2',
+    owner_id='0wn3r_2',
     name='l2',
     start_time=now + datetime.timedelta(days=85),
     end_time=now + datetime.timedelta(days=90),
@@ -106,6 +110,7 @@ test_lease_4 = dict(
 
 test_lease_5 = dict(
     project_id='1e5533',
+    owner_id='0wn3r',
     start_time=now + datetime.timedelta(days=90),
     end_time=now + datetime.timedelta(days=100),
     uuid='lease_5',

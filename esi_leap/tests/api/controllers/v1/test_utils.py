@@ -83,6 +83,7 @@ test_lease = lease.Lease(
     name='c',
     uuid=uuidutils.generate_uuid(),
     project_id=lessee_ctx.project_id,
+    owner_id=owner_ctx.project_id,
     status=statuses.CREATED
 )
 
@@ -91,6 +92,7 @@ test_lease_2 = lease.Lease(
     name='c',
     uuid=uuidutils.generate_uuid(),
     project_id=lessee_ctx.project_id,
+    owner_id=owner_ctx.project_id,
     status=statuses.CREATED
 )
 
@@ -99,6 +101,7 @@ test_lease_3 = lease.Lease(
     name='c',
     uuid=uuidutils.generate_uuid(),
     project_id=lessee_ctx_2.project_id,
+    owner_id=owner_ctx.project_id,
     status=statuses.CREATED
 )
 
@@ -107,6 +110,7 @@ test_lease_4 = lease.Lease(
     name='c2',
     uuid=uuidutils.generate_uuid(),
     project_id=lessee_ctx_2.project_id,
+    owner_id=owner_ctx.project_id,
     status=statuses.CREATED
 )
 
@@ -172,12 +176,8 @@ class TestManagementUtils(testtools.TestCase):
             test_lease, owner_ctx.to_policy_values()
         )
 
-        mock_authorize.assert_called_once_with(
-            'esi_leap:lease:lease_admin',
-            owner_ctx.to_policy_values(),
-            owner_ctx.to_policy_values())
-
-        mock_get.assert_called_with(test_lease.offer_uuid)
+        assert not mock_authorize.called
+        assert not mock_get.called
 
     @mock.patch('esi_leap.objects.offer.Offer.get')
     @mock.patch.object(policy, 'authorize', spec=True)

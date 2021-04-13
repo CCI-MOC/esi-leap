@@ -184,6 +184,8 @@ class TestLeasesControllerAdmin(test_api_base.APITestCase):
         data['project_id'] = lessee_ctx.project_id
         data['uuid'] = lease_uuid
         data['offer_uuid'] = offer_uuid
+        data['owner_id'] = test_offer.project_id
+
         self.assertEqual(request.json, data)
         # FIXME: post returns incorrect status code
         # self.assertEqual(http_client.CREATED, request.status_int)

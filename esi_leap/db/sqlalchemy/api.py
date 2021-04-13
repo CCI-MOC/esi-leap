@@ -287,7 +287,6 @@ def lease_get_all(filters):
 
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
-    owner = filters.pop('owner', None)
     status = filters.pop('status', None)
 
     query = query.filter_by(**filters)
@@ -298,10 +297,6 @@ def lease_get_all(filters):
     if start and end:
         query = query.filter((start >= models.Lease.start_time) &
                              (end <= models.Lease.end_time))
-
-    if owner:
-        query = query.join(models.Offer).\
-            filter(models.Offer.project_id == owner)
 
     return query
 
