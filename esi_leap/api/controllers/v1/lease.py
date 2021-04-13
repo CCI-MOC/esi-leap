@@ -32,6 +32,7 @@ class Lease(base.ESILEAPBase):
     name = wsme.wsattr(wtypes.text)
     uuid = wsme.wsattr(wtypes.text, readonly=True)
     project_id = wsme.wsattr(wtypes.text, readonly=True)
+    owner_id = wsme.wsattr(wtypes.text, readonly=True)
     start_time = wsme.wsattr(datetime.datetime)
     fulfill_time = wsme.wsattr(datetime.datetime, readonly=True)
     expire_time = wsme.wsattr(datetime.datetime, readonly=True)
@@ -104,6 +105,7 @@ class LeasesController(rest.RestController):
                                         statuses.AVAILABLE)
 
         lease_dict['offer_uuid'] = related_offer.uuid
+        lease_dict['owner_id'] = related_offer.project_id
 
         if 'start_time' not in lease_dict:
             lease_dict['start_time'] = datetime.datetime.now()
@@ -167,7 +169,6 @@ class LeasesController(rest.RestController):
                 possible_filters['owner'] = owner
                 possible_filters['project_id'] = project_id
             else:
-
                 if project_id is None:
                     project_id = cdict['project_id']
                 elif project_id != cdict['project_id']:

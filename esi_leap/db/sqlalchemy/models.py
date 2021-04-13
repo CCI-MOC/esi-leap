@@ -65,6 +65,7 @@ class Lease(Base):
     __table_args__ = (
         Index('lease_uuid_idx', 'uuid'),
         Index('lease_project_id_idx', 'project_id'),
+        Index('lease_owner_id_idx', 'owner_id'),
         Index('lease_status_idx', 'status'),
     )
 
@@ -72,6 +73,7 @@ class Lease(Base):
     uuid = Column(String(36), nullable=False, unique=True)
     name = Column(String(35), nullable=True, unique=False)
     project_id = Column(String(255), nullable=False)
+    owner_id = Column(String(255), nullable=False)
     start_time = Column(DateTime)
     end_time = Column(DateTime)
     fulfill_time = Column(DateTime)

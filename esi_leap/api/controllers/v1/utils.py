@@ -117,7 +117,7 @@ def get_lease_authorized(uuid_or_name, cdict, status_filters=[]):
 
 def lease_authorize_management(lease, cdict):
 
-    if lease.project_id != cdict['project_id']:
+    if cdict['project_id'] not in (lease.project_id, lease.owner_id):
         try:
             policy.authorize('esi_leap:lease:lease_admin',
                              cdict, cdict)
