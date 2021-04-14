@@ -59,7 +59,7 @@ class Offer(Base):
 
 
 class Lease(Base):
-    """Represents an accepted lease."""
+    """Represents a lease."""
 
     __tablename__ = 'leases'
     __table_args__ = (
@@ -74,6 +74,8 @@ class Lease(Base):
     name = Column(String(35), nullable=True, unique=False)
     project_id = Column(String(255), nullable=False)
     owner_id = Column(String(255), nullable=False)
+    resource_type = Column(String(36), nullable=False)
+    resource_uuid = Column(String(36), nullable=False)
     start_time = Column(DateTime)
     end_time = Column(DateTime)
     fulfill_time = Column(DateTime)
@@ -82,7 +84,7 @@ class Lease(Base):
     properties = Column(db_types.JsonEncodedDict, nullable=True)
     offer_uuid = Column(String(36),
                         ForeignKey('offers.uuid'),
-                        nullable=False)
+                        nullable=True)
     offer = orm.relationship(
         Offer,
         backref=orm.backref('offers'),

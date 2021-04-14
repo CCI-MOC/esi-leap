@@ -42,7 +42,7 @@ lease_policies = [
          {'path': '/leases/{lease_ident}', 'method': 'DELETE'}]),
     policy.DocumentedRuleDefault(
         'esi_leap:lease:create',
-        'rule:is_admin or rule:is_lessee',
+        'rule:is_admin or rule:is_owner',
         'Create lease',
         [{'path': '/leases', 'method': 'POST'}]),
     policy.DocumentedRuleDefault(
@@ -83,6 +83,11 @@ offer_policies = [
         'rule:is_admin or rule:is_owner',
         'Delete offer',
         [{'path': '/offers/{offer_ident}', 'method': 'DELETE'}]),
+    policy.DocumentedRuleDefault(
+        'esi_leap:offer:claim',
+        'rule:is_admin or rule:is_lessee',
+        'Claim an offer',
+        [{'path': '/offers/{offer_ident}/claim', 'method': 'POST'}]),
 ]
 
 

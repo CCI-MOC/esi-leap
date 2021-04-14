@@ -11,6 +11,7 @@
 #    under the License.
 
 import datetime
+import http.client as http_client
 import mock
 from oslo_context import context as ctx
 from oslo_policy import policy
@@ -19,141 +20,23 @@ import testtools
 
 from esi_leap.api.controllers.v1.lease import LeasesController
 from esi_leap.common import exception
-from esi_leap.common import statuses
 from esi_leap.objects import lease as lease_obj
-from esi_leap.objects import offer as offer_obj
-from esi_leap.resource_objects.test_node import TestNode
 from esi_leap.tests.api import base as test_api_base
 
 
-admin_ctx = ctx.RequestContext(project_id='adminid',
-                               roles=['admin'])
-admin_ctx_dict = admin_ctx.to_policy_values()
-
-owner_ctx = ctx.RequestContext(project_id='ownerid',
-                               roles=['owner'])
-owner_ctx_dict = owner_ctx.to_policy_values()
-
-lessee_ctx = ctx.RequestContext(project_id="lesseeid",
-                                roles=['lessee'])
-lessee_ctx_dict = lessee_ctx.to_policy_values()
-
-random_ctx = ctx.RequestContext(project_id='randomid',
-                                roles=['randomrole'])
-random_ctx_dict = random_ctx.to_policy_values()
-
-
-owner_ctx_2 = ctx.RequestContext(project_id='ownerid2',
-                                 roles=['owner'])
-lessee_ctx_2 = ctx.RequestContext(project_id="lesseeid2",
-                                  roles=['lessee'])
-
-
-start = datetime.datetime(2016, 7, 16)
-start_iso = '2016-07-16T00:00:00'
-
-end = start + datetime.timedelta(days=100)
-end_iso = '2016-10-24T00:00:00'
-
-test_node_1 = TestNode('111', owner_ctx.project_id)
-
-offer_uuid = uuidutils.generate_uuid()
-lease_uuid = uuidutils.generate_uuid()
-
-
-def create_test_offer(context):
-    offer = offer_obj.Offer(
-        resource_type='test_node',
-        resource_uuid='1234567890',
-        uuid=offer_uuid,
-        start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
-        end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
-        project_id="111111111111"
-    )
-    offer.create(context)
-    return offer
-
-
-def create_test_lease(context):
-    lease = lease_obj.Lease(
-        uuid=lease_uuid,
-        start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
-        end_date=datetime.datetime(2016, 8, 16, 19, 20, 30),
-        offer_uuid='1234567890',
-        project_id="222222222222"
-    )
-    lease.create(context)
-    return lease
-
-
-def create_test_lease_data():
-    return {
-        "offer_uuid_or_name": "o",
-        "start_time": "2016-07-16T19:20:30",
-        "end_time": "2016-08-16T19:20:30"
-    }
-
-
-test_offer = offer_obj.Offer(
-    resource_type='test_node',
-    resource_uuid=test_node_1._uuid,
-    name="o",
-    uuid=offer_uuid,
-    status=statuses.AVAILABLE,
-    start_time=start,
-    end_time=end,
-    project_id=owner_ctx.project_id
-)
-
-test_lease = lease_obj.Lease(
-    offer_uuid=offer_uuid,
-    name='c',
-    uuid=lease_uuid,
-    project_id=lessee_ctx.project_id,
-    status=statuses.CREATED
-)
-
-test_lease_2 = lease_obj.Lease(
-    offer_uuid=offer_uuid,
-    name='c',
-    uuid=uuidutils.generate_uuid(),
-    project_id=lessee_ctx.project_id,
-    status=statuses.CREATED
-)
-
-test_lease_3 = lease_obj.Lease(
-    offer_uuid=offer_uuid,
-    name='c',
-    uuid=uuidutils.generate_uuid(),
-    project_id=lessee_ctx_2.project_id,
-    status=statuses.CREATED
-)
-
-test_lease_4 = lease_obj.Lease(
-    offer_uuid=offer_uuid,
-    name='c2',
-    uuid=uuidutils.generate_uuid(),
-    project_id=lessee_ctx_2.project_id,
-    status=statuses.CREATED
-)
-
-
-class TestLeasesControllerAdmin(test_api_base.APITestCase):
+class TestLeasesController(test_api_base.APITestCase):
 
     def setUp(self):
-
-        self.context = lessee_ctx
-
-        super(TestLeasesControllerAdmin, self).setUp()
-
-        o = create_test_offer(self.context)
+        super(TestLeasesController, self).setUp()
 
         self.test_lease = lease_obj.Lease(
             start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
             end_date=datetime.datetime(2016, 8, 16, 19, 20, 30),
-            uuid=lease_uuid,
-            offer_uuid=o.uuid,
-            project_id=lessee_ctx.project_id
+            uuid=uuidutils.generate_uuid(),
+            resource_type='test_node',
+            resource_uuid='111',
+            project_id='lesseeid',
+            owner_id='ownerid'
         )
 
     def test_empty(self):
@@ -162,39 +45,51 @@ class TestLeasesControllerAdmin(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.objects.lease.Lease.get_all')
     def test_one(self, mock_ga):
-
         mock_ga.return_value = [self.test_lease]
         data = self.get_json('/leases')
         self.assertEqual(self.test_lease.uuid,
                          data['leases'][0]["uuid"])
 
-    @mock.patch('esi_leap.api.controllers.v1.lease.uuidutils.generate_uuid')
-    @mock.patch('esi_leap.api.controllers.v1.lease.utils.get_offer')
+    @mock.patch('oslo_utils.uuidutils.generate_uuid')
+    @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.lease.Lease.create')
-    def test_post(self, mock_create, mock_offer_get, mock_generate_uuid):
+    def test_post(self, mock_create, mock_cra, mock_generate_uuid):
+        mock_generate_uuid.return_value = self.test_lease.uuid
 
-        mock_generate_uuid.return_value = lease_uuid
-        mock_offer_get.return_value = test_offer
-
-        data = create_test_lease_data()
+        data = {
+            "project_id": "lesseeid",
+            "resource_type": "test_node",
+            "resource_uuid": "1234567890",
+            "start_time": "2016-07-16T19:20:30",
+            "end_time": "2016-08-16T19:20:30"
+        }
         request = self.post_json('/leases', data)
-        self.assertEqual(1, mock_create.call_count)
 
-        data.pop('offer_uuid_or_name')
-        data['project_id'] = lessee_ctx.project_id
-        data['uuid'] = lease_uuid
-        data['offer_uuid'] = offer_uuid
-        data['owner_id'] = test_offer.project_id
-
-        self.assertEqual(request.json, data)
-        # FIXME: post returns incorrect status code
-        # self.assertEqual(http_client.CREATED, request.status_int)
+        data['owner_id'] = self.context.project_id
+        data['uuid'] = self.test_lease.uuid
 
         mock_generate_uuid.assert_called_once()
-        mock_offer_get.assert_called_once_with('o', statuses.AVAILABLE)
+        mock_cra.assert_called_once_with(self.context.to_policy_values(),
+                                         'test_node', '1234567890',
+                                         self.context.project_id)
+        mock_create.assert_called_once()
+        self.assertEqual(data, request.json)
+        self.assertEqual(http_client.CREATED, request.status_int)
 
 
 class TestLeaseControllersGetAllFilters(testtools.TestCase):
+
+    def setUp(self):
+        super(TestLeaseControllersGetAllFilters, self).setUp()
+
+        self.admin_ctx = ctx.RequestContext(project_id='adminid',
+                                            roles=['admin'])
+        self.owner_ctx = ctx.RequestContext(project_id='ownerid',
+                                            roles=['owner'])
+        self.lessee_ctx = ctx.RequestContext(project_id="lesseeid",
+                                             roles=['lessee'])
+        self.random_ctx = ctx.RequestContext(project_id='randomid',
+                                             roles=['randomrole'])
 
     def test_lease_get_all_no_view_no_projectid_no_owner(self):
 
@@ -204,23 +99,23 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         }
 
         # admin
-        expected_filters['project_id'] = admin_ctx_dict['project_id']
+        expected_filters['project_id'] = self.admin_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
-            admin_ctx_dict,
+            self.admin_ctx.to_policy_values(),
             status='random', offer_uuid='offeruuid')
         self.assertEqual(expected_filters, filters)
 
         # owner
-        expected_filters['project_id'] = owner_ctx.project_id
+        expected_filters['project_id'] = self.owner_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
-            owner_ctx_dict,
+            self.owner_ctx.to_policy_values(),
             status='random', offer_uuid='offeruuid')
         self.assertEqual(expected_filters, filters)
 
         # lessee
-        expected_filters['project_id'] = lessee_ctx.project_id
+        expected_filters['project_id'] = self.lessee_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
-            lessee_ctx_dict,
+            self.lessee_ctx.to_policy_values(),
             status='random', offer_uuid='offeruuid')
         self.assertEqual(expected_filters, filters)
 
@@ -228,7 +123,7 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         self.assertRaises(policy.PolicyNotAuthorized,
                           LeasesController.
                           _lease_get_all_authorize_filters,
-                          random_ctx_dict,
+                          self.random_ctx.to_policy_values(),
                           status='random', offer_uuid='offeruuid')
 
     def test_lease_get_all_no_view_project_no_owner(self):
@@ -238,56 +133,42 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         }
 
         # admin
-        expected_filters['project_id'] = admin_ctx_dict['project_id']
+        expected_filters['project_id'] = self.admin_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
-            admin_ctx_dict,
-            project_id=admin_ctx_dict['project_id'],
-            status='random')
-        self.assertEqual(expected_filters, filters)
-
-        expected_filters['project_id'] = random_ctx.project_id
-        filters = LeasesController._lease_get_all_authorize_filters(
-            admin_ctx_dict,
-            project_id=random_ctx.project_id,
+            self.admin_ctx.to_policy_values(),
+            project_id=self.admin_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
 
         # lessee
-        expected_filters['project_id'] = lessee_ctx.project_id
+        expected_filters['project_id'] = self.lessee_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
-            lessee_ctx_dict,
-            project_id=lessee_ctx.project_id,
+            self.lessee_ctx.to_policy_values(),
+            project_id=self.lessee_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
 
         self.assertRaises(policy.PolicyNotAuthorized,
                           LeasesController.
                           _lease_get_all_authorize_filters,
-                          lessee_ctx_dict,
-                          project_id=random_ctx.project_id,
+                          self.random_ctx.to_policy_values(),
+                          project_id=self.random_ctx.project_id,
                           status='random')
 
         # owner
-        expected_filters['project_id'] = owner_ctx.project_id
+        expected_filters['project_id'] = self.owner_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
-            owner_ctx_dict,
-            project_id=owner_ctx.project_id,
+            self.owner_ctx.to_policy_values(),
+            project_id=self.owner_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
-
-        self.assertRaises(policy.PolicyNotAuthorized,
-                          LeasesController.
-                          _lease_get_all_authorize_filters,
-                          lessee_ctx_dict,
-                          project_id=random_ctx.project_id,
-                          status='random')
 
         # random
         self.assertRaises(policy.PolicyNotAuthorized,
                           LeasesController.
                           _lease_get_all_authorize_filters,
-                          random_ctx_dict,
-                          project_id=random_ctx.project_id,
+                          self.random_ctx.to_policy_values(),
+                          project_id=self.random_ctx.project_id,
                           status='random')
 
     def test_lease_get_all_no_view_any_projectid_owner(self):
@@ -297,64 +178,45 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         }
 
         # admin
-        expected_filters['owner'] = admin_ctx_dict['project_id']
+        expected_filters['owner'] = self.admin_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
-            admin_ctx_dict,
-            owner=admin_ctx_dict['project_id'],
-            status='random')
-        self.assertEqual(expected_filters, filters)
-
-        expected_filters['owner'] = random_ctx.project_id
-        filters = LeasesController._lease_get_all_authorize_filters(
-            admin_ctx_dict,
-            owner=random_ctx.project_id,
+            self.admin_ctx.to_policy_values(),
+            owner=self.admin_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
 
         # lessee
-        expected_filters['owner'] = lessee_ctx.project_id
+        expected_filters['owner'] = self.lessee_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
-            lessee_ctx_dict,
-            owner=lessee_ctx.project_id,
+            self.lessee_ctx.to_policy_values(),
+            owner=self.lessee_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
 
-        self.assertRaises(policy.PolicyNotAuthorized,
-                          LeasesController.
-                          _lease_get_all_authorize_filters,
-                          lessee_ctx_dict,
-                          owner=random_ctx.project_id,
-                          status='random')
-
-        expected_filters['owner'] = lessee_ctx.project_id
-        expected_filters['project_id'] = random_ctx.project_id
+        expected_filters['owner'] = self.lessee_ctx.project_id
+        expected_filters['project_id'] = self.random_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
-            lessee_ctx_dict,
-            owner=lessee_ctx.project_id, project_id=random_ctx.project_id,
+            self.lessee_ctx.to_policy_values(),
+            owner=self.lessee_ctx.project_id,
+            project_id=self.random_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
         del expected_filters['project_id']
 
         # owner
-        expected_filters['owner'] = owner_ctx.project_id
+        expected_filters['owner'] = self.owner_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
-            owner_ctx_dict,
-            owner=owner_ctx.project_id,
+            self.owner_ctx.to_policy_values(),
+            owner=self.owner_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
 
-        self.assertRaises(policy.PolicyNotAuthorized,
-                          LeasesController.
-                          _lease_get_all_authorize_filters,
-                          lessee_ctx_dict,
-                          owner=random_ctx.project_id,
-                          status='random')
-
-        expected_filters['owner'] = owner_ctx_dict['project_id']
-        expected_filters['project_id'] = random_ctx.project_id
+        expected_filters['owner'] = self.owner_ctx.project_id
+        expected_filters['project_id'] = self.random_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
-            owner_ctx_dict,
-            owner=owner_ctx.project_id, project_id=random_ctx.project_id,
+            self.owner_ctx.to_policy_values(),
+            owner=self.owner_ctx.project_id,
+            project_id=self.random_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
 
@@ -362,8 +224,8 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         self.assertRaises(policy.PolicyNotAuthorized,
                           LeasesController.
                           _lease_get_all_authorize_filters,
-                          random_ctx_dict,
-                          owner=random_ctx.project_id,
+                          self.random_ctx.to_policy_values(),
+                          owner=self.random_ctx.project_id,
                           status='random')
 
     def test_lease_get_all_all_view(self):
@@ -374,7 +236,7 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
 
         # admin
         filters = LeasesController._lease_get_all_authorize_filters(
-            admin_ctx_dict,
+            self.admin_ctx.to_policy_values(),
             view='all',
             status='random')
         self.assertEqual(expected_filters, filters)
@@ -383,21 +245,21 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         self.assertRaises(policy.PolicyNotAuthorized,
                           LeasesController.
                           _lease_get_all_authorize_filters,
-                          lessee_ctx_dict,
+                          self.lessee_ctx.to_policy_values(),
                           view='all',
                           status='random')
 
         self.assertRaises(policy.PolicyNotAuthorized,
                           LeasesController.
                           _lease_get_all_authorize_filters,
-                          owner_ctx_dict,
+                          self.owner_ctx.to_policy_values(),
                           view='all',
                           status='random')
 
         self.assertRaises(policy.PolicyNotAuthorized,
                           LeasesController.
                           _lease_get_all_authorize_filters,
-                          random_ctx_dict,
+                          self.random_ctx.to_policy_values(),
                           view='all',
                           status='random')
 
@@ -414,20 +276,20 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
 
         # admin
         filters = LeasesController._lease_get_all_authorize_filters(
-            admin_ctx_dict,
+            self.admin_ctx.to_policy_values(),
             view='all', start_time=start, end_time=end, status='random')
         self.assertEqual(expected_filters, filters)
 
         self.assertRaises(exception.InvalidTimeAPICommand,
                           LeasesController.
                           _lease_get_all_authorize_filters,
-                          admin_ctx_dict,
+                          self.admin_ctx.to_policy_values(),
                           view='all', start_time=start, status='random')
 
         self.assertRaises(exception.InvalidTimeAPICommand,
                           LeasesController.
                           _lease_get_all_authorize_filters,
-                          admin_ctx_dict,
+                          self.admin_ctx.to_policy_values(),
                           view='all', end_time=end, status='random')
 
     def test_lease_get_all_status(self):
@@ -439,10 +301,10 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
 
         # admin
         filters = LeasesController._lease_get_all_authorize_filters(
-            admin_ctx_dict)
+            self.admin_ctx.to_policy_values())
         self.assertEqual(expected_filters, filters)
 
         del(expected_filters['status'])
         filters = LeasesController._lease_get_all_authorize_filters(
-            admin_ctx_dict, status='any')
+            self.admin_ctx.to_policy_values(), status='any')
         self.assertEqual(expected_filters, filters)

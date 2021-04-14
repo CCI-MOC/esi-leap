@@ -10,12 +10,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_concurrency import lockutils
-
-_prefix = 'esileap'
-synchronized = lockutils.synchronized_with_prefix(_prefix)
-lock = lockutils.lock_with_prefix(_prefix)
+from esi_leap.common import utils
+from esi_leap.tests import base
 
 
-def get_resource_lock_name(resource_type, resource_uuid):
-    return resource_type + '-' + resource_uuid
+class LockTestCase(base.TestCase):
+
+    def test_get_resource_lock_name(self):
+        resource_type = 'ironic_node'
+        resource_uuid = '12345'
+
+        self.assertEqual(resource_type + '-' + resource_uuid,
+                         utils.get_resource_lock_name(
+                             resource_type, resource_uuid))

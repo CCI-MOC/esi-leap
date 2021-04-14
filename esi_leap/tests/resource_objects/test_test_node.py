@@ -43,6 +43,14 @@ class TestTestNode(base.TestCase):
         self.fake_admin_project_id_1 = '123'
         self.fake_admin_project_id_2 = '123456'
 
+    def test_resource_type(self):
+        resource_type = self.fake_test_node.resource_type
+        self.assertEqual(resource_type, 'test_node')
+
+    def test_get_resource_uuid(self):
+        resource_uuid = self.fake_test_node.get_resource_uuid()
+        self.assertEqual(resource_uuid, '1111')
+
     def test_get_lease_uuid(self):
         lease_uuid = self.fake_test_node.get_lease_uuid()
         self.assertEqual(lease_uuid, '12345')
