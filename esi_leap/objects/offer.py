@@ -97,16 +97,15 @@ class Offer(base.ESILEAPObject):
 
             if updates['start_time'] >= updates['end_time']:
                 raise exception.InvalidTimeRange(
-                    resource='lease',
+                    resource='offer',
                     start_time=str(updates['start_time']),
                     end_time=str(updates['end_time'])
                 )
 
-            self.dbapi.offer_verify_resource_availability(
-                updates['resource_type'],
-                updates['resource_uuid'],
-                updates['start_time'],
-                updates['end_time'])
+            ro = ro_factory.ResourceObjectFactory.get_resource_object(
+                updates['resource_type'], updates['resource_uuid'])
+            ro.verify_availability(updates['start_time'],
+                                   updates['end_time'])
 
             db_offer = self.dbapi.offer_create(updates)
             self._from_db_object(context, self, db_offer)
@@ -114,8 +113,8 @@ class Offer(base.ESILEAPObject):
         _create_offer()
 
     def cancel(self):
-
-        @utils.synchronized(utils.get_offer_lock_name(self.uuid))
+        @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
+                                                         self.resource_uuid))
         def _cancel_offer():
 
             leases = lease_obj.Lease.get_all(
@@ -130,8 +129,8 @@ class Offer(base.ESILEAPObject):
         _cancel_offer()
 
     def expire(self, context=None):
-
-        @utils.synchronized(utils.get_offer_lock_name(self.uuid))
+        @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
+                                                         self.resource_uuid))
         def _expire_offer():
 
             leases = lease_obj.Lease.get_all(
@@ -145,6 +144,10 @@ class Offer(base.ESILEAPObject):
             self.save(context)
 
         _expire_offer()
+
+    def verify_availability(self, start_time, end_time):
+        return self.dbapi.offer_verify_availability(
+            self, start_time, end_time)
 
     def destroy(self):
         self.dbapi.offer_destroy(self.uuid)

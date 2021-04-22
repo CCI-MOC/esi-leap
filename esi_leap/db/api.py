@@ -97,14 +97,9 @@ def offer_get_first_availability(offer_uuid, start, end):
         offer_uuid, start, end)
 
 
-def offer_verify_lease_availability(offer_ref, start, end):
-    return IMPL.offer_verify_lease_availability(
+def offer_verify_availability(offer_ref, start, end):
+    return IMPL.offer_verify_availability(
         offer_ref, start, end)
-
-
-def offer_verify_resource_availability(r_type, r_uuid, start, end):
-    return IMPL.offer_verify_resource_availability(
-        r_type, r_uuid, start, end)
 
 
 def offer_create(values):
@@ -145,3 +140,9 @@ def lease_update(lease_uuid, values):
 
 def lease_destroy(lease_uuid):
     return IMPL.lease_destroy(lease_uuid)
+
+
+# Resource object
+def resource_verify_availability(r_type, r_uuid, start, end):
+    return IMPL.resource_verify_availability(
+        r_type, r_uuid, start, end)

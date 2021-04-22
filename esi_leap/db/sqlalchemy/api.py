@@ -127,7 +127,7 @@ def offer_get_all(filters):
     if a_start and a_end:
         for o in query:
             try:
-                offer_verify_lease_availability(o, a_start, a_end)
+                offer_verify_availability(o, a_start, a_end)
             except exception.OfferNoTimeAvailabilities:
                 query = query.filter(models.Offer.uuid != o.uuid)
 
@@ -161,7 +161,7 @@ def offer_get_first_availability(offer_uuid, start):
         filter(models.Lease.end_time >= start).first()
 
 
-def offer_verify_lease_availability(offer_ref, start, end):
+def offer_verify_availability(offer_ref, start, end):
 
     if start < offer_ref.start_time or end > offer_ref.end_time:
         raise exception.OfferNoTimeAvailabilities(offer_uuid=offer_ref.uuid,
@@ -192,33 +192,6 @@ def offer_verify_lease_availability(offer_ref, start, end):
         raise exception.OfferNoTimeAvailabilities(offer_uuid=offer_ref.uuid,
                                                   start_time=start,
                                                   end_time=end)
-
-
-def offer_verify_resource_availability(r_type, r_uuid, start, end):
-
-    o_query = model_query(models.Offer)
-
-    offers = o_query.with_entities(
-        models.Offer.start_time, models.Offer.end_time).\
-        filter((models.Offer.resource_uuid == r_uuid),
-               (models.Offer.resource_type == r_type),
-               (models.Offer.status == statuses.AVAILABLE))
-
-    conflict = offers.filter((
-        (start >= models.Offer.start_time) &
-        (start < models.Offer.end_time) |
-
-        (end > models.Offer.start_time) &
-        (end <= models.Offer.end_time) |
-
-        (start <= models.Offer.start_time) &
-        (end >= models.Offer.end_time)
-    )).first()
-
-    if conflict:
-        raise exception.OfferResourceTimeConflict(
-            resource_uuid=r_uuid,
-            resource_type=r_type)
 
 
 def offer_create(values):
@@ -345,3 +318,55 @@ def lease_destroy(lease_uuid):
             raise exception.LeaseNotFound(lease_uuid=lease_uuid)
         query.delete()
         session.flush()
+
+
+def resource_verify_availability(r_type, r_uuid, start, end):
+    # check conflict with offers
+    o_query = model_query(models.Offer)
+
+    offers = o_query.with_entities(
+        models.Offer.start_time, models.Offer.end_time).\
+        filter((models.Offer.resource_uuid == r_uuid),
+               (models.Offer.resource_type == r_type),
+               (models.Offer.status == statuses.AVAILABLE))
+
+    offer_conflict = offers.filter((
+        (start >= models.Offer.start_time) &
+        (start < models.Offer.end_time) |
+
+        (end > models.Offer.start_time) &
+        (end <= models.Offer.end_time) |
+
+        (start <= models.Offer.start_time) &
+        (end >= models.Offer.end_time)
+    )).first()
+
+    if offer_conflict:
+        raise exception.ResourceTimeConflict(
+            resource_uuid=r_uuid,
+            resource_type=r_type)
+
+    # check conflict with leases
+    l_query = model_query(models.Lease)
+
+    leases = l_query.with_entities(
+        models.Lease.start_time, models.Lease.end_time).\
+        filter((models.Lease.resource_uuid == r_uuid),
+               (models.Lease.resource_type == r_type),
+               (models.Lease.status.in_([statuses.CREATED, statuses.ACTIVE])))
+
+    lease_conflict = leases.filter((
+        (start >= models.Lease.start_time) &
+        (start < models.Lease.end_time) |
+
+        (end > models.Lease.start_time) &
+        (end <= models.Lease.end_time) |
+
+        (start <= models.Lease.start_time) &
+        (end >= models.Lease.end_time)
+    )).first()
+
+    if lease_conflict:
+        raise exception.ResourceTimeConflict(
+            resource_uuid=r_uuid,
+            resource_type=r_type)

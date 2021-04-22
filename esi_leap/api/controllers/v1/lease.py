@@ -11,6 +11,7 @@
 #    under the License.
 
 import datetime
+import http.client as http_client
 from oslo_utils import uuidutils
 import pecan
 from pecan import rest
@@ -31,8 +32,10 @@ class Lease(base.ESILEAPBase):
 
     name = wsme.wsattr(wtypes.text)
     uuid = wsme.wsattr(wtypes.text, readonly=True)
-    project_id = wsme.wsattr(wtypes.text, readonly=True)
+    project_id = wsme.wsattr(wtypes.text)
     owner_id = wsme.wsattr(wtypes.text, readonly=True)
+    resource_type = wsme.wsattr(wtypes.text)
+    resource_uuid = wsme.wsattr(wtypes.text)
     start_time = wsme.wsattr(datetime.datetime)
     fulfill_time = wsme.wsattr(datetime.datetime, readonly=True)
     expire_time = wsme.wsattr(datetime.datetime, readonly=True)
@@ -88,35 +91,27 @@ class LeasesController(rest.RestController):
             Lease(**lease.to_dict()) for lease in leases]
         return lease_collection
 
-    @wsme_pecan.wsexpose(Lease, body=Lease)
+    @wsme_pecan.wsexpose(Lease, body=Lease, status_code=http_client.CREATED)
     def post(self, new_lease):
         request = pecan.request.context
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:lease:create', cdict, cdict)
 
         lease_dict = new_lease.to_dict()
-        lease_dict['project_id'] = request.project_id
+
+        utils.check_resource_admin(cdict,
+                                   lease_dict.get('resource_type'),
+                                   lease_dict.get('resource_uuid'),
+                                   request.project_id)
+
+        lease_dict['owner_id'] = request.project_id
         lease_dict['uuid'] = uuidutils.generate_uuid()
-
-        if new_lease.offer_uuid_or_name is None:
-            raise exception.LeaseNoOfferUUID()
-
-        related_offer = utils.get_offer(new_lease.offer_uuid_or_name,
-                                        statuses.AVAILABLE)
-
-        lease_dict['offer_uuid'] = related_offer.uuid
-        lease_dict['owner_id'] = related_offer.project_id
 
         if 'start_time' not in lease_dict:
             lease_dict['start_time'] = datetime.datetime.now()
 
         if 'end_time' not in lease_dict:
-            q = related_offer.get_first_availability(
-                lease_dict['start_time'])
-            if q is None:
-                lease_dict['end_time'] = related_offer.end_time
-            else:
-                lease_dict['end_time'] = q.start_time
+            lease_dict['end_time'] = datetime.datetime.max
 
         lease = lease_obj.Lease(**lease_dict)
         lease.create(request)

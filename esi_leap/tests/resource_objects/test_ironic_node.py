@@ -45,6 +45,14 @@ class TestIronicNode(base.TestCase):
         self.fake_admin_project_id_1 = '123'
         self.fake_admin_project_id_2 = '123456'
 
+    def test_resource_type(self):
+        test_ironic_node = ironic_node.IronicNode("1111")
+        self.assertEqual("ironic_node", test_ironic_node.resource_type)
+
+    def test_get_resource_uuid(self):
+        test_ironic_node = ironic_node.IronicNode("1111")
+        self.assertEqual("1111", test_ironic_node.get_resource_uuid())
+
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
     def test_get_lease_uuid(self, client_mock):
         fake_get_node = FakeIronicNode()

@@ -15,6 +15,7 @@ from keystoneauth1 import loading as ks_loading
 from ironicclient import client as ironic_client
 
 import esi_leap.conf
+from esi_leap.resource_objects import base
 
 
 CONF = esi_leap.conf.CONF
@@ -38,10 +39,15 @@ def get_ironic_client():
     return cli
 
 
-class IronicNode(object):
+class IronicNode(base.ResourceObjectInterface):
+
+    resource_type = 'ironic_node'
 
     def __init__(self, uuid):
         self._uuid = uuid
+
+    def get_resource_uuid(self):
+        return self._uuid
 
     def get_lease_uuid(self):
         node = get_ironic_client().node.get(self._uuid)

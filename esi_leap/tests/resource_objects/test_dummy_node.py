@@ -70,6 +70,12 @@ class TestDummyNode(base.TestCase):
         self.fake_read_data_1 = json.dumps(get_test_dummy_node_1())
         self.fake_read_data_2 = json.dumps(get_test_dummy_node_2())
 
+    def test_resource_type(self):
+        self.assertEqual("dummy_node", self.fake_dummy_node.resource_type)
+
+    def test_get_resource_uuid(self):
+        self.assertEqual("1111", self.fake_dummy_node.get_resource_uuid())
+
     def test_get_lease_uuid(self):
         mock_open = mock.mock_open(read_data=self.fake_read_data_1)
         with mock.patch('builtins.open', mock_open) as mock_file_open:

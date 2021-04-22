@@ -72,13 +72,6 @@ class OfferNoTimeAvailabilities(ESILeapException):
                 "time range %(start_time)s, %(end_time)s.")
 
 
-class OfferResourceTimeConflict(ESILeapException):
-    msg_fmt = ("Offer on %(resource_type)s %(resource_uuid)s cannot be "
-               "created with a start_time and end_time "
-               "which conflicts with the time range of an existing offer "
-               "on %(resource_type)s %(resource_uuid)s.")
-
-
 class OfferNotAvailable(ESILeapException):
     msg_fmt = _("Offer %(offer_uuid)s does not have status "
                 "'available'. Got offer status '%(status)s'.")
@@ -86,6 +79,11 @@ class OfferNotAvailable(ESILeapException):
 
 class ProjectNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on project %(project_id)s.")
+
+
+class ResourceTimeConflict(ESILeapException):
+    msg_fmt = ("Conflict with existing offer or lease "
+               "on %(resource_type)s %(resource_uuid)s.")
 
 
 class ResourceNoPermission(ESILeapException):

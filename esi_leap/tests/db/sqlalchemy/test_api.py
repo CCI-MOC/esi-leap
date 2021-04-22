@@ -72,6 +72,8 @@ test_lease_1 = dict(
     project_id='1e5533',
     owner_id='0wn3r',
     name='l1',
+    resource_uuid='1111',
+    resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=10),
     end_time=now + datetime.timedelta(days=20),
     status=statuses.CREATED,
@@ -82,6 +84,8 @@ test_lease_2 = dict(
     project_id='1e5533',
     owner_id='0wn3r',
     name='l1',
+    resource_uuid='1111',
+    resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=20),
     end_time=now + datetime.timedelta(days=30),
     status=statuses.CREATED,
@@ -92,6 +96,8 @@ test_lease_3 = dict(
     project_id='1e5533_2',
     owner_id='0wn3r_2',
     name='l1',
+    resource_uuid='1111',
+    resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=50),
     end_time=now + datetime.timedelta(days=60),
     status=statuses.ACTIVE,
@@ -102,6 +108,8 @@ test_lease_4 = dict(
     project_id='1e5533_2',
     owner_id='0wn3r_2',
     name='l2',
+    resource_uuid='1111',
+    resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=85),
     end_time=now + datetime.timedelta(days=90),
     properties={},
@@ -111,6 +119,8 @@ test_lease_4 = dict(
 test_lease_5 = dict(
     project_id='1e5533',
     owner_id='0wn3r',
+    resource_uuid='1111',
+    resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=90),
     end_time=now + datetime.timedelta(days=100),
     uuid='lease_5',
@@ -126,7 +136,7 @@ class TestAPI(base.DBTestCase):
         assert len(o) == 1
         assert o[0].to_dict() == offer.to_dict()
 
-    def test_offer_verify_lease_availability(self):
+    def test_offer_verify_availability(self):
         offer = api.offer_create(test_offer_1)
 
         test_lease_1['offer_uuid'] = offer.uuid
@@ -139,105 +149,105 @@ class TestAPI(base.DBTestCase):
 
         start = now + datetime.timedelta(days=35)
         end = now + datetime.timedelta(days=40)
-        api.offer_verify_lease_availability(offer, start, end)
+        api.offer_verify_availability(offer, start, end)
 
         start = now + datetime.timedelta(days=5)
         end = now + datetime.timedelta(days=10)
-        api.offer_verify_lease_availability(offer, start, end)
+        api.offer_verify_availability(offer, start, end)
 
         start = now
         end = now + datetime.timedelta(days=10)
-        api.offer_verify_lease_availability(offer, start, end)
+        api.offer_verify_availability(offer, start, end)
 
         start = now + datetime.timedelta(days=90)
         end = now + datetime.timedelta(days=100)
-        api.offer_verify_lease_availability(offer, start, end)
+        api.offer_verify_availability(offer, start, end)
 
         start = now + datetime.timedelta(days=60)
         end = now + datetime.timedelta(days=100)
-        api.offer_verify_lease_availability(offer, start, end)
+        api.offer_verify_availability(offer, start, end)
 
         start = now + datetime.timedelta(days=30)
         end = now + datetime.timedelta(days=50)
-        api.offer_verify_lease_availability(offer, start, end)
+        api.offer_verify_availability(offer, start, end)
 
         start = now + datetime.timedelta(days=15)
         end = now + datetime.timedelta(days=16)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_lease_availability,
+                          api.offer_verify_availability,
                           offer, start, end)
 
         start = now + datetime.timedelta(days=45)
         end = now + datetime.timedelta(days=55)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_lease_availability,
+                          api.offer_verify_availability,
                           offer, start, end)
 
         start = now + datetime.timedelta(days=55)
         end = now + datetime.timedelta(days=65)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_lease_availability,
+                          api.offer_verify_availability,
                           offer, start, end)
 
         start = now + datetime.timedelta(days=50)
         end = now + datetime.timedelta(days=65)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_lease_availability,
+                          api.offer_verify_availability,
                           offer, start, end)
 
         start = now + datetime.timedelta(days=45)
         end = now + datetime.timedelta(days=60)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_lease_availability,
+                          api.offer_verify_availability,
                           offer, start, end)
 
         start = now + datetime.timedelta(days=90)
         end = now + datetime.timedelta(days=105)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_lease_availability,
+                          api.offer_verify_availability,
                           offer, start, end)
 
         start = now + datetime.timedelta(days=100)
         end = now + datetime.timedelta(days=105)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_lease_availability,
+                          api.offer_verify_availability,
                           offer, start, end)
 
         start = now + datetime.timedelta(days=105)
         end = now + datetime.timedelta(days=110)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_lease_availability,
+                          api.offer_verify_availability,
                           offer, start, end)
 
         start = now - datetime.timedelta(days=1)
         end = now + datetime.timedelta(days=5)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_lease_availability,
+                          api.offer_verify_availability,
                           offer, start, end)
 
         start = now - datetime.timedelta(days=1)
         end = now
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_lease_availability,
+                          api.offer_verify_availability,
                           offer, start, end)
 
         start = now - datetime.timedelta(days=10)
         end = now - datetime.timedelta(days=5)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_lease_availability,
+                          api.offer_verify_availability,
                           offer, start, end)
 
         start = now + datetime.timedelta(days=45)
         end = now + datetime.timedelta(days=55)
         self.assertRaises(e.OfferNoTimeAvailabilities,
-                          api.offer_verify_lease_availability,
+                          api.offer_verify_availability,
                           offer, start, end)
 
         test_lease_4['offer_uuid'] = offer.uuid
         api.lease_create(test_lease_4)
         start = now + datetime.timedelta(days=86)
         end = now + datetime.timedelta(days=87)
-        api.offer_verify_lease_availability(offer, start, end)
+        api.offer_verify_availability(offer, start, end)
 
     def test_offer_get_conflict_times(self):
         o1 = api.offer_create(test_offer_1)
@@ -310,22 +320,6 @@ class TestAPI(base.DBTestCase):
                   'end_time': now}
         self.assertRaises(e.InvalidTimeRange, api.offer_update,
                           o1.uuid, values)
-
-    def test_offer_verify_resource_availability(self):
-        o1 = api.offer_create(test_offer_4)
-        r_type = o1.resource_type
-        r_uuid = o1.resource_uuid
-
-        start = now + datetime.timedelta(days=101)
-        end = now + datetime.timedelta(days=105)
-        api.offer_verify_resource_availability(r_type, r_uuid,
-                                               start, end)
-
-        start = now + datetime.timedelta(days=5)
-        end = now + datetime.timedelta(days=10)
-        self.assertRaises(e.OfferResourceTimeConflict,
-                          api.offer_verify_resource_availability,
-                          r_type, r_uuid, start, end)
 
     def test_offer_get_all(self):
         o1 = api.offer_create(test_offer_2)
@@ -419,3 +413,71 @@ class TestAPI(base.DBTestCase):
 
     def test_lease_destroy_not_found(self):
         self.assertEqual(api.lease_get_by_uuid('lease_4'), None)
+
+    def test_resource_verify_availability_offer_conflict(self):
+        o1 = api.offer_create(test_offer_4)
+        r_type = o1.resource_type
+        r_uuid = o1.resource_uuid
+
+        start = test_offer_4['end_time'] + datetime.timedelta(days=1)
+        end = test_offer_4['end_time'] + datetime.timedelta(days=5)
+        api.resource_verify_availability(r_type, r_uuid,
+                                         start, end)
+
+        start = test_offer_4['start_time'] + datetime.timedelta(days=1)
+        end = test_offer_4['end_time'] + datetime.timedelta(days=-1)
+        self.assertRaises(e.ResourceTimeConflict,
+                          api.resource_verify_availability,
+                          r_type, r_uuid, start, end)
+
+        start = test_offer_4['start_time'] + datetime.timedelta(days=-1)
+        end = test_offer_4['end_time'] + datetime.timedelta(days=1)
+        self.assertRaises(e.ResourceTimeConflict,
+                          api.resource_verify_availability,
+                          r_type, r_uuid, start, end)
+
+        start = test_offer_4['start_time'] + datetime.timedelta(days=-1)
+        end = test_offer_4['start_time'] + datetime.timedelta(days=1)
+        self.assertRaises(e.ResourceTimeConflict,
+                          api.resource_verify_availability,
+                          r_type, r_uuid, start, end)
+
+        start = test_offer_4['end_time'] + datetime.timedelta(days=-1)
+        end = test_offer_4['end_time'] + datetime.timedelta(days=1)
+        self.assertRaises(e.ResourceTimeConflict,
+                          api.resource_verify_availability,
+                          r_type, r_uuid, start, end)
+
+    def test_resource_verify_availability_lease_conflict(self):
+        test_lease = api.lease_create(test_lease_1)
+        r_type = test_lease.resource_type
+        r_uuid = test_lease.resource_uuid
+
+        start = test_lease_1['end_time'] + datetime.timedelta(days=1)
+        end = test_lease_1['end_time'] + datetime.timedelta(days=5)
+        api.resource_verify_availability(r_type, r_uuid,
+                                         start, end)
+
+        start = test_lease_1['start_time'] + datetime.timedelta(days=1)
+        end = test_lease_1['end_time'] + datetime.timedelta(days=-1)
+        self.assertRaises(e.ResourceTimeConflict,
+                          api.resource_verify_availability,
+                          r_type, r_uuid, start, end)
+
+        start = test_lease_1['start_time'] + datetime.timedelta(days=-1)
+        end = test_lease_1['end_time'] + datetime.timedelta(days=1)
+        self.assertRaises(e.ResourceTimeConflict,
+                          api.resource_verify_availability,
+                          r_type, r_uuid, start, end)
+
+        start = test_lease_1['start_time'] + datetime.timedelta(days=-1)
+        end = test_lease_1['start_time'] + datetime.timedelta(days=1)
+        self.assertRaises(e.ResourceTimeConflict,
+                          api.resource_verify_availability,
+                          r_type, r_uuid, start, end)
+
+        start = test_lease_1['end_time'] + datetime.timedelta(days=-1)
+        end = test_lease_1['end_time'] + datetime.timedelta(days=1)
+        self.assertRaises(e.ResourceTimeConflict,
+                          api.resource_verify_availability,
+                          r_type, r_uuid, start, end)

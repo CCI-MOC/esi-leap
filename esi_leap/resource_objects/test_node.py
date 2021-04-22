@@ -10,12 +10,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from esi_leap.resource_objects import base
 
-class TestNode(object):
+
+class TestNode(base.ResourceObjectInterface):
+
+    resource_type = 'test_node'
 
     def __init__(self, uuid, project_id='12345'):
         self._uuid = uuid
         self._project_id = project_id
+
+    def get_resource_uuid(self):
+        return self._uuid
 
     def get_lease_uuid(self):
         return '12345'

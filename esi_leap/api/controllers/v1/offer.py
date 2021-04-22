@@ -11,6 +11,7 @@
 #    under the License.
 
 import datetime
+import http.client as http_client
 from oslo_utils import uuidutils
 import pecan
 from pecan import rest
@@ -20,11 +21,13 @@ import wsmeext.pecan as wsme_pecan
 
 from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
+from esi_leap.api.controllers.v1 import lease
 from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
 from esi_leap.common import policy
 from esi_leap.common import statuses
-from esi_leap.objects import offer
+from esi_leap.objects import lease as lease_obj
+from esi_leap.objects import offer as offer_obj
 
 
 class Offer(base.ESILEAPBase):
@@ -42,7 +45,7 @@ class Offer(base.ESILEAPBase):
 
     def __init__(self, **kwargs):
 
-        self.fields = offer.Offer.fields
+        self.fields = offer_obj.Offer.fields
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
@@ -58,6 +61,10 @@ class OfferCollection(types.Collection):
 
 
 class OffersController(rest.RestController):
+
+    _custom_actions = {
+        'claim': ['POST']
+    }
 
     @wsme_pecan.wsexpose(Offer, wtypes.text)
     def get_one(self, offer_id):
@@ -129,14 +136,14 @@ class OffersController(rest.RestController):
                 filters[k] = v
 
         offer_collection = OfferCollection()
-        offers = offer.Offer.get_all(filters, request)
+        offers = offer_obj.Offer.get_all(filters, request)
 
         offer_collection.offers = [
             Offer(**OffersController._add_offer_availabilities(o))
             for o in offers]
         return offer_collection
 
-    @wsme_pecan.wsexpose(Offer, body=Offer)
+    @wsme_pecan.wsexpose(Offer, body=Offer, status_code=http_client.CREATED)
     def post(self, new_offer):
         request = pecan.request.context
         cdict = request.to_policy_values()
@@ -144,10 +151,12 @@ class OffersController(rest.RestController):
 
         offer_dict = new_offer.to_dict()
         offer_dict['project_id'] = request.project_id
-
-        utils.verify_resource_permission(cdict, offer_dict)
-
         offer_dict['uuid'] = uuidutils.generate_uuid()
+
+        utils.check_resource_admin(cdict,
+                                   offer_dict.get('resource_type'),
+                                   offer_dict.get('resource_uuid'),
+                                   offer_dict.get('project_id'))
 
         if 'start_time' not in offer_dict:
             offer_dict['start_time'] = datetime.datetime.now()
@@ -160,10 +169,9 @@ class OffersController(rest.RestController):
                                  start_time=str(offer_dict['start_time']),
                                  end_time=str(offer_dict['end_time']))
 
-        o = offer.Offer(**offer_dict)
+        o = offer_obj.Offer(**offer_dict)
         o.create()
-        o = OffersController._add_offer_availabilities(o)
-        return Offer(**o)
+        return Offer(**OffersController._add_offer_availabilities(o))
 
     @wsme_pecan.wsexpose(Offer, wtypes.text)
     def delete(self, offer_id):
@@ -176,6 +184,38 @@ class OffersController(rest.RestController):
                                               statuses.AVAILABLE)
 
         o_object.cancel()
+
+    @wsme_pecan.wsexpose(lease.Lease, wtypes.text, body=lease.Lease,
+                         status_code=http_client.CREATED)
+    def claim(self, offer_uuid, new_lease):
+        request = pecan.request.context
+        cdict = request.to_policy_values()
+        policy.authorize('esi_leap:offer:claim', cdict, cdict)
+
+        offer = utils.get_offer(offer_uuid, statuses.AVAILABLE)
+
+        lease_dict = new_lease.to_dict()
+        lease_dict['project_id'] = request.project_id
+        lease_dict['uuid'] = uuidutils.generate_uuid()
+        lease_dict['offer_uuid'] = offer_uuid
+        lease_dict['resource_type'] = offer.resource_type
+        lease_dict['resource_uuid'] = offer.resource_uuid
+        lease_dict['owner_id'] = offer.project_id
+
+        if 'start_time' not in lease_dict:
+            lease_dict['start_time'] = datetime.datetime.now()
+
+        if 'end_time' not in lease_dict:
+            q = offer.get_first_availability(
+                lease_dict['start_time'])
+            if q is None:
+                lease_dict['end_time'] = offer.end_time
+            else:
+                lease_dict['end_time'] = q.start_time
+
+        new_lease = lease_obj.Lease(**lease_dict)
+        new_lease.create(request)
+        return lease.Lease(**new_lease.to_dict())
 
     @staticmethod
     def _add_offer_availabilities(o):
