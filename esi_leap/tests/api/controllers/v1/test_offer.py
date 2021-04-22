@@ -52,6 +52,16 @@ class TestOffersController(test_api_base.APITestCase):
             end_time=start + datetime.timedelta(days=100),
             project_id=self.context.project_id,
         )
+        self.test_offer_drt = offer.Offer(
+            resource_type='ironic_node',
+            resource_uuid=uuidutils.generate_uuid(),
+            name="test_offer",
+            uuid=uuidutils.generate_uuid(),
+            status=statuses.AVAILABLE,
+            start_time=start,
+            end_time=start + datetime.timedelta(days=100),
+            project_id=self.context.project_id,
+        )
         self.test_offer_2 = offer.Offer(
             resource_type='test_node',
             resource_uuid=uuidutils.generate_uuid(),
@@ -99,6 +109,39 @@ class TestOffersController(test_api_base.APITestCase):
         mock_cra.assert_called_once_with(self.context.to_policy_values(),
                                          self.test_offer.resource_type,
                                          self.test_offer.resource_uuid,
+                                         self.context.project_id)
+        mock_create.assert_called_once()
+        mock_aoa.assert_called_once()
+        self.assertEqual(data, request.json)
+        self.assertEqual(http_client.CREATED, request.status_int)
+
+    @mock.patch('oslo_utils.uuidutils.generate_uuid')
+    @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
+    @mock.patch('esi_leap.objects.offer.Offer.create')
+    @mock.patch('esi_leap.api.controllers.v1.offer.' +
+                'OffersController._add_offer_availabilities')
+    def test_post_default_resource_type(self, mock_aoa, mock_create, mock_cra,
+                                        mock_generate_uuid):
+        mock_generate_uuid.return_value = self.test_offer_drt.uuid
+        mock_aoa.return_value = self.test_offer_drt.to_dict()
+
+        data = {
+            "resource_uuid": self.test_offer_drt.resource_uuid,
+            "name": self.test_offer_drt.name,
+            "start_time": "2016-07-16T00:00:00",
+            "end_time": "2016-10-24T00:00:00"
+        }
+
+        request = self.post_json('/offers', data)
+
+        data['project_id'] = self.context.project_id
+        data['uuid'] = self.test_offer_drt.uuid
+        data['status'] = statuses.AVAILABLE
+        data['resource_type'] = 'ironic_node'
+
+        mock_cra.assert_called_once_with(self.context.to_policy_values(),
+                                         'ironic_node',
+                                         self.test_offer_drt.resource_uuid,
                                          self.context.project_id)
         mock_create.assert_called_once()
         mock_aoa.assert_called_once()

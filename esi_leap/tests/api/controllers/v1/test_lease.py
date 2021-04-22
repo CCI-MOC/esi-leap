@@ -76,6 +76,33 @@ class TestLeasesController(test_api_base.APITestCase):
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
 
+    @mock.patch('oslo_utils.uuidutils.generate_uuid')
+    @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
+    @mock.patch('esi_leap.objects.lease.Lease.create')
+    def test_post_default_resource_type(self, mock_create, mock_cra,
+                                        mock_generate_uuid):
+        mock_generate_uuid.return_value = self.test_lease.uuid
+
+        data = {
+            "project_id": "lesseeid",
+            "resource_uuid": "1234567890",
+            "start_time": "2016-07-16T19:20:30",
+            "end_time": "2016-08-16T19:20:30"
+        }
+        request = self.post_json('/leases', data)
+
+        data['owner_id'] = self.context.project_id
+        data['uuid'] = self.test_lease.uuid
+        data['resource_type'] = 'ironic_node'
+
+        mock_generate_uuid.assert_called_once()
+        mock_cra.assert_called_once_with(self.context.to_policy_values(),
+                                         'ironic_node', '1234567890',
+                                         self.context.project_id)
+        mock_create.assert_called_once()
+        self.assertEqual(data, request.json)
+        self.assertEqual(http_client.CREATED, request.status_int)
+
 
 class TestLeaseControllersGetAllFilters(testtools.TestCase):
 
