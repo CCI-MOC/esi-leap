@@ -126,21 +126,21 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         }
 
         # admin
-        expected_filters['project_id'] = self.admin_ctx.project_id
+        expected_filters['project_or_owner_id'] = self.admin_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
             self.admin_ctx.to_policy_values(),
             status='random', offer_uuid='offeruuid')
         self.assertEqual(expected_filters, filters)
 
         # owner
-        expected_filters['project_id'] = self.owner_ctx.project_id
+        expected_filters['project_or_owner_id'] = self.owner_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
             self.owner_ctx.to_policy_values(),
             status='random', offer_uuid='offeruuid')
         self.assertEqual(expected_filters, filters)
 
         # lessee
-        expected_filters['project_id'] = self.lessee_ctx.project_id
+        expected_filters['project_or_owner_id'] = self.lessee_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
             self.lessee_ctx.to_policy_values(),
             status='random', offer_uuid='offeruuid')
@@ -205,44 +205,44 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         }
 
         # admin
-        expected_filters['owner'] = self.admin_ctx.project_id
+        expected_filters['owner_id'] = self.admin_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
             self.admin_ctx.to_policy_values(),
-            owner=self.admin_ctx.project_id,
+            owner_id=self.admin_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
 
         # lessee
-        expected_filters['owner'] = self.lessee_ctx.project_id
+        expected_filters['owner_id'] = self.lessee_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
             self.lessee_ctx.to_policy_values(),
-            owner=self.lessee_ctx.project_id,
+            owner_id=self.lessee_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
 
-        expected_filters['owner'] = self.lessee_ctx.project_id
+        expected_filters['owner_id'] = self.lessee_ctx.project_id
         expected_filters['project_id'] = self.random_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
             self.lessee_ctx.to_policy_values(),
-            owner=self.lessee_ctx.project_id,
+            owner_id=self.lessee_ctx.project_id,
             project_id=self.random_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
         del expected_filters['project_id']
 
         # owner
-        expected_filters['owner'] = self.owner_ctx.project_id
+        expected_filters['owner_id'] = self.owner_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
             self.owner_ctx.to_policy_values(),
-            owner=self.owner_ctx.project_id,
+            owner_id=self.owner_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
 
-        expected_filters['owner'] = self.owner_ctx.project_id
+        expected_filters['owner_id'] = self.owner_ctx.project_id
         expected_filters['project_id'] = self.random_ctx.project_id
         filters = LeasesController._lease_get_all_authorize_filters(
             self.owner_ctx.to_policy_values(),
-            owner=self.owner_ctx.project_id,
+            owner_id=self.owner_ctx.project_id,
             project_id=self.random_ctx.project_id,
             status='random')
         self.assertEqual(expected_filters, filters)
@@ -252,7 +252,7 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
                           LeasesController.
                           _lease_get_all_authorize_filters,
                           self.random_ctx.to_policy_values(),
-                          owner=self.random_ctx.project_id,
+                          owner_id=self.random_ctx.project_id,
                           status='random')
 
     def test_lease_get_all_all_view(self):
@@ -322,7 +322,7 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
     def test_lease_get_all_status(self):
 
         expected_filters = {
-            'project_id': 'adminid',
+            'project_or_owner_id': 'adminid',
             'status': ['created', 'active']
         }
 

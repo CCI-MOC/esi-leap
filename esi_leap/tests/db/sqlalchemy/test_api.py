@@ -76,6 +76,7 @@ test_lease_1 = dict(
     resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=10),
     end_time=now + datetime.timedelta(days=20),
+    properties={},
     status=statuses.CREATED,
 )
 
@@ -88,6 +89,7 @@ test_lease_2 = dict(
     resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=20),
     end_time=now + datetime.timedelta(days=30),
+    properties={},
     status=statuses.CREATED,
 )
 
@@ -100,6 +102,7 @@ test_lease_3 = dict(
     resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=50),
     end_time=now + datetime.timedelta(days=60),
+    properties={},
     status=statuses.ACTIVE,
 )
 
@@ -107,7 +110,7 @@ test_lease_4 = dict(
     uuid='44444',
     project_id='1e5533_2',
     owner_id='0wn3r_2',
-    name='l2',
+    name='l4',
     resource_uuid='1111',
     resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=85),
@@ -117,14 +120,16 @@ test_lease_4 = dict(
 )
 
 test_lease_5 = dict(
-    project_id='1e5533',
-    owner_id='0wn3r',
+    project_id='0wn3r',
+    owner_id='0wn3r_2',
+    name='l5',
     resource_uuid='1111',
     resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=90),
     end_time=now + datetime.timedelta(days=100),
-    uuid='lease_5',
+    uuid='55555',
     properties={},
+    status=statuses.EXPIRED,
 )
 
 
@@ -366,15 +371,61 @@ class TestAPI(base.DBTestCase):
         self.assertEqual(api.lease_get_by_name('some_name'), [])
 
     def test_lease_get_all(self):
-        o1 = api.offer_create(test_offer_2)
-        test_lease_4['offer_uuid'] = o1.uuid
-        o2 = api.offer_create(test_offer_3)
-        test_lease_5['offer_uuid'] = o2.uuid
-        l1 = api.lease_create(test_lease_4)
-        l2 = api.lease_create(test_lease_5)
+        api.lease_create(test_lease_1)
+        api.lease_create(test_lease_2)
+
         res = api.lease_get_all({})
-        self.assertEqual((l1.to_dict(), l2.to_dict()),
-                         (res[0].to_dict(), res[1].to_dict()))
+        res_uuids = [res_lease.to_dict()['uuid'] for res_lease in res]
+
+        self.assertEqual(2, res.count())
+        self.assertIn(test_lease_1['uuid'], res_uuids)
+        self.assertIn(test_lease_2['uuid'], res_uuids)
+
+    def test_lease_get_all_filter_by_status(self):
+        api.lease_create(test_lease_1)
+        api.lease_create(test_lease_2)
+        api.lease_create(test_lease_3)
+        api.lease_create(test_lease_4)
+        api.lease_create(test_lease_5)
+
+        res = api.lease_get_all({'status': [statuses.CREATED,
+                                            statuses.ACTIVE]})
+        res_uuids = [res_lease.to_dict()['uuid'] for res_lease in res]
+
+        self.assertEqual(3, res.count())
+        self.assertIn(test_lease_1['uuid'], res_uuids)
+        self.assertIn(test_lease_2['uuid'], res_uuids)
+        self.assertIn(test_lease_3['uuid'], res_uuids)
+
+    def test_lease_get_all_filter_by_time(self):
+        api.lease_create(test_lease_1)
+        api.lease_create(test_lease_2)
+        api.lease_create(test_lease_3)
+
+        start_time = test_lease_2['start_time'] + datetime.timedelta(days=1)
+        end_time = test_lease_2['end_time'] + datetime.timedelta(days=-1)
+
+        res = api.lease_get_all({'start_time': start_time,
+                                 'end_time': end_time})
+        res_uuids = [res_lease.to_dict()['uuid'] for res_lease in res]
+
+        self.assertEqual(1, res.count())
+        self.assertIn(test_lease_2['uuid'], res_uuids)
+
+    def test_lease_get_all_filter_by_project_or_owner_id(self):
+        api.lease_create(test_lease_1)
+        api.lease_create(test_lease_2)
+        api.lease_create(test_lease_3)
+        api.lease_create(test_lease_4)
+        api.lease_create(test_lease_5)
+
+        res = api.lease_get_all({'project_or_owner_id': '0wn3r'})
+        res_uuids = [res_lease.to_dict()['uuid'] for res_lease in res]
+
+        self.assertEqual(3, res.count())
+        self.assertIn(test_lease_1['uuid'], res_uuids)
+        self.assertIn(test_lease_2['uuid'], res_uuids)
+        self.assertIn(test_lease_5['uuid'], res_uuids)
 
     def test_lease_create(db):
         o1 = api.offer_create(test_offer_2)
