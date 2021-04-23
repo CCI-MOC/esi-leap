@@ -14,6 +14,7 @@ from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 
 from esi_leap.common import exception
+from esi_leap.common import keystone
 from esi_leap.common import policy
 from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
@@ -124,3 +125,16 @@ def lease_authorize_management(lease, cdict):
             if o.project_id != cdict['project_id']:
                 policy.authorize('esi_leap:offer:offer_admin',
                                  cdict, cdict)
+
+
+def check_offer_lessee(cdict, offer):
+    project_id = cdict['project_id']
+
+    # pass if offer has no lessee limitation or project_id created
+    # the offer
+    if offer.lessee_id is None or offer.project_id == project_id:
+        return
+
+    if offer.lessee_id not in keystone.get_parent_project_id_tree(
+            project_id):
+        policy.authorize('esi_leap:offer:offer_admin', cdict, cdict)

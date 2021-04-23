@@ -50,6 +50,7 @@ class Offer(Base):
     uuid = Column(String(36), nullable=False, unique=True)
     name = Column(String(35), nullable=True, unique=False)
     project_id = Column(String(255), nullable=False)
+    lessee_id = Column(String(255), nullable=True)
     resource_type = Column(String(36), nullable=False)
     resource_uuid = Column(String(36), nullable=False)
     start_time = Column(DateTime)

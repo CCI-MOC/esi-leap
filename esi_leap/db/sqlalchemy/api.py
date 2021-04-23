@@ -18,8 +18,10 @@ from oslo_db.sqlalchemy import enginefacade
 from oslo_log import log as logging
 
 import sqlalchemy as sa
+from sqlalchemy import or_
 
 from esi_leap.common import exception
+from esi_leap.common import keystone
 from esi_leap.common import statuses
 from esi_leap.db.sqlalchemy import models
 
@@ -112,13 +114,19 @@ def offer_get_all(filters):
 
     query = model_query(models.Offer)
 
+    lessee_id = filters.pop('lessee_id', None)
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
-
     a_start = filters.pop('available_start_time', None)
     a_end = filters.pop('available_end_time', None)
 
     query = query.filter_by(**filters)
+
+    if lessee_id:
+        lessee_id_list = keystone.get_parent_project_id_tree(lessee_id)
+        query = query.filter(or_(models.Offer.project_id == lessee_id,
+                                 models.Offer.lessee_id.__eq__(None),
+                                 models.Offer.lessee_id.in_(lessee_id_list)))
 
     if start and end:
         query = query.filter((start >= models.Offer.start_time) &

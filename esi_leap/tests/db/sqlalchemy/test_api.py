@@ -11,6 +11,7 @@
 #    under the License.
 
 import datetime
+import mock
 
 from esi_leap.common import exception as e
 from esi_leap.common import statuses
@@ -34,6 +35,7 @@ test_offer_1 = dict(
 test_offer_2 = dict(
     uuid='22222',
     project_id='0wn3r',
+    lessee_id='12345',
     name='o1',
     resource_uuid='1111',
     resource_type='dummy_node',
@@ -46,6 +48,7 @@ test_offer_2 = dict(
 test_offer_3 = dict(
     uuid='33333',
     project_id='0wn3r_2',
+    lessee_id='67890',
     name='o1',
     resource_uuid='1111',
     resource_type='dummy_node',
@@ -58,6 +61,20 @@ test_offer_3 = dict(
 test_offer_4 = dict(
     uuid='44444',
     project_id='0wn3r_2',
+    lessee_id='ABCDE',
+    name='o2',
+    resource_uuid='1111',
+    resource_type='dummy_node',
+    start_time=now,
+    end_time=now + datetime.timedelta(days=100),
+    properties={'foo': 'bar'},
+    status=statuses.AVAILABLE,
+)
+
+test_offer_5 = dict(
+    uuid='55555',
+    project_id='12345',
+    lessee_id='ABCDE',
     name='o2',
     resource_uuid='1111',
     resource_type='dummy_node',
@@ -330,8 +347,28 @@ class TestAPI(base.DBTestCase):
         o1 = api.offer_create(test_offer_2)
         o2 = api.offer_create(test_offer_3)
         res = api.offer_get_all({})
+
+        self.assertEqual(2, res.count())
         self.assertEqual((o1.to_dict(), o2.to_dict()),
                          (res[0].to_dict(), res[1].to_dict()))
+
+    @mock.patch('esi_leap.common.keystone.get_parent_project_id_tree')
+    def test_offer_get_all_lessee_filter(self, mock_gppit):
+        mock_gppit.return_value = ['12345', '67890']
+
+        o1 = api.offer_create(test_offer_1)
+        o2 = api.offer_create(test_offer_2)
+        o3 = api.offer_create(test_offer_3)
+        api.offer_create(test_offer_4)
+        o5 = api.offer_create(test_offer_5)
+        res = api.offer_get_all({'lessee_id': '12345'})
+
+        mock_gppit.assert_called_once_with('12345')
+        self.assertEqual(4, res.count())
+        self.assertEqual((o1.to_dict(), o2.to_dict(), o3.to_dict(),
+                          o5.to_dict()),
+                         (res[0].to_dict(), res[1].to_dict(),
+                          res[2].to_dict(), res[3].to_dict()))
 
     def test_lease_get_by_uuid(self):
         o1 = api.offer_create(test_offer_2)

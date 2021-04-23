@@ -13,10 +13,12 @@
 import datetime
 import http.client as http_client
 import mock
+from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 import testtools
 
 from esi_leap.api.controllers.v1.offer import OffersController
+from esi_leap.common import policy
 from esi_leap.common import statuses
 from esi_leap.objects import offer
 from esi_leap.tests.api import base as test_api_base
@@ -182,10 +184,56 @@ class TestOffersController(test_api_base.APITestCase):
         assert mock_get_availabilities.call_count == 2
         self.assertEqual(request, expected_resp)
 
+    @mock.patch('esi_leap.objects.offer.Offer.get_availabilities')
+    @mock.patch('esi_leap.objects.offer.Offer.get_all')
+    @mock.patch.object(policy, 'authorize', spec=True)
+    def test_get_lessee_filter(self, mock_authorize, mock_get_all,
+                               mock_get_availabilities):
+        mock_get_all.return_value = [self.test_offer, self.test_offer_2]
+        mock_get_availabilities.return_value = []
+        mock_authorize.side_effect = [
+            None,
+            oslo_policy.PolicyNotAuthorized('esi_leap:offer:offer_admin',
+                                            self.context.to_policy_values(),
+                                            self.context.to_policy_values())
+        ]
+
+        expected_filters = {'status': 'available',
+                            'lessee_id': self.context.project_id}
+        expected_resp = {'offers': [_get_offer_response(self.test_offer),
+                                    _get_offer_response(self.test_offer_2)]}
+
+        request = self.get_json('/offers')
+
+        mock_get_all.assert_called_once_with(expected_filters, self.context)
+        assert mock_get_availabilities.call_count == 2
+        self.assertEqual(request, expected_resp)
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.check_offer_lessee')
+    @mock.patch('esi_leap.api.controllers.v1.utils.get_offer')
+    @mock.patch('esi_leap.api.controllers.v1.offer.' +
+                'OffersController._add_offer_availabilities')
+    @mock.patch.object(policy, 'authorize', spec=True)
+    def test_get_one(self, mock_authorize, mock_aoa, mock_get_offer,
+                     mock_col):
+        mock_get_offer.return_value = self.test_offer
+        mock_aoa.return_value = self.test_offer.to_dict()
+
+        self.get_json('/offers/' + self.test_offer.uuid)
+
+        mock_authorize.assert_called_once_with('esi_leap:offer:get',
+                                               self.context.to_policy_values(),
+                                               self.context.to_policy_values())
+        mock_get_offer.assert_called_once_with(self.test_offer.uuid)
+        mock_col.assert_called_once_with(self.context.to_policy_values(),
+                                         self.test_offer)
+        mock_aoa.assert_called_once_with(self.test_offer)
+
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.objects.lease.Lease.create')
+    @mock.patch('esi_leap.api.controllers.v1.utils.check_offer_lessee')
     @mock.patch('esi_leap.api.controllers.v1.utils.get_offer')
-    def test_claim(self, mock_get_offer, mock_lease_create,
+    def test_claim(self, mock_get_offer, mock_col, mock_lease_create,
                    mock_generate_uuid):
         lease_uuid = '12345'
         mock_generate_uuid.return_value = lease_uuid
@@ -208,6 +256,8 @@ class TestOffersController(test_api_base.APITestCase):
 
         mock_get_offer.assert_called_once_with(self.test_offer.uuid,
                                                statuses.AVAILABLE)
+        mock_col.assert_called_once_with(self.context.to_policy_values(),
+                                         self.test_offer)
         mock_lease_create.assert_called_once()
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)

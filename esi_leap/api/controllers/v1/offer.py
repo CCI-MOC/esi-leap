@@ -12,6 +12,7 @@
 
 import datetime
 import http.client as http_client
+from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 import pecan
 from pecan import rest
@@ -38,6 +39,7 @@ class Offer(base.ESILEAPBase):
     name = wsme.wsattr(wtypes.text)
     uuid = wsme.wsattr(wtypes.text, readonly=True)
     project_id = wsme.wsattr(wtypes.text, readonly=True)
+    lessee_id = wsme.wsattr(wtypes.text)
     resource_type = wsme.wsattr(wtypes.text)
     resource_uuid = wsme.wsattr(wtypes.text, mandatory=True)
     start_time = wsme.wsattr(datetime.datetime)
@@ -73,10 +75,13 @@ class OffersController(rest.RestController):
     def get_one(self, offer_id):
         request = pecan.request.context
         cdict = request.to_policy_values()
+
         policy.authorize('esi_leap:offer:get', cdict, cdict)
 
         o_object = utils.get_offer(offer_id)
+        utils.check_offer_lessee(cdict, o_object)
         o = OffersController._add_offer_availabilities(o_object)
+
         return Offer(**o)
 
     @wsme_pecan.wsexpose(OfferCollection, wtypes.text, wtypes.text,
@@ -122,8 +127,16 @@ class OffersController(rest.RestController):
         elif status == 'any':
             status = None
 
+        try:
+            policy.authorize('esi_leap:offer:offer_admin',
+                             cdict, cdict)
+            lessee_id = None
+        except oslo_policy.PolicyNotAuthorized:
+            lessee_id = cdict['project_id']
+
         possible_filters = {
             'project_id': project_id,
+            'lessee_id': lessee_id,
             'resource_type': resource_type,
             'resource_uuid': resource_uuid,
             'status': status,
@@ -198,6 +211,7 @@ class OffersController(rest.RestController):
         policy.authorize('esi_leap:offer:claim', cdict, cdict)
 
         offer = utils.get_offer(offer_uuid, statuses.AVAILABLE)
+        utils.check_offer_lessee(cdict, offer)
 
         lease_dict = new_lease.to_dict()
         lease_dict['project_id'] = request.project_id
