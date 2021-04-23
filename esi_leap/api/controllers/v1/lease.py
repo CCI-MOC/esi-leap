@@ -25,7 +25,10 @@ from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
 from esi_leap.common import policy
 from esi_leap.common import statuses
+import esi_leap.conf
 from esi_leap.objects import lease as lease_obj
+
+CONF = esi_leap.conf.CONF
 
 
 class Lease(base.ESILEAPBase):
@@ -98,14 +101,15 @@ class LeasesController(rest.RestController):
         policy.authorize('esi_leap:lease:create', cdict, cdict)
 
         lease_dict = new_lease.to_dict()
+        lease_dict['owner_id'] = request.project_id
+        lease_dict['uuid'] = uuidutils.generate_uuid()
+        if 'resource_type' not in lease_dict:
+            lease_dict['resource_type'] = CONF.api.default_resource_type
 
         utils.check_resource_admin(cdict,
                                    lease_dict.get('resource_type'),
                                    lease_dict.get('resource_uuid'),
                                    request.project_id)
-
-        lease_dict['owner_id'] = request.project_id
-        lease_dict['uuid'] = uuidutils.generate_uuid()
 
         if 'start_time' not in lease_dict:
             lease_dict['start_time'] = datetime.datetime.now()

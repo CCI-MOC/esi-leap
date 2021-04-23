@@ -26,8 +26,11 @@ from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
 from esi_leap.common import policy
 from esi_leap.common import statuses
+import esi_leap.conf
 from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
+
+CONF = esi_leap.conf.CONF
 
 
 class Offer(base.ESILEAPBase):
@@ -35,7 +38,7 @@ class Offer(base.ESILEAPBase):
     name = wsme.wsattr(wtypes.text)
     uuid = wsme.wsattr(wtypes.text, readonly=True)
     project_id = wsme.wsattr(wtypes.text, readonly=True)
-    resource_type = wsme.wsattr(wtypes.text, mandatory=True)
+    resource_type = wsme.wsattr(wtypes.text)
     resource_uuid = wsme.wsattr(wtypes.text, mandatory=True)
     start_time = wsme.wsattr(datetime.datetime)
     end_time = wsme.wsattr(datetime.datetime)
@@ -152,6 +155,8 @@ class OffersController(rest.RestController):
         offer_dict = new_offer.to_dict()
         offer_dict['project_id'] = request.project_id
         offer_dict['uuid'] = uuidutils.generate_uuid()
+        if 'resource_type' not in offer_dict:
+            offer_dict['resource_type'] = CONF.api.default_resource_type
 
         utils.check_resource_admin(cdict,
                                    offer_dict.get('resource_type'),
