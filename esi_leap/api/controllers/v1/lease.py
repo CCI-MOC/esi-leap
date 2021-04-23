@@ -77,7 +77,7 @@ class LeasesController(rest.RestController):
                          datetime.datetime, datetime.datetime, wtypes.text,
                          wtypes.text, wtypes.text, wtypes.text)
     def get_all(self, project_id=None, start_time=None, end_time=None,
-                status=None, offer_uuid=None, view=None, owner=None):
+                status=None, offer_uuid=None, view=None, owner_id=None):
         request = pecan.request.context
         cdict = request.to_policy_values()
 
@@ -86,7 +86,7 @@ class LeasesController(rest.RestController):
                 cdict,
                 project_id=project_id, start_time=start_time,
                 end_time=end_time, status=status,
-                offer_uuid=offer_uuid, view=view, owner=owner)
+                offer_uuid=offer_uuid, view=view, owner_id=owner_id)
 
         lease_collection = LeaseCollection()
         leases = lease_obj.Lease.get_all(filters, request)
@@ -137,7 +137,7 @@ class LeasesController(rest.RestController):
                                          start_time=None, end_time=None,
                                          status=None, offer_uuid=None,
                                          project_id=None, view=None,
-                                         owner=None):
+                                         owner_id=None):
 
         if status is None:
             status = [statuses.CREATED, statuses.ACTIVE]
@@ -155,26 +155,27 @@ class LeasesController(rest.RestController):
 
         if view == 'all':
             policy.authorize('esi_leap:lease:lease_admin', cdict, cdict)
-            possible_filters['owner'] = owner
+            possible_filters['owner_id'] = owner_id
             possible_filters['project_id'] = project_id
         else:
             policy.authorize('esi_leap:lease:get', cdict, cdict)
 
-            if owner:
-                if cdict['project_id'] != owner:
+            if owner_id:
+                if cdict['project_id'] != owner_id:
                     policy.authorize('esi_leap:lease:lease_admin',
                                      cdict, cdict)
 
-                possible_filters['owner'] = owner
+                possible_filters['owner_id'] = owner_id
                 possible_filters['project_id'] = project_id
             else:
                 if project_id is None:
                     project_id = cdict['project_id']
-                elif project_id != cdict['project_id']:
-                    policy.authorize('esi_leap:lease:lease_admin',
-                                     cdict, cdict)
-
-                possible_filters['project_id'] = project_id
+                    possible_filters['project_or_owner_id'] = project_id
+                else:
+                    if project_id != cdict['project_id']:
+                        policy.authorize('esi_leap:lease:lease_admin',
+                                         cdict, cdict)
+                    possible_filters['project_id'] = project_id
 
         if (start_time and end_time is None) or \
                 (end_time and start_time is None):
