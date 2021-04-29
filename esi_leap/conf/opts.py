@@ -17,6 +17,7 @@ _opts = [
     ('api', esi_leap.conf.api.opts),
     ('dummy_node', esi_leap.conf.dummy_node.opts),
     ('ironic', esi_leap.conf.ironic.list_opts()),
+    ('keystone', esi_leap.conf.keystone.list_opts()),
     ('pecan', esi_leap.conf.pecan.opts),
 ]
 

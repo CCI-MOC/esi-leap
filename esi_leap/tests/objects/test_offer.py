@@ -33,6 +33,7 @@ class TestOfferObject(base.DBTestCase):
             'name': "o",
             'uuid': uuidutils.generate_uuid(),
             'project_id': '0wn5r',
+            'lessee_id': None,
             'resource_type': 'dummy_node',
             'resource_uuid': '1718',
             'start_time': start,

@@ -61,6 +61,7 @@ test_offer = offer.Offer(
     resource_uuid=test_node_1._uuid,
     name="o",
     uuid=o_uuid,
+    lessee_id=None,
     status=statuses.AVAILABLE,
     start_time=start,
     end_time=end,
@@ -72,6 +73,31 @@ test_offer_2 = offer.Offer(
     resource_uuid=test_node_1._uuid,
     name="o",
     uuid=uuidutils.generate_uuid(),
+    lessee_id=None,
+    status=statuses.EXPIRED,
+    start_time=start,
+    end_time=end,
+    project_id=owner_ctx.project_id
+)
+
+test_offer_lessee_match = offer.Offer(
+    resource_type='test_node',
+    resource_uuid=test_node_1._uuid,
+    name="o",
+    uuid=uuidutils.generate_uuid(),
+    lessee_id='lesseeid',
+    status=statuses.EXPIRED,
+    start_time=start,
+    end_time=end,
+    project_id=owner_ctx.project_id
+)
+
+test_offer_lessee_no_match = offer.Offer(
+    resource_type='test_node',
+    resource_uuid=test_node_1._uuid,
+    name="o",
+    uuid=uuidutils.generate_uuid(),
+    lessee_id='otherlesseeid',
     status=statuses.EXPIRED,
     start_time=start,
     end_time=end,
@@ -115,7 +141,7 @@ test_lease_4 = lease.Lease(
 )
 
 
-class TestManagementUtils(testtools.TestCase):
+class TestLeaseAuthorizeManagementUtils(testtools.TestCase):
 
     @mock.patch('esi_leap.objects.offer.Offer.get')
     @mock.patch.object(policy, 'authorize', spec=True)
@@ -436,7 +462,7 @@ class TestGetObjectUtils(testtools.TestCase):
         )
 
 
-class TestOffersControllerStaticMethods(testtools.TestCase):
+class TestCheckResourceAdminUtils(testtools.TestCase):
 
     @mock.patch.object(test_node_1, 'is_resource_admin',
                        return_value=True)
@@ -526,3 +552,77 @@ class TestOffersControllerStaticMethods(testtools.TestCase):
         mock_authorize.assert_called_once_with('esi_leap:offer:offer_admin',
                                                owner_ctx_2.to_policy_values(),
                                                owner_ctx_2.to_policy_values())
+
+
+class TestOfferLesseeUtils(testtools.TestCase):
+
+    @mock.patch.object(policy, 'authorize', spec=True)
+    @mock.patch('esi_leap.common.keystone.get_parent_project_id_tree')
+    def test_check_offer_lessee_no_lessee_id(self,
+                                             mock_gppit,
+                                             mock_authorize):
+        utils.check_offer_lessee(lessee_ctx.to_policy_values(),
+                                 test_offer)
+
+        assert not mock_authorize.called
+        assert not mock_gppit.called
+
+    @mock.patch.object(policy, 'authorize', spec=True)
+    @mock.patch('esi_leap.common.keystone.get_parent_project_id_tree')
+    def test_check_offer_lessee_owner_match(self,
+                                            mock_gppit,
+                                            mock_authorize):
+        utils.check_offer_lessee(owner_ctx.to_policy_values(),
+                                 test_offer_lessee_no_match)
+
+        assert not mock_authorize.called
+        assert not mock_gppit.called
+
+    @mock.patch.object(policy, 'authorize', spec=True)
+    @mock.patch('esi_leap.common.keystone.get_parent_project_id_tree')
+    def test_check_offer_lessee_admin(self,
+                                      mock_gppit,
+                                      mock_authorize):
+        mock_authorize.return_value = True
+        mock_gppit.return_value = [admin_ctx.project_id]
+
+        utils.check_offer_lessee(admin_ctx.to_policy_values(),
+                                 test_offer_lessee_no_match)
+
+        mock_authorize.assert_called_once_with('esi_leap:offer:offer_admin',
+                                               admin_ctx.to_policy_values(),
+                                               admin_ctx.to_policy_values())
+        mock_gppit.assert_called_once_with(admin_ctx.project_id)
+
+    @mock.patch.object(policy, 'authorize', spec=True)
+    @mock.patch('esi_leap.common.keystone.get_parent_project_id_tree')
+    def test_check_offer_lessee_non_admin_match(self,
+                                                mock_gppit,
+                                                mock_authorize):
+        mock_gppit.return_value = [lessee_ctx.project_id, 'lesseeidparent']
+
+        utils.check_offer_lessee(lessee_ctx.to_policy_values(),
+                                 test_offer_lessee_match)
+
+        assert not mock_authorize.called
+        mock_gppit.assert_called_once_with(lessee_ctx.project_id)
+
+    @mock.patch.object(policy, 'authorize', spec=True)
+    @mock.patch('esi_leap.common.keystone.get_parent_project_id_tree')
+    def test_check_offer_lessee_non_admin_no_match(self,
+                                                   mock_gppit,
+                                                   mock_authorize):
+        mock_authorize.side_effect = oslo_policy.PolicyNotAuthorized(
+            'esi_leap:offer:offer_admin',
+            lessee_ctx.to_dict(), lessee_ctx.to_dict())
+        mock_gppit.return_value = [lessee_ctx.project_id, 'lesseeidparent']
+
+        self.assertRaises(oslo_policy.PolicyNotAuthorized,
+                          utils.check_offer_lessee,
+                          lessee_ctx.to_policy_values(),
+                          test_offer_lessee_no_match)
+
+        mock_authorize.assert_called_once_with('esi_leap:offer:offer_admin',
+                                               lessee_ctx.to_policy_values(),
+                                               lessee_ctx.to_policy_values())
+        mock_gppit.assert_called_once_with(lessee_ctx.project_id)

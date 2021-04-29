@@ -34,6 +34,7 @@ class Offer(base.ESILEAPObject):
         'name': fields.StringField(nullable=True),
         'uuid': fields.UUIDField(),
         'project_id': fields.StringField(),
+        'lessee_id': fields.StringField(nullable=True),
         'resource_type': fields.StringField(),
         'resource_uuid': fields.StringField(),
         'start_time': fields.DateTimeField(nullable=True),
