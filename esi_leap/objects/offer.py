@@ -114,32 +114,31 @@ class Offer(base.ESILEAPObject):
         _create_offer()
 
     def cancel(self):
+        leases = lease_obj.Lease.get_all(
+            {'offer_uuid': self.uuid,
+             'status': [statuses.CREATED, statuses.ACTIVE]},
+            None)
+        for lease in leases:
+            lease.cancel()
+
         @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
                                                          self.resource_uuid))
         def _cancel_offer():
-
-            leases = lease_obj.Lease.get_all(
-                {'offer_uuid': self.uuid}, None)
-            for lease in leases:
-                if lease.status in [statuses.CREATED, statuses.ACTIVE]:
-                    lease.cancel()
-
             self.status = statuses.CANCELLED
             self.save(None)
 
         _cancel_offer()
 
     def expire(self, context=None):
+        leases = lease_obj.Lease.get_all(
+            {'offer_uuid': self.uuid}, None)
+        for lease in leases:
+            if lease.status != statuses.EXPIRED:
+                lease.expire(context)
+
         @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
                                                          self.resource_uuid))
         def _expire_offer():
-
-            leases = lease_obj.Lease.get_all(
-                {'offer_uuid': self.uuid}, None)
-            for lease in leases:
-                if lease.status != statuses.EXPIRED:
-                    lease.expire(context)
-
             # expire offer
             self.status = statuses.EXPIRED
             self.save(context)

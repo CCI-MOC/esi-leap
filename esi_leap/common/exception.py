@@ -77,13 +77,22 @@ class OfferNotAvailable(ESILeapException):
                 "'available'. Got offer status '%(status)s'.")
 
 
+class OwnerChangeNotFound(ESILeapException):
+    msg_fmt = _(
+        "Ownership change with uuid %(owner_change_uuid)s not found.")
+
+
+class OwnerChangeSameFromAndToOwner(ESILeapException):
+    msg_fmt = _(
+        "Ownership change must have different from_ and to_ owners.")
+
+
 class ProjectNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on project %(project_id)s.")
 
 
 class ResourceTimeConflict(ESILeapException):
-    msg_fmt = ("Conflict with existing offer or lease "
-               "on %(resource_type)s %(resource_uuid)s.")
+    msg_fmt = ("Time conflict for %(resource_type)s %(resource_uuid)s.")
 
 
 class ResourceNoPermission(ESILeapException):

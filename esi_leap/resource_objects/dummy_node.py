@@ -62,8 +62,14 @@ class DummyNode(base.ResourceObjectInterface):
         with open(self._path, 'w') as node_file:
             json.dump(node_dict, node_file)
 
-    def is_resource_admin(self, project_id):
+    def set_owner(self, owner_id):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        project_owner_id = node_dict.get("project_owner_id", None)
-        return (project_owner_id == project_id)
+        node_dict["project_owner_id"] = owner_id
+        with open(self._path, 'w') as node_file:
+            json.dump(node_dict, node_file)
+
+    def resource_admin_project_id(self):
+        with open(self._path) as node_file:
+            node_dict = json.load(node_file)
+        return node_dict.get("project_owner_id", None)

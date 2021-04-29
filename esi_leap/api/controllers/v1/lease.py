@@ -106,16 +106,18 @@ class LeasesController(rest.RestController):
         if 'resource_type' not in lease_dict:
             lease_dict['resource_type'] = CONF.api.default_resource_type
 
-        utils.check_resource_admin(cdict,
-                                   lease_dict.get('resource_type'),
-                                   lease_dict.get('resource_uuid'),
-                                   request.project_id)
-
         if 'start_time' not in lease_dict:
             lease_dict['start_time'] = datetime.datetime.now()
 
         if 'end_time' not in lease_dict:
             lease_dict['end_time'] = datetime.datetime.max
+
+        utils.check_resource_admin(cdict,
+                                   lease_dict.get('resource_type'),
+                                   lease_dict.get('resource_uuid'),
+                                   request.project_id,
+                                   lease_dict.get('start_time'),
+                                   lease_dict.get('end_time'))
 
         lease = lease_obj.Lease(**lease_dict)
         lease.create(request)
