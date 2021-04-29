@@ -9,6 +9,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 import datetime
 from esi_leap.common import statuses
 from esi_leap.resource_objects import test_node
@@ -75,10 +76,10 @@ class TestTestNode(base.TestCase):
             self.fake_test_node.expire_lease(
                 fake_lease), None)
 
-    def test_is_resource_admin(self):
-        res1 = self.fake_test_node.is_resource_admin(
-            self.fake_admin_project_id_1)
-        self.assertEqual(res1, False)
-        res2 = self.fake_test_node.is_resource_admin(
-            self.fake_admin_project_id_2)
-        self.assertEqual(res2, True)
+    def test_set_owner(self):
+        self.assertEqual(self.fake_test_node.set_owner('12345'), None)
+
+    def test_resource_admin_project_id(self):
+        self.assertEqual(
+            self.fake_admin_project_id_2,
+            self.fake_test_node.resource_admin_project_id())

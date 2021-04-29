@@ -111,13 +111,15 @@ class TestDummyNode(base.TestCase):
             self.fake_dummy_node.expire_lease(fake_lease)
             self.assertEqual(mock_file_open.call_count, 2)
 
-    def test_is_resource_admin(self):
+    def test_set_owner(self):
+        mock_open = mock.mock_open(read_data=self.fake_read_data_2)
+        with mock.patch('builtins.open', mock_open) as mock_file_open:
+            self.fake_dummy_node.set_owner('54321')
+            self.assertEqual(mock_file_open.call_count, 2)
+
+    def test_resource_admin_project_id(self):
         mock_open = mock.mock_open(read_data=self.fake_read_data_1)
         with mock.patch('builtins.open', mock_open) as mock_file_open:
-            res1 = self.fake_dummy_node.is_resource_admin(
-                self.fake_admin_project_id_1)
-            res2 = self.fake_dummy_node.is_resource_admin(
-                self.fake_admin_project_id_2)
-            self.assertEqual(res1, False)
-            self.assertEqual(res2, True)
-            self.assertEqual(mock_file_open.call_count, 2)
+            self.assertEqual(self.fake_admin_project_id_2,
+                             self.fake_dummy_node.resource_admin_project_id())
+            self.assertEqual(mock_file_open.call_count, 1)

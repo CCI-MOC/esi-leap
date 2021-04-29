@@ -137,7 +137,8 @@ class TestOfferObject(base.DBTestCase):
         mock_rva.assert_called_once_with(o.resource_type,
                                          o.resource_uuid,
                                          o.start_time,
-                                         o.end_time)
+                                         o.end_time,
+                                         is_owner_change=False)
         mock_oc.assert_called_once_with(self.test_offer_data)
 
     def test_create_invalid_time(self):

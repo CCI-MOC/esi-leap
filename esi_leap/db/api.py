@@ -146,3 +146,12 @@ def lease_destroy(lease_uuid):
 def resource_verify_availability(r_type, r_uuid, start, end):
     return IMPL.resource_verify_availability(
         r_type, r_uuid, start, end)
+
+
+def resource_check_admin(resource_type, resource_uuid,
+                         start_time, end_time,
+                         default_admin_project_id, project_id):
+    return IMPL.resource_check_admin(
+        resource_type, resource_uuid,
+        start_time, end_time,
+        default_admin_project_id, project_id)

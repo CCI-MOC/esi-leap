@@ -117,6 +117,7 @@ def offer_get_all(filters):
     lessee_id = filters.pop('lessee_id', None)
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
+    time_filter_type = filters.pop('time_filter_type', None)
     a_start = filters.pop('available_start_time', None)
     a_end = filters.pop('available_end_time', None)
 
@@ -129,8 +130,15 @@ def offer_get_all(filters):
                                  models.Offer.lessee_id.in_(lessee_id_list)))
 
     if start and end:
-        query = query.filter((start >= models.Offer.start_time) &
-                             (end <= models.Offer.end_time))
+        if time_filter_type == 'within':
+            query = query.filter(((start <= models.Offer.start_time) &
+                                  (end >= models.Offer.start_time)) |
+
+                                 ((start <= models.Offer.end_time) &
+                                  (end >= models.Offer.end_time)))
+        else:
+            query = query.filter((start >= models.Offer.start_time) &
+                                 (end <= models.Offer.end_time))
 
     if a_start and a_end:
         for o in query:
@@ -186,14 +194,14 @@ def offer_verify_availability(offer_ref, start, end):
                )
 
     conflict = leases.filter((
-        (start >= models.Lease.start_time) &
-        (start < models.Lease.end_time) |
+        ((start >= models.Lease.start_time) &
+         (start < models.Lease.end_time)) |
 
-        (end > models.Lease.start_time) &
-        (end <= models.Lease.end_time) |
+        ((end > models.Lease.start_time) &
+         (end <= models.Lease.end_time)) |
 
-        (start <= models.Lease.start_time) &
-        (end >= models.Lease.end_time)
+        ((start <= models.Lease.start_time) &
+         (end >= models.Lease.end_time))
     )).first()
 
     if conflict:
@@ -268,6 +276,7 @@ def lease_get_all(filters):
 
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
+    time_filter_type = filters.pop('time_filter_type', None)
     status = filters.pop('status', None)
     project_or_owner_id = filters.pop('project_or_owner_id', None)
 
@@ -277,8 +286,15 @@ def lease_get_all(filters):
         query = query.filter((models.Lease.status.in_(status)))
 
     if start and end:
-        query = query.filter((start >= models.Lease.start_time) &
-                             (end <= models.Lease.end_time))
+        if time_filter_type == 'within':
+            query = query.filter(((start <= models.Lease.start_time) &
+                                  (end >= models.Lease.start_time)) |
+
+                                 ((start <= models.Lease.end_time) &
+                                  (end >= models.Lease.end_time)))
+        else:
+            query = query.filter((start >= models.Lease.start_time) &
+                                 (end <= models.Lease.end_time))
 
     if project_or_owner_id:
         query = query.filter(
@@ -334,7 +350,93 @@ def lease_destroy(lease_uuid):
         session.flush()
 
 
-def resource_verify_availability(r_type, r_uuid, start, end):
+# Owner Changes
+def owner_change_get_by_uuid(owner_change_uuid):
+    query = model_query(models.OwnerChange)
+    result = query.filter_by(uuid=owner_change_uuid).one_or_none()
+    return result
+
+
+def owner_change_get_all(filters):
+    query = model_query(models.OwnerChange)
+
+    start = filters.pop('start_time', None)
+    end = filters.pop('end_time', None)
+    status = filters.pop('status', None)
+    from_or_to_owner_id = filters.pop('from_or_to_owner_id', None)
+
+    query = query.filter_by(**filters)
+
+    if status:
+        query = query.filter((models.OwnerChange.status.in_(status)))
+
+    if start and end:
+        query = query.filter((start >= models.OwnerChange.start_time) &
+                             (end <= models.OwnerChange.end_time))
+
+    if from_or_to_owner_id:
+        query = query.filter(
+            (from_or_to_owner_id == models.OwnerChange.from_owner_id) |
+            (from_or_to_owner_id == models.OwnerChange.to_owner_id))
+
+    return query
+
+
+def owner_change_create(values):
+    owner_change_ref = models.OwnerChange()
+    owner_change_ref.update(values)
+
+    with _session_for_write() as session:
+        session.add(owner_change_ref)
+        session.flush()
+        return owner_change_ref
+
+
+def owner_change_update(owner_change_uuid, values):
+    with _session_for_write() as session:
+        query = model_query(models.OwnerChange)
+        owner_change_ref = query.filter_by(
+            uuid=owner_change_uuid).one_or_none()
+
+        values.pop('uuid', None)
+        values.pop('from_owner_id', None)
+        values.pop('to_owner_id', None)
+        values.pop('resource_type', None)
+        values.pop('resource_uuid', None)
+
+        start = values.get('start_time', None)
+        end = values.get('end_time', None)
+        if start is None:
+            start = owner_change_ref.start_time
+        if end is None:
+            end = owner_change_ref.end_time
+        if start >= end:
+            raise exception.InvalidTimeRange(resource="an owner_change",
+                                             start_time=str(start),
+                                             end_time=str(end))
+
+        owner_change_ref.update(values)
+        session.flush()
+        return owner_change_ref
+
+
+def owner_change_destroy(owner_change_uuid):
+    with _session_for_write() as session:
+
+        query = model_query(models.OwnerChange)
+        owner_change_ref = query.filter_by(
+            uuid=owner_change_uuid).one_or_none()
+
+        if not owner_change_ref:
+            raise exception.OwnerChangeNotFound(
+                owner_change_uuid=owner_change_uuid)
+        query.delete()
+        session.flush()
+
+
+# Resources
+def resource_verify_availability(r_type, r_uuid, start, end,
+                                 is_owner_change=False):
     # check conflict with offers
     o_query = model_query(models.Offer)
 
@@ -345,14 +447,14 @@ def resource_verify_availability(r_type, r_uuid, start, end):
                (models.Offer.status == statuses.AVAILABLE))
 
     offer_conflict = offers.filter((
-        (start >= models.Offer.start_time) &
-        (start < models.Offer.end_time) |
+        ((start >= models.Offer.start_time) &
+         (start < models.Offer.end_time)) |
 
-        (end > models.Offer.start_time) &
-        (end <= models.Offer.end_time) |
+        ((end > models.Offer.start_time) &
+         (end <= models.Offer.end_time)) |
 
-        (start <= models.Offer.start_time) &
-        (end >= models.Offer.end_time)
+        ((start <= models.Offer.start_time) &
+         (end >= models.Offer.end_time))
     )).first()
 
     if offer_conflict:
@@ -370,17 +472,94 @@ def resource_verify_availability(r_type, r_uuid, start, end):
                (models.Lease.status.in_([statuses.CREATED, statuses.ACTIVE])))
 
     lease_conflict = leases.filter((
-        (start >= models.Lease.start_time) &
-        (start < models.Lease.end_time) |
+        ((start >= models.Lease.start_time) &
+         (start < models.Lease.end_time)) |
 
-        (end > models.Lease.start_time) &
-        (end <= models.Lease.end_time) |
+        ((end > models.Lease.start_time) &
+         (end <= models.Lease.end_time)) |
 
-        (start <= models.Lease.start_time) &
-        (end >= models.Lease.end_time)
+        ((start <= models.Lease.start_time) &
+         (end >= models.Lease.end_time))
     )).first()
 
     if lease_conflict:
         raise exception.ResourceTimeConflict(
             resource_uuid=r_uuid,
             resource_type=r_type)
+
+    # check conflict with ownership changes
+    if not is_owner_change:
+        # check_resource_admin will have been called earlier
+        # for leases and offers
+        return
+
+    oc_query = model_query(models.OwnerChange)
+
+    ocs = oc_query.with_entities(
+        models.OwnerChange.start_time, models.OwnerChange.end_time).\
+        filter((models.OwnerChange.resource_uuid == r_uuid),
+               (models.OwnerChange.resource_type == r_type),
+               (models.OwnerChange.status.in_([statuses.CREATED,
+                                               statuses.ACTIVE])))
+
+    oc_conflict = ocs.filter((
+        ((start >= models.OwnerChange.start_time) &
+         (start < models.OwnerChange.end_time)) |
+
+        ((end > models.OwnerChange.start_time) &
+         (end <= models.OwnerChange.end_time)) |
+
+        ((start <= models.OwnerChange.start_time) &
+         (end >= models.OwnerChange.end_time))
+    )).first()
+
+    if oc_conflict:
+        raise exception.ResourceTimeConflict(
+            resource_uuid=r_uuid,
+            resource_type=r_type)
+
+
+def resource_check_admin(resource_type, resource_uuid,
+                         start_time, end_time,
+                         default_admin_project_id, project_id):
+    # check if time period straddles an owner changes
+    ocs_conflicts = model_query(models.OwnerChange).with_entities(
+        models.OwnerChange.start_time, models.OwnerChange.end_time).\
+        filter((models.OwnerChange.resource_uuid == resource_uuid),
+               (models.OwnerChange.resource_type == resource_type),
+               (models.OwnerChange.status.in_([statuses.CREATED,
+                                               statuses.ACTIVE])))
+
+    ocs_conflicts = ocs_conflicts.filter((
+        ((start_time >= models.OwnerChange.start_time) &
+         (start_time < models.OwnerChange.end_time) &
+         (end_time > models.OwnerChange.end_time)) |
+
+        ((start_time < models.OwnerChange.start_time) &
+         (end_time > models.OwnerChange.start_time) &
+         (end_time < models.OwnerChange.end_time)) |
+
+        ((start_time <= models.OwnerChange.start_time) &
+         (end_time >= models.OwnerChange.end_time))
+    ))
+
+    if ocs_conflicts.count() > 0:
+        return False
+
+    # check if time period encompasses a single owner change
+    filters = {
+        'resource_type': resource_type,
+        'resource_uuid': resource_uuid,
+        'start_time': start_time,
+        'end_time': end_time,
+        'status': [statuses.CREATED, statuses.ACTIVE]
+    }
+    ocs = owner_change_get_all(filters)
+
+    if ocs.count() > 1:
+        # shouldn't happen, but...
+        return False
+    if ocs.count() == 1:
+        return project_id == ocs[0].to_owner_id
+    # no owner changes; use default check
+    return project_id == default_admin_project_id

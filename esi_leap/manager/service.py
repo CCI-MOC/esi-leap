@@ -16,6 +16,7 @@ import esi_leap.conf
 from esi_leap.manager import utils
 from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
+from esi_leap.objects import owner_change as owner_change_obj
 from oslo_context import context as ctx
 from oslo_log import log as logging
 import oslo_messaging as messaging
@@ -52,6 +53,10 @@ class ManagerService(service.Service):
         self.tg.add_timer(EVENT_INTERVAL, self._expire_leases)
         LOG.info("Starting _expire_offers periodic job")
         self.tg.add_timer(EVENT_INTERVAL, self._expire_offers)
+        LOG.info("Starting _fulfill_owner_changes periodic job")
+        self.tg.add_timer(EVENT_INTERVAL, self._fulfill_owner_changes)
+        LOG.info("Starting _expire_owner_changes periodic job")
+        self.tg.add_timer(EVENT_INTERVAL, self._expire_owner_changes)
 
     def stop(self):
         super(ManagerService, self).stop()
@@ -89,6 +94,26 @@ class ManagerService(service.Service):
                 LOG.info("Expiring offer %s for %s %s",
                          offer.uuid, offer.resource_type, offer.resource_uuid)
                 offer.expire(self._context)
+
+    def _fulfill_owner_changes(self):
+        LOG.info("Checking for owner changes to fulfill")
+        ocs = owner_change_obj.OwnerChange.get_all(
+            {'status': [statuses.CREATED]}, self._context)
+        now = timeutils.utcnow()
+        for oc in ocs:
+            if oc.start_time <= now and now <= oc.end_time:
+                LOG.info("Fulfilling owner change %s", oc.uuid)
+                oc.fulfill(self._context)
+
+    def _expire_owner_changes(self):
+        LOG.info("Checking for expiring owner changes")
+        ocs = owner_change_obj.OwnerChange.get_all(
+            {'status': [statuses.ACTIVE, statuses.CREATED]}, self._context)
+        now = timeutils.utcnow()
+        for oc in ocs:
+            if oc.end_time <= now:
+                LOG.info("Expiring owner change %s", oc.uuid)
+                oc.expire(self._context)
 
 
 class ManagerEndpoint(object):

@@ -91,3 +91,26 @@ class Lease(Base):
         backref=orm.backref('offers'),
         foreign_keys=offer_uuid,
         primaryjoin=offer_uuid == Offer.uuid)
+
+
+class OwnerChange(Base):
+    """Represents an ownership change."""
+
+    __tablename__ = 'owner_changes'
+    __table_args__ = (
+        Index('oc_uuid_idx', 'uuid'),
+        Index('oc_from_owner_id_idx', 'from_owner_id'),
+        Index('oc_to_owner_id_idx', 'to_owner_id'),
+    )
+
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    uuid = Column(String(36), nullable=False, unique=True)
+    from_owner_id = Column(String(255), nullable=False)
+    to_owner_id = Column(String(255), nullable=False)
+    resource_type = Column(String(36), nullable=False)
+    resource_uuid = Column(String(36), nullable=False)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
+    fulfill_time = Column(DateTime)
+    expire_time = Column(DateTime)
+    status = Column(String(15), nullable=False, default=statuses.CREATED)
