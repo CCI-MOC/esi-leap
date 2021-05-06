@@ -9,6 +9,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 import datetime
 
 from esi_leap.common import exception
@@ -96,13 +97,19 @@ class Lease(base.ESILEAPObject):
         _create_lease()
 
     def cancel(self):
-        resource = self.resource_object()
-        if resource.get_lease_uuid() == self.uuid:
-            resource.expire_lease(self)
+        @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
+                                                         self.resource_uuid),
+                            external=True)
+        def _cancel_lease():
+            resource = self.resource_object()
+            if resource.get_lease_uuid() == self.uuid:
+                resource.expire_lease(self)
 
-        self.status = statuses.CANCELLED
-        self.expire_time = datetime.datetime.now()
-        self.save(None)
+            self.status = statuses.CANCELLED
+            self.expire_time = datetime.datetime.now()
+            self.save(None)
+
+        _cancel_lease()
 
     def destroy(self):
         self.dbapi.lease_destroy(self.uuid)

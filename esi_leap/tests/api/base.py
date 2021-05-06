@@ -103,6 +103,24 @@ class APITestCase(base.DBTestCase):
                                   status=status, method="post")
 
     # borrowed from Ironic
+    def delete_json(self, path, expect_errors=False, headers=None,
+                    extra_environ=None, status=None):
+        """Sends simulated HTTP POST request to Pecan test app.
+
+        :param path: url path of target service
+        :param expect_errors: Boolean value; whether an error is expected based
+                              on request
+        :param headers: a dictionary of headers to send along with the request
+        :param extra_environ: a dictionary of environ variables to send along
+                              with the request
+        :param status: expected status code of response
+        """
+        return self._request_json(path=path, params={},
+                                  expect_errors=expect_errors,
+                                  headers=headers, extra_environ=extra_environ,
+                                  status=status, method="delete")
+
+    # borrowed from Ironic
     def _request_json(self, path, params, expect_errors=False, headers=None,
                       method="post", extra_environ=None, status=None,
                       path_prefix=PATH_PREFIX):

@@ -108,10 +108,13 @@ class TestOffersController(test_api_base.APITestCase):
         data['uuid'] = self.test_offer.uuid
         data['status'] = statuses.AVAILABLE
 
-        mock_cra.assert_called_once_with(self.context.to_policy_values(),
-                                         self.test_offer.resource_type,
-                                         self.test_offer.resource_uuid,
-                                         self.context.project_id)
+        mock_cra.assert_called_once_with(
+            self.context.to_policy_values(),
+            self.test_offer.resource_type,
+            self.test_offer.resource_uuid,
+            self.context.project_id,
+            datetime.datetime(2016, 7, 16, 0, 0, 0),
+            datetime.datetime(2016, 10, 24, 0, 0, 0))
         mock_create.assert_called_once()
         mock_aoa.assert_called_once()
         self.assertEqual(data, request.json)
@@ -141,10 +144,13 @@ class TestOffersController(test_api_base.APITestCase):
         data['status'] = statuses.AVAILABLE
         data['resource_type'] = 'ironic_node'
 
-        mock_cra.assert_called_once_with(self.context.to_policy_values(),
-                                         'ironic_node',
-                                         self.test_offer_drt.resource_uuid,
-                                         self.context.project_id)
+        mock_cra.assert_called_once_with(
+            self.context.to_policy_values(),
+            'ironic_node',
+            self.test_offer_drt.resource_uuid,
+            self.context.project_id,
+            datetime.datetime(2016, 7, 16, 0, 0, 0),
+            datetime.datetime(2016, 10, 24, 0, 0, 0))
         mock_create.assert_called_once()
         mock_aoa.assert_called_once()
         self.assertEqual(data, request.json)

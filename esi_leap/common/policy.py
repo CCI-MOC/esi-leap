@@ -90,12 +90,40 @@ offer_policies = [
         [{'path': '/offers/{offer_ident}/claim', 'method': 'POST'}]),
 ]
 
+owner_change_policies = [
+    policy.DocumentedRuleDefault(
+        'esi_leap:owner_change:owner_change_admin',
+        'rule:is_admin',
+        'Complete permissions over owner changes',
+        [{'path': '/owner_changes', 'method': 'POST'},
+         {'path': '/owner_changes', 'method': 'GET'},
+         {'path': '/owner_changes/{owner_change_ident}', 'method': 'GET'},
+         {'path': '/owner_changes/{owner_change_ident}', 'method': 'DELETE'}]),
+    policy.DocumentedRuleDefault(
+        'esi_leap:owner_change:create',
+        'rule:is_admin',
+        'Create owner change',
+        [{'path': '/owner_changes', 'method': 'POST'}]),
+    policy.DocumentedRuleDefault(
+        'esi_leap:owner_change:get',
+        'rule:is_admin or rule:is_owner',
+        'Retrieve owner change',
+        [{'path': '/owner_changes', 'method': 'GET'},
+         {'path': '/owner_changes/{owner_change_ident}', 'method': 'GET'}]),
+    policy.DocumentedRuleDefault(
+        'esi_leap:owner_change:delete',
+        'rule:is_admin',
+        'Delete owner change',
+        [{'path': '/owner_changes/{owner_change_ident}', 'method': 'DELETE'}]),
+]
+
 
 def list_rules():
     policies = itertools.chain(
         default_policies,
         lease_policies,
         offer_policies,
+        owner_change_policies,
     )
     return policies
 

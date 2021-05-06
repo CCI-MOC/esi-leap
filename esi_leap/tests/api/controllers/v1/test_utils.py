@@ -464,7 +464,7 @@ class TestGetObjectUtils(testtools.TestCase):
 
 class TestCheckResourceAdminUtils(testtools.TestCase):
 
-    @mock.patch.object(test_node_1, 'is_resource_admin',
+    @mock.patch.object(test_node_1, 'check_admin',
                        return_value=True)
     @mock.patch.object(policy, 'authorize', spec=True)
     @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
@@ -473,19 +473,21 @@ class TestCheckResourceAdminUtils(testtools.TestCase):
     def test_check_resource_admin_owner(self,
                                         mock_gro,
                                         mock_authorize,
-                                        mock_is_resource_admin):
+                                        mock_ca):
 
         utils.check_resource_admin(
             owner_ctx.to_policy_values(), test_offer.resource_type,
-            test_offer.resource_uuid, test_offer.project_id)
+            test_offer.resource_uuid, test_offer.project_id, start,
+            end)
 
         mock_gro.assert_called_once_with(
             test_offer.resource_type,
             test_offer.resource_uuid)
-        mock_is_resource_admin.assert_called_once_with(test_offer.project_id)
+        mock_ca.assert_called_once_with(test_offer.project_id,
+                                        start, end)
         assert not mock_authorize.called
 
-    @mock.patch.object(test_node_2, 'is_resource_admin',
+    @mock.patch.object(test_node_2, 'check_admin',
                        return_value=False)
     @mock.patch.object(policy, 'authorize', spec=True)
     @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
@@ -494,7 +496,7 @@ class TestCheckResourceAdminUtils(testtools.TestCase):
     def test_check_resource_admin_admin(self,
                                         mock_gro,
                                         mock_authorize,
-                                        mock_is_resource_admin):
+                                        mock_ca):
 
         bad_test_offer = offer.Offer(
             resource_type='test_node',
@@ -505,18 +507,19 @@ class TestCheckResourceAdminUtils(testtools.TestCase):
         utils.check_resource_admin(admin_ctx.to_policy_values(),
                                    bad_test_offer.resource_type,
                                    bad_test_offer.resource_uuid,
-                                   bad_test_offer.project_id)
+                                   bad_test_offer.project_id,
+                                   start, end)
 
         mock_gro.assert_called_once_with(
             bad_test_offer.resource_type,
             bad_test_offer.resource_uuid)
-        mock_is_resource_admin.assert_called_once_with(
-            bad_test_offer.project_id)
+        mock_ca.assert_called_once_with(
+            bad_test_offer.project_id, start, end)
         mock_authorize.assert_called_once_with('esi_leap:offer:offer_admin',
                                                admin_ctx.to_policy_values(),
                                                admin_ctx.to_policy_values())
 
-    @mock.patch.object(test_node_2, 'is_resource_admin',
+    @mock.patch.object(test_node_2, 'check_admin',
                        return_value=False)
     @mock.patch.object(policy, 'authorize', spec=True)
     @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
@@ -525,7 +528,7 @@ class TestCheckResourceAdminUtils(testtools.TestCase):
     def test_check_resource_admin_invalid_owner(self,
                                                 mock_gro,
                                                 mock_authorize,
-                                                mock_is_resource_admin):
+                                                mock_ca):
 
         mock_authorize.side_effect = oslo_policy.PolicyNotAuthorized(
             'esi_leap:offer:offer_admin',
@@ -542,13 +545,13 @@ class TestCheckResourceAdminUtils(testtools.TestCase):
                           owner_ctx_2.to_policy_values(),
                           bad_test_offer.resource_type,
                           bad_test_offer.resource_uuid,
-                          bad_test_offer.project_id)
+                          bad_test_offer.project_id, start, end)
 
         mock_gro.assert_called_once_with(
             bad_test_offer.resource_type,
             bad_test_offer.resource_uuid)
-        mock_is_resource_admin.assert_called_once_with(
-            bad_test_offer.project_id)
+        mock_ca.assert_called_once_with(
+            bad_test_offer.project_id, start, end)
         mock_authorize.assert_called_once_with('esi_leap:offer:offer_admin',
                                                owner_ctx_2.to_policy_values(),
                                                owner_ctx_2.to_policy_values())
