@@ -69,9 +69,12 @@ class TestLeasesController(test_api_base.APITestCase):
         data['uuid'] = self.test_lease.uuid
 
         mock_generate_uuid.assert_called_once()
-        mock_cra.assert_called_once_with(self.context.to_policy_values(),
-                                         'test_node', '1234567890',
-                                         self.context.project_id)
+        mock_cra.assert_called_once_with(
+            self.context.to_policy_values(),
+            'test_node', '1234567890',
+            self.context.project_id,
+            datetime.datetime(2016, 7, 16, 19, 20, 30),
+            datetime.datetime(2016, 8, 16, 19, 20, 30))
         mock_create.assert_called_once()
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
@@ -96,9 +99,12 @@ class TestLeasesController(test_api_base.APITestCase):
         data['resource_type'] = 'ironic_node'
 
         mock_generate_uuid.assert_called_once()
-        mock_cra.assert_called_once_with(self.context.to_policy_values(),
-                                         'ironic_node', '1234567890',
-                                         self.context.project_id)
+        mock_cra.assert_called_once_with(
+            self.context.to_policy_values(),
+            'ironic_node', '1234567890',
+            self.context.project_id,
+            datetime.datetime(2016, 7, 16, 19, 20, 30),
+            datetime.datetime(2016, 8, 16, 19, 20, 30))
         mock_create.assert_called_once()
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)

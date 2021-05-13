@@ -57,14 +57,33 @@ class ResourceObjectInterface(object, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def is_resource_admin(self, project_id):
-        """Check if project_id can administrate the node
+    def set_owner(self, owner_id):
+        """Set the owner of the node
 
         """
 
-    def verify_availability(self, start_time, end_time):
+    @abc.abstractmethod
+    def resource_admin_project_id(self):
+        """Return project_id of resource admin
+
+        """
+
+    def verify_availability(self, start_time, end_time,
+                            is_owner_change=False):
         self.dbapi.resource_verify_availability(
             self.resource_type,
             self.get_resource_uuid(),
             start_time,
-            end_time)
+            end_time,
+            is_owner_change=is_owner_change
+        )
+
+    def check_admin(self, project_id, start_time, end_time):
+        return self.dbapi.resource_check_admin(
+            self.resource_type,
+            self.get_resource_uuid(),
+            start_time,
+            end_time,
+            self.resource_admin_project_id(),
+            project_id
+        )

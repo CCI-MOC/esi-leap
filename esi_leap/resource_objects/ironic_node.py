@@ -75,8 +75,7 @@ class IronicNode(base.ResourceObjectInterface):
             "path": "/lessee",
             "value": lease.project_id,
         })
-        if len(patches) > 0:
-            get_ironic_client().node.update(self._uuid, patches)
+        get_ironic_client().node.update(self._uuid, patches)
 
     def expire_lease(self, lease):
         patches = []
@@ -98,7 +97,14 @@ class IronicNode(base.ResourceObjectInterface):
         if state == "active":
             get_ironic_client().node.set_provision_state(self._uuid, "deleted")
 
-    def is_resource_admin(self, project_id):
+    def set_owner(self, owner_id):
+        patches = [{
+            "op": "add",
+            "path": "/owner",
+            "value": owner_id,
+        }]
+        get_ironic_client().node.update(self._uuid, patches)
+
+    def resource_admin_project_id(self):
         node = get_ironic_client().node.get(self._uuid)
-        project_owner_id = node.owner
-        return (project_owner_id == project_id)
+        return node.owner

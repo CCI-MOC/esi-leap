@@ -39,7 +39,7 @@ test_offer_2 = dict(
     name='o1',
     resource_uuid='1111',
     resource_type='dummy_node',
-    start_time=now,
+    start_time=now + datetime.timedelta(days=25),
     end_time=now + datetime.timedelta(days=100),
     properties={'foo': 'bar'},
     status=statuses.AVAILABLE,
@@ -52,7 +52,7 @@ test_offer_3 = dict(
     name='o1',
     resource_uuid='1111',
     resource_type='dummy_node',
-    start_time=now,
+    start_time=now + datetime.timedelta(days=50),
     end_time=now + datetime.timedelta(days=100),
     properties={'foo': 'bar'},
     status=statuses.AVAILABLE,
@@ -65,7 +65,7 @@ test_offer_4 = dict(
     name='o2',
     resource_uuid='1111',
     resource_type='dummy_node',
-    start_time=now,
+    start_time=now + datetime.timedelta(days=75),
     end_time=now + datetime.timedelta(days=100),
     properties={'foo': 'bar'},
     status=statuses.AVAILABLE,
@@ -78,8 +78,8 @@ test_offer_5 = dict(
     name='o2',
     resource_uuid='1111',
     resource_type='dummy_node',
-    start_time=now,
-    end_time=now + datetime.timedelta(days=100),
+    start_time=now + datetime.timedelta(days=105),
+    end_time=now + datetime.timedelta(days=150),
     properties={'foo': 'bar'},
     status=statuses.AVAILABLE,
 )
@@ -150,7 +150,7 @@ test_lease_5 = dict(
 )
 
 
-class TestAPI(base.DBTestCase):
+class TestOfferAPI(base.DBTestCase):
 
     def test_offer_create(self):
         offer = api.offer_create(test_offer_1)
@@ -333,6 +333,8 @@ class TestAPI(base.DBTestCase):
         values = {'start_time': test_offer_2['start_time'],
                   'end_time': test_offer_2['end_time']}
         api.offer_update(o1.uuid, values)
+        o1 = api.offer_get_by_uuid(o1.uuid)
+
         self.assertEqual(test_offer_2['start_time'], o1.start_time)
         self.assertEqual(test_offer_2['end_time'], o1.end_time)
 
@@ -369,6 +371,42 @@ class TestAPI(base.DBTestCase):
                           o5.to_dict()),
                          (res[0].to_dict(), res[1].to_dict(),
                           res[2].to_dict(), res[3].to_dict()))
+
+    def test_offer_get_all_time_filter(self):
+        o1 = api.offer_create(test_offer_1)
+        o2 = api.offer_create(test_offer_2)
+        api.offer_create(test_offer_3)
+        api.offer_create(test_offer_4)
+        api.offer_create(test_offer_5)
+        res = api.offer_get_all({
+            'start_time': o1.start_time + datetime.timedelta(days=26),
+            'end_time': o1.end_time + datetime.timedelta(days=-1),
+        })
+
+        self.assertEqual(2, res.count())
+        self.assertEqual((o1.to_dict(), o2.to_dict()),
+                         (res[0].to_dict(), res[1].to_dict()))
+
+    def test_offer_get_all_time_filter_within(self):
+        o1 = api.offer_create(test_offer_1)
+        o2 = api.offer_create(test_offer_2)
+        o3 = api.offer_create(test_offer_3)
+        o4 = api.offer_create(test_offer_4)
+        api.offer_create(test_offer_5)
+        res = api.offer_get_all({
+            'start_time': o1.end_time + datetime.timedelta(days=-2),
+            'end_time': o2.end_time + datetime.timedelta(days=1),
+            'time_filter_type': 'within'
+        })
+
+        self.assertEqual(4, res.count())
+        self.assertEqual((o1.to_dict(), o2.to_dict(), o3.to_dict(),
+                          o4.to_dict()),
+                         (res[0].to_dict(), res[1].to_dict(),
+                          res[2].to_dict(), res[3].to_dict()))
+
+
+class TestLeaseAPI(base.DBTestCase):
 
     def test_lease_get_by_uuid(self):
         o1 = api.offer_create(test_offer_2)
@@ -449,6 +487,23 @@ class TestAPI(base.DBTestCase):
         self.assertEqual(1, res.count())
         self.assertIn(test_lease_2['uuid'], res_uuids)
 
+    def test_lease_get_all_filter_by_time_within(self):
+        api.lease_create(test_lease_1)
+        api.lease_create(test_lease_2)
+        api.lease_create(test_lease_3)
+
+        start_time = test_lease_1['end_time'] + datetime.timedelta(days=-1)
+        end_time = test_lease_2['start_time'] + datetime.timedelta(days=1)
+
+        res = api.lease_get_all({'start_time': start_time,
+                                 'end_time': end_time,
+                                 'time_filter_type': 'within'})
+        res_uuids = [res_lease.to_dict()['uuid'] for res_lease in res]
+
+        self.assertEqual(2, res.count())
+        self.assertIn(test_lease_1['uuid'], res_uuids)
+        self.assertIn(test_lease_2['uuid'], res_uuids)
+
     def test_lease_get_all_filter_by_project_or_owner_id(self):
         api.lease_create(test_lease_1)
         api.lease_create(test_lease_2)
@@ -464,7 +519,7 @@ class TestAPI(base.DBTestCase):
         self.assertIn(test_lease_2['uuid'], res_uuids)
         self.assertIn(test_lease_5['uuid'], res_uuids)
 
-    def test_lease_create(db):
+    def test_lease_create(self):
         o1 = api.offer_create(test_offer_2)
         test_lease_4['offer_uuid'] = o1.uuid
         l1 = api.lease_create(test_lease_4)
@@ -501,6 +556,138 @@ class TestAPI(base.DBTestCase):
 
     def test_lease_destroy_not_found(self):
         self.assertEqual(api.lease_get_by_uuid('lease_4'), None)
+
+
+class TestOwnerChangeAPI(base.DBTestCase):
+
+    def setUp(self):
+        super(TestOwnerChangeAPI, self).setUp()
+
+        self.oc1_data = dict(
+            uuid='11111',
+            from_owner_id='owner1',
+            to_owner_id='owner2',
+            resource_uuid='1111',
+            resource_type='dummy_node',
+            start_time=now + datetime.timedelta(days=10),
+            end_time=now + datetime.timedelta(days=20),
+            status=statuses.CREATED,
+        )
+
+        self.oc2_data = dict(
+            uuid='22222',
+            from_owner_id='owner1',
+            to_owner_id='owner3',
+            resource_uuid='1111',
+            resource_type='dummy_node',
+            start_time=now + datetime.timedelta(days=30),
+            end_time=now + datetime.timedelta(days=40),
+            status=statuses.ACTIVE,
+        )
+
+        self.oc3_data = dict(
+            uuid='33333',
+            from_owner_id='owner2',
+            to_owner_id='owner1',
+            resource_uuid='22222',
+            resource_type='dummy_node',
+            start_time=now + datetime.timedelta(days=30),
+            end_time=now + datetime.timedelta(days=40),
+            status=statuses.CREATED,
+        )
+
+    def test_owner_change_get_by_uuid(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+        res = api.owner_change_get_by_uuid(oc1.uuid)
+        self.assertEqual(oc1.uuid, res.uuid)
+
+    def test_owner_change_get_by_uuid_not_found(self):
+        assert api.owner_change_get_by_uuid('some_uuid') is None
+
+    def test_owner_change_get_all(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+        oc2 = api.owner_change_create(self.oc2_data)
+
+        res = api.owner_change_get_all({})
+        res_uuids = [res_oc.uuid for res_oc in res]
+
+        self.assertEqual(2, res.count())
+        self.assertIn(oc1.uuid, res_uuids)
+        self.assertIn(oc2.uuid, res_uuids)
+
+    def test_owner_change_get_all_filter_by_status(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+        api.owner_change_create(self.oc2_data)
+        oc3 = api.owner_change_create(self.oc3_data)
+
+        res = api.owner_change_get_all({'status': [statuses.CREATED]})
+        res_uuids = [res_oc.uuid for res_oc in res]
+
+        self.assertEqual(2, res.count())
+        self.assertIn(oc1.uuid, res_uuids)
+        self.assertIn(oc3.uuid, res_uuids)
+
+    def test_owner_change_get_all_filter_by_time(self):
+        api.owner_change_create(self.oc1_data)
+        oc2 = api.owner_change_create(self.oc2_data)
+        oc3 = api.owner_change_create(self.oc3_data)
+
+        start_time = now + datetime.timedelta(days=32)
+        end_time = now + datetime.timedelta(days=38)
+
+        res = api.owner_change_get_all({'start_time': start_time,
+                                        'end_time': end_time})
+        res_uuids = [res_oc.uuid for res_oc in res]
+
+        self.assertEqual(2, res.count())
+        self.assertIn(oc2.uuid, res_uuids)
+        self.assertIn(oc3.uuid, res_uuids)
+
+    def test_owner_change_get_all_filter_by_from_or_to_owner_id(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+        api.owner_change_create(self.oc2_data)
+        oc3 = api.owner_change_create(self.oc3_data)
+
+        res = api.owner_change_get_all(
+            {'from_or_to_owner_id': oc1.to_owner_id})
+        res_uuids = [res_oc.uuid for res_oc in res]
+
+        self.assertEqual(2, res.count())
+        self.assertIn(oc1.uuid, res_uuids)
+        self.assertIn(oc3.uuid, res_uuids)
+
+    def test_owner_change_create(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+        self.assertEqual(self.oc1_data['start_time'], oc1.start_time)
+        self.assertEqual(self.oc1_data['resource_uuid'], oc1.resource_uuid)
+
+    def test_owner_change_update(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+
+        api.owner_change_update(oc1.uuid, {'status': statuses.ACTIVE})
+
+        oc1_update = api.owner_change_get_by_uuid(oc1.uuid)
+        self.assertEqual(statuses.ACTIVE, oc1_update.status)
+
+    def test_owner_change_update_invalid_time(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+        values = {'start_time': now + datetime.timedelta(days=101),
+                  'end_time': now}
+
+        self.assertRaises(e.InvalidTimeRange, api.owner_change_update,
+                          oc1.uuid, values)
+
+    def test_owner_change_destroy(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+        api.owner_change_destroy(oc1.uuid)
+        self.assertEqual(api.owner_change_get_by_uuid(oc1.uuid), None)
+
+    def test_owner_change_destroy_not_found(self):
+        self.assertRaises(e.OwnerChangeNotFound, api.owner_change_destroy,
+                          'someuuid')
+
+
+class TestResourceVeifyAvailabilityAPI(base.DBTestCase):
 
     def test_resource_verify_availability_offer_conflict(self):
         o1 = api.offer_create(test_offer_4)
@@ -569,3 +756,125 @@ class TestAPI(base.DBTestCase):
         self.assertRaises(e.ResourceTimeConflict,
                           api.resource_verify_availability,
                           r_type, r_uuid, start, end)
+
+    def test_resource_verify_availability_owner_change_conflict(self):
+        oc1 = api.owner_change_create(dict(
+            uuid='11111',
+            from_owner_id='owner1',
+            to_owner_id='owner2',
+            resource_uuid='1111',
+            resource_type='dummy_node',
+            start_time=now + datetime.timedelta(days=10),
+            end_time=now + datetime.timedelta(days=20),
+            status=statuses.CREATED,
+        ))
+
+        start = oc1.start_time + datetime.timedelta(days=1)
+        end = oc1.end_time + datetime.timedelta(days=5)
+
+        api.resource_verify_availability(oc1.resource_type,
+                                         oc1.resource_uuid,
+                                         start, end)
+        self.assertRaises(e.ResourceTimeConflict,
+                          api.resource_verify_availability,
+                          oc1.resource_type, oc1.resource_uuid,
+                          start, end, is_owner_change=True)
+
+
+class TestResourceCheckAdminAPI(base.DBTestCase):
+
+    def setUp(self):
+        super(TestResourceCheckAdminAPI, self).setUp()
+
+        self.oc1_data = dict(
+            uuid='11111',
+            from_owner_id='owner1',
+            to_owner_id='owner2',
+            resource_uuid='1111',
+            resource_type='dummy_node',
+            start_time=now + datetime.timedelta(days=10),
+            end_time=now + datetime.timedelta(days=20),
+            status=statuses.CREATED,
+        )
+
+    def test_resource_check_admin_default(self):
+        start = now + datetime.timedelta(days=11)
+        end = now + datetime.timedelta(days=19)
+
+        check = api.resource_check_admin(self.oc1_data['resource_type'],
+                                         self.oc1_data['resource_uuid'],
+                                         start, end,
+                                         'owner1', 'owner1')
+
+        self.assertTrue(check)
+
+    def test_resource_check_admin_default_no_match(self):
+        start = now + datetime.timedelta(days=1)
+        end = now + datetime.timedelta(days=5)
+
+        check = api.resource_check_admin(self.oc1_data['resource_type'],
+                                         self.oc1_data['resource_uuid'],
+                                         start, end,
+                                         'owner1', 'owner2')
+
+        self.assertFalse(check)
+
+    def test_resource_check_admin_owner_change_no_owner_changes(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+        start = oc1.start_time + datetime.timedelta(days=-2)
+        end = oc1.start_time + datetime.timedelta(days=-1)
+
+        check = api.resource_check_admin(oc1.resource_type,
+                                         oc1.resource_uuid,
+                                         start, end,
+                                         'owner1', 'owner1')
+
+        self.assertTrue(check)
+
+    def test_resource_check_admin_owner_change_no_owner_changes_no_match(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+        start = oc1.start_time + datetime.timedelta(days=-2)
+        end = oc1.start_time + datetime.timedelta(days=-1)
+
+        check = api.resource_check_admin(oc1.resource_type,
+                                         oc1.resource_uuid,
+                                         start, end,
+                                         'owner1', 'owner2')
+
+        self.assertFalse(check)
+
+    def test_resource_check_admin_owner_change_conflict(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+        start = oc1.start_time + datetime.timedelta(days=-1)
+        end = oc1.start_time + datetime.timedelta(days=1)
+
+        check = api.resource_check_admin(oc1.resource_type,
+                                         oc1.resource_uuid,
+                                         start, end,
+                                         'owner1', 'owner1')
+
+        self.assertFalse(check)
+
+    def test_resource_check_admin_owner_change_owner_change_match(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+        start = oc1.start_time + datetime.timedelta(days=1)
+        end = oc1.end_time + datetime.timedelta(days=-1)
+
+        check = api.resource_check_admin(oc1.resource_type,
+                                         oc1.resource_uuid,
+                                         start, end,
+                                         'owner1', 'owner2')
+
+        self.assertTrue(check)
+
+    def test_resource_check_admin_owner_change_owner_change_no_match(self):
+        oc1 = api.owner_change_create(self.oc1_data)
+        start = oc1.start_time + datetime.timedelta(days=1)
+        end = oc1.end_time + datetime.timedelta(days=-1)
+
+        check = api.resource_check_admin(oc1.resource_type,
+                                         oc1.resource_uuid,
+                                         start, end,
+                                         'owner1', 'owner1')
+
+        self.assertFalse(check)

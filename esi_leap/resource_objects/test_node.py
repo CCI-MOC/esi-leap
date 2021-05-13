@@ -39,5 +39,8 @@ class TestNode(base.ResourceObjectInterface):
     def expire_lease(self, lease):
         return
 
-    def is_resource_admin(self, project_id):
-        return project_id == self._project_id
+    def set_owner(self, owner_id):
+        return
+
+    def resource_admin_project_id(self):
+        return self._project_id

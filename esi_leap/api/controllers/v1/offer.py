@@ -171,11 +171,6 @@ class OffersController(rest.RestController):
         if 'resource_type' not in offer_dict:
             offer_dict['resource_type'] = CONF.api.default_resource_type
 
-        utils.check_resource_admin(cdict,
-                                   offer_dict.get('resource_type'),
-                                   offer_dict.get('resource_uuid'),
-                                   offer_dict.get('project_id'))
-
         if 'start_time' not in offer_dict:
             offer_dict['start_time'] = datetime.datetime.now()
         if 'end_time' not in offer_dict:
@@ -186,6 +181,13 @@ class OffersController(rest.RestController):
                 InvalidTimeRange(resource="an offer",
                                  start_time=str(offer_dict['start_time']),
                                  end_time=str(offer_dict['end_time']))
+
+        utils.check_resource_admin(cdict,
+                                   offer_dict.get('resource_type'),
+                                   offer_dict.get('resource_uuid'),
+                                   offer_dict.get('project_id'),
+                                   offer_dict.get('start_time'),
+                                   offer_dict.get('end_time'))
 
         o = offer_obj.Offer(**offer_dict)
         o.create()
