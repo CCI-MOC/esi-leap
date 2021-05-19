@@ -75,9 +75,11 @@ class LeasesController(rest.RestController):
 
     @wsme_pecan.wsexpose(LeaseCollection, wtypes.text,
                          datetime.datetime, datetime.datetime, wtypes.text,
-                         wtypes.text, wtypes.text, wtypes.text)
+                         wtypes.text, wtypes.text, wtypes.text,
+                         wtypes.text, wtypes.text)
     def get_all(self, project_id=None, start_time=None, end_time=None,
-                status=None, offer_uuid=None, view=None, owner_id=None):
+                status=None, offer_uuid=None, view=None, owner_id=None,
+                resource_type=None, resource_uuid=None):
         request = pecan.request.context
         cdict = request.to_policy_values()
 
@@ -86,7 +88,8 @@ class LeasesController(rest.RestController):
                 cdict,
                 project_id=project_id, start_time=start_time,
                 end_time=end_time, status=status,
-                offer_uuid=offer_uuid, view=view, owner_id=owner_id)
+                offer_uuid=offer_uuid, view=view, owner_id=owner_id,
+                resource_type=resource_type, resource_uuid=resource_uuid)
 
         lease_collection = LeaseCollection()
         leases = lease_obj.Lease.get_all(filters, request)
@@ -139,7 +142,8 @@ class LeasesController(rest.RestController):
                                          start_time=None, end_time=None,
                                          status=None, offer_uuid=None,
                                          project_id=None, view=None,
-                                         owner_id=None):
+                                         owner_id=None, resource_type=None,
+                                         resource_uuid=None):
 
         if status is None:
             status = [statuses.CREATED, statuses.ACTIVE]
@@ -153,6 +157,8 @@ class LeasesController(rest.RestController):
             'offer_uuid': offer_uuid,
             'start_time': start_time,
             'end_time': end_time,
+            'resource_type': resource_type,
+            'resource_uuid': resource_uuid,
         }
 
         if view == 'all':
