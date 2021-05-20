@@ -78,12 +78,14 @@ class ResourceObjectInterface(object, metaclass=abc.ABCMeta):
             is_owner_change=is_owner_change
         )
 
-    def check_admin(self, project_id, start_time, end_time):
-        return self.dbapi.resource_check_admin(
+    def get_admin(self, start_time, end_time):
+        oc_admin_id = self.dbapi.resource_get_admin_from_owner_change(
             self.resource_type,
             self.get_resource_uuid(),
             start_time,
-            end_time,
-            self.resource_admin_project_id(),
-            project_id
+            end_time
         )
+        if oc_admin_id is None:
+            # use default
+            oc_admin_id = self.resource_admin_project_id()
+        return oc_admin_id

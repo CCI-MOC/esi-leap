@@ -36,14 +36,29 @@ class TestResourceObjectInterface(base.TestCase):
             is_owner_change=False)
 
     @mock.patch(
-        'esi_leap.db.sqlalchemy.api.resource_check_admin')
-    def test_check_admin(self, mock_cra):
+        'esi_leap.db.sqlalchemy.api.resource_get_admin_from_owner_change')
+    def test_get_admin(self, mock_gafoc):
+        mock_gafoc.return_value = '654321'
         node = test_node.TestNode('1111', '123456')
         start = self.base_time
         end = self.base_time + datetime.timedelta(days=1)
 
-        node.check_admin('654321', start, end)
+        admin_project_id = node.get_admin(start, end)
 
-        mock_cra.assert_called_once_with('test_node', '1111',
-                                         start, end, '123456',
-                                         '654321')
+        mock_gafoc.assert_called_once_with('test_node', '1111',
+                                           start, end)
+        self.assertEqual('654321', admin_project_id)
+
+    @mock.patch(
+        'esi_leap.db.sqlalchemy.api.resource_get_admin_from_owner_change')
+    def test_get_admin_use_default(self, mock_gafoc):
+        mock_gafoc.return_value = None
+        node = test_node.TestNode('1111', '123456')
+        start = self.base_time
+        end = self.base_time + datetime.timedelta(days=1)
+
+        admin_project_id = node.get_admin(start, end)
+
+        mock_gafoc.assert_called_once_with('test_node', '1111',
+                                           start, end)
+        self.assertEqual('123456', admin_project_id)

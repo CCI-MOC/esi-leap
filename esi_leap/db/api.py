@@ -148,10 +148,9 @@ def resource_verify_availability(r_type, r_uuid, start, end):
         r_type, r_uuid, start, end)
 
 
-def resource_check_admin(resource_type, resource_uuid,
-                         start_time, end_time,
-                         default_admin_project_id, project_id):
-    return IMPL.resource_check_admin(
+def resource_get_admin_from_owner_change(
         resource_type, resource_uuid,
-        start_time, end_time,
-        default_admin_project_id, project_id)
+        start_time, end_time):
+    return IMPL.resource_get_admin_from_owner_change(
+        resource_type, resource_uuid,
+        start_time, end_time)

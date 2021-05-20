@@ -60,7 +60,8 @@ def check_resource_admin(cdict, resource_type, resource_uuid, project_id,
                          start_time, end_time):
     resource = ro_factory.ResourceObjectFactory.get_resource_object(
         resource_type, resource_uuid)
-    if not resource.check_admin(project_id, start_time, end_time):
+    resource_admin_project_id = resource.get_admin(start_time, end_time)
+    if resource_admin_project_id != project_id:
         policy.authorize('esi_leap:offer:offer_admin', cdict, cdict)
 
 

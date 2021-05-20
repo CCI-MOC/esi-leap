@@ -781,10 +781,10 @@ class TestResourceVeifyAvailabilityAPI(base.DBTestCase):
                           start, end, is_owner_change=True)
 
 
-class TestResourceCheckAdminAPI(base.DBTestCase):
+class TestResourceGetAdminFromOwnerChangeAPI(base.DBTestCase):
 
     def setUp(self):
-        super(TestResourceCheckAdminAPI, self).setUp()
+        super(TestResourceGetAdminFromOwnerChangeAPI, self).setUp()
 
         self.oc1_data = dict(
             uuid='11111',
@@ -797,84 +797,32 @@ class TestResourceCheckAdminAPI(base.DBTestCase):
             status=statuses.CREATED,
         )
 
-    def test_resource_check_admin_default(self):
+    def test_get_admin_from_owner_change(self):
+        oc1 = api.owner_change_create(self.oc1_data)
         start = now + datetime.timedelta(days=11)
         end = now + datetime.timedelta(days=19)
 
-        check = api.resource_check_admin(self.oc1_data['resource_type'],
-                                         self.oc1_data['resource_uuid'],
-                                         start, end,
-                                         'owner1', 'owner1')
+        project_id = api.resource_get_admin_from_owner_change(
+            oc1.resource_type, oc1.resource_uuid, start, end)
 
-        self.assertTrue(check)
+        self.assertEqual(oc1.to_owner_id, project_id)
 
-    def test_resource_check_admin_default_no_match(self):
-        start = now + datetime.timedelta(days=1)
-        end = now + datetime.timedelta(days=5)
-
-        check = api.resource_check_admin(self.oc1_data['resource_type'],
-                                         self.oc1_data['resource_uuid'],
-                                         start, end,
-                                         'owner1', 'owner2')
-
-        self.assertFalse(check)
-
-    def test_resource_check_admin_owner_change_no_owner_changes(self):
+    def test_get_admin_from_owner_change_no_owner_changes(self):
         oc1 = api.owner_change_create(self.oc1_data)
         start = oc1.start_time + datetime.timedelta(days=-2)
         end = oc1.start_time + datetime.timedelta(days=-1)
 
-        check = api.resource_check_admin(oc1.resource_type,
-                                         oc1.resource_uuid,
-                                         start, end,
-                                         'owner1', 'owner1')
+        project_id = api.resource_get_admin_from_owner_change(
+            oc1.resource_type, oc1.resource_uuid, start, end)
 
-        self.assertTrue(check)
+        self.assertIsNone(project_id)
 
-    def test_resource_check_admin_owner_change_no_owner_changes_no_match(self):
-        oc1 = api.owner_change_create(self.oc1_data)
-        start = oc1.start_time + datetime.timedelta(days=-2)
-        end = oc1.start_time + datetime.timedelta(days=-1)
-
-        check = api.resource_check_admin(oc1.resource_type,
-                                         oc1.resource_uuid,
-                                         start, end,
-                                         'owner1', 'owner2')
-
-        self.assertFalse(check)
-
-    def test_resource_check_admin_owner_change_conflict(self):
+    def test_get_admin_from_owner_change_owner_change_conflict(self):
         oc1 = api.owner_change_create(self.oc1_data)
         start = oc1.start_time + datetime.timedelta(days=-1)
         end = oc1.start_time + datetime.timedelta(days=1)
 
-        check = api.resource_check_admin(oc1.resource_type,
-                                         oc1.resource_uuid,
-                                         start, end,
-                                         'owner1', 'owner1')
-
-        self.assertFalse(check)
-
-    def test_resource_check_admin_owner_change_owner_change_match(self):
-        oc1 = api.owner_change_create(self.oc1_data)
-        start = oc1.start_time + datetime.timedelta(days=1)
-        end = oc1.end_time + datetime.timedelta(days=-1)
-
-        check = api.resource_check_admin(oc1.resource_type,
-                                         oc1.resource_uuid,
-                                         start, end,
-                                         'owner1', 'owner2')
-
-        self.assertTrue(check)
-
-    def test_resource_check_admin_owner_change_owner_change_no_match(self):
-        oc1 = api.owner_change_create(self.oc1_data)
-        start = oc1.start_time + datetime.timedelta(days=1)
-        end = oc1.end_time + datetime.timedelta(days=-1)
-
-        check = api.resource_check_admin(oc1.resource_type,
-                                         oc1.resource_uuid,
-                                         start, end,
-                                         'owner1', 'owner1')
-
-        self.assertFalse(check)
+        self.assertRaises(e.ResourceTimeConflict,
+                          api.resource_get_admin_from_owner_change,
+                          oc1.resource_type, oc1.resource_uuid,
+                          start, end)

@@ -519,9 +519,9 @@ def resource_verify_availability(r_type, r_uuid, start, end,
             resource_type=r_type)
 
 
-def resource_check_admin(resource_type, resource_uuid,
-                         start_time, end_time,
-                         default_admin_project_id, project_id):
+def resource_get_admin_from_owner_change(
+        resource_type, resource_uuid,
+        start_time, end_time):
     # check if time period straddles an owner changes
     ocs_conflicts = model_query(models.OwnerChange).with_entities(
         models.OwnerChange.start_time, models.OwnerChange.end_time).\
@@ -544,7 +544,9 @@ def resource_check_admin(resource_type, resource_uuid,
     ))
 
     if ocs_conflicts.count() > 0:
-        return False
+        raise exception.ResourceTimeConflict(
+            resource_uuid=resource_uuid,
+            resource_type=resource_type)
 
     # check if time period encompasses a single owner change
     filters = {
@@ -558,8 +560,10 @@ def resource_check_admin(resource_type, resource_uuid,
 
     if ocs.count() > 1:
         # shouldn't happen, but...
-        return False
+        raise exception.ResourceTimeConflict(
+            resource_uuid=resource_uuid,
+            resource_type=resource_type)
     if ocs.count() == 1:
-        return project_id == ocs[0].to_owner_id
-    # no owner changes; use default check
-    return project_id == default_admin_project_id
+        return ocs[0].to_owner_id
+    # no owner changes
+    return None
