@@ -21,6 +21,8 @@ import testtools
 from esi_leap.api.controllers.v1.lease import LeasesController
 from esi_leap.common import exception
 from esi_leap.objects import lease as lease_obj
+from esi_leap.resource_objects.ironic_node import IronicNode
+from esi_leap.resource_objects.test_node import TestNode
 from esi_leap.tests.api import base as test_api_base
 
 
@@ -50,10 +52,16 @@ class TestLeasesController(test_api_base.APITestCase):
         self.assertEqual(self.test_lease.uuid,
                          data['leases'][0]["uuid"])
 
+    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.lease.Lease.create')
-    def test_post(self, mock_create, mock_cra, mock_generate_uuid):
+    def test_post(self, mock_create, mock_cra, mock_generate_uuid,
+                  mock_gpufi, mock_gro):
+        mock_gro.return_value = TestNode('1234567890')
+        mock_gpufi.return_value = 'lesseeid'
         mock_generate_uuid.return_value = self.test_lease.uuid
 
         data = {
@@ -68,6 +76,7 @@ class TestLeasesController(test_api_base.APITestCase):
         data['owner_id'] = self.context.project_id
         data['uuid'] = self.test_lease.uuid
 
+        mock_gro.assert_called_once_with('test_node', '1234567890')
         mock_generate_uuid.assert_called_once()
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
@@ -79,11 +88,17 @@ class TestLeasesController(test_api_base.APITestCase):
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
 
+    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.lease.Lease.create')
     def test_post_default_resource_type(self, mock_create, mock_cra,
-                                        mock_generate_uuid):
+                                        mock_generate_uuid, mock_gpufi,
+                                        mock_gro):
+        mock_gro.return_value = IronicNode('1234567890')
+        mock_gpufi.return_value = 'lesseeid'
         mock_generate_uuid.return_value = self.test_lease.uuid
 
         data = {
@@ -98,6 +113,7 @@ class TestLeasesController(test_api_base.APITestCase):
         data['uuid'] = self.test_lease.uuid
         data['resource_type'] = 'ironic_node'
 
+        mock_gro.assert_called_once_with('ironic_node', '1234567890')
         mock_generate_uuid.assert_called_once()
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
@@ -108,6 +124,121 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_create.assert_called_once()
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
+
+    @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
+                '_lease_get_all_authorize_filters')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    def test_get_nofilters(self, mock_get_all, mock_lgaaf):
+        self.get_json('/leases')
+
+        mock_lgaaf.assert_called_once_with(self.context.to_policy_values(),
+                                           project_id=None,
+                                           start_time=None,
+                                           end_time=None,
+                                           status=None,
+                                           offer_uuid=None,
+                                           view=None,
+                                           owner_id=None,
+                                           resource_type=None,
+                                           resource_uuid=None)
+        mock_get_all.assert_called_once()
+
+    @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
+    @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
+                '_lease_get_all_authorize_filters')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    def test_get_project_filter(self, mock_get_all, mock_lgaaf,
+                                mock_gpufi):
+        mock_gpufi.return_value = '12345'
+
+        self.get_json('/leases?project_id=12345')
+
+        mock_gpufi.assert_called_once_with('12345')
+        mock_lgaaf.assert_called_once_with(self.context.to_policy_values(),
+                                           project_id='12345',
+                                           start_time=None,
+                                           end_time=None,
+                                           status=None,
+                                           offer_uuid=None,
+                                           view=None,
+                                           owner_id=None,
+                                           resource_type=None,
+                                           resource_uuid=None)
+        mock_get_all.assert_called_once()
+
+    @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
+    @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
+                '_lease_get_all_authorize_filters')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    def test_get_owner_filter(self, mock_get_all, mock_lgaaf,
+                              mock_gpufi):
+        mock_gpufi.return_value = '54321'
+
+        self.get_json('/leases?owner_id=54321')
+
+        mock_gpufi.assert_called_once_with('54321')
+        mock_lgaaf.assert_called_once_with(self.context.to_policy_values(),
+                                           project_id=None,
+                                           start_time=None,
+                                           end_time=None,
+                                           status=None,
+                                           offer_uuid=None,
+                                           view=None,
+                                           owner_id='54321',
+                                           resource_type=None,
+                                           resource_uuid=None)
+
+        mock_get_all.assert_called_once()
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
+                '_lease_get_all_authorize_filters')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    def test_get_resource_filter(self, mock_get_all, mock_lgaaf,
+                                 mock_gro):
+        mock_gro.return_value = TestNode('54321')
+
+        self.get_json('/leases?resource_uuid=54321&resource_type=test_node')
+
+        mock_gro.assert_called_once_with('test_node', '54321')
+        mock_lgaaf.assert_called_once_with(self.context.to_policy_values(),
+                                           project_id=None,
+                                           start_time=None,
+                                           end_time=None,
+                                           status=None,
+                                           offer_uuid=None,
+                                           view=None,
+                                           owner_id=None,
+                                           resource_type='test_node',
+                                           resource_uuid='54321')
+
+        mock_get_all.assert_called_once()
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
+                '_lease_get_all_authorize_filters')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    def test_get_resource_filter_default_resource_type(self, mock_get_all,
+                                                       mock_lgaaf, mock_gro):
+        mock_gro.return_value = IronicNode('54321')
+
+        self.get_json('/leases?resource_uuid=54321')
+
+        mock_gro.assert_called_once_with('ironic_node', '54321')
+        mock_lgaaf.assert_called_once_with(self.context.to_policy_values(),
+                                           project_id=None,
+                                           start_time=None,
+                                           end_time=None,
+                                           status=None,
+                                           offer_uuid=None,
+                                           view=None,
+                                           owner_id=None,
+                                           resource_type='ironic_node',
+                                           resource_uuid='54321')
+
+        mock_get_all.assert_called_once()
 
 
 class TestLeaseControllersGetAllFilters(testtools.TestCase):

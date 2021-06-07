@@ -54,6 +54,15 @@ class TestIronicNode(base.TestCase):
         self.assertEqual("1111", test_ironic_node.get_resource_uuid())
 
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
+    def test_get_by_name(self, client_mock):
+        fake_get_node = FakeIronicNode()
+        client_mock.return_value.node.get.return_value = fake_get_node
+        test_ironic_node = ironic_node.IronicNode.get_by_name("node-name")
+        self.assertEqual('1111', test_ironic_node.get_resource_uuid())
+        client_mock.assert_called_once()
+        client_mock.return_value.node.get.assert_called_once_with("node-name")
+
+    @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
     def test_get_lease_uuid(self, client_mock):
         fake_get_node = FakeIronicNode()
         client_mock.return_value.node.get.return_value = fake_get_node

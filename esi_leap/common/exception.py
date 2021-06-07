@@ -91,6 +91,10 @@ class ProjectNoPermission(ESILeapException):
     msg_fmt = _("You do not have permissions on project %(project_id)s.")
 
 
+class ProjectNoSuchName(ESILeapException):
+    msg_fmt = _("No project named %(name)s.")
+
+
 class ResourceTimeConflict(ESILeapException):
     msg_fmt = ("Time conflict for %(resource_type)s %(resource_uuid)s.")
 

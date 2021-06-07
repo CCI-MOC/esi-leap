@@ -23,10 +23,12 @@ from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
 from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
+from esi_leap.common import keystone
 from esi_leap.common import policy
 from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.objects import lease as lease_obj
+from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 CONF = esi_leap.conf.CONF
 
@@ -83,6 +85,19 @@ class LeasesController(rest.RestController):
         request = pecan.request.context
         cdict = request.to_policy_values()
 
+        if project_id is not None:
+            project_id = keystone.get_project_uuid_from_ident(project_id)
+
+        if owner_id is not None:
+            owner_id = keystone.get_project_uuid_from_ident(owner_id)
+
+        if resource_uuid is not None:
+            if resource_type is None:
+                resource_type = CONF.api.default_resource_type
+            resource = ro_factory.ResourceObjectFactory.get_resource_object(
+                resource_type, resource_uuid)
+            resource_uuid = resource.get_resource_uuid()
+
         filters = LeasesController.\
             _lease_get_all_authorize_filters(
                 cdict,
@@ -108,6 +123,14 @@ class LeasesController(rest.RestController):
         lease_dict['uuid'] = uuidutils.generate_uuid()
         if 'resource_type' not in lease_dict:
             lease_dict['resource_type'] = CONF.api.default_resource_type
+
+        resource = ro_factory.ResourceObjectFactory.get_resource_object(
+            lease_dict['resource_type'], lease_dict['resource_uuid'])
+        lease_dict['resource_uuid'] = resource.get_resource_uuid()
+
+        if 'project_id' in lease_dict:
+            lease_dict['project_id'] = keystone.get_project_uuid_from_ident(
+                lease_dict['project_id'])
 
         if 'start_time' not in lease_dict:
             lease_dict['start_time'] = datetime.datetime.now()

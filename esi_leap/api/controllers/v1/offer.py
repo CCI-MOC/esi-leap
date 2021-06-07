@@ -25,11 +25,13 @@ from esi_leap.api.controllers import types
 from esi_leap.api.controllers.v1 import lease
 from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
+from esi_leap.common import keystone
 from esi_leap.common import policy
 from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
+from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 CONF = esi_leap.conf.CONF
 
@@ -97,6 +99,16 @@ class OffersController(rest.RestController):
 
         cdict = request.to_policy_values()
         policy.authorize('esi_leap:offer:get', cdict, cdict)
+
+        if project_id is not None:
+            project_id = keystone.get_project_uuid_from_ident(project_id)
+
+        if resource_uuid is not None:
+            if resource_type is None:
+                resource_type = CONF.api.default_resource_type
+            resource = ro_factory.ResourceObjectFactory.get_resource_object(
+                resource_type, resource_uuid)
+            resource_uuid = resource.get_resource_uuid()
 
         if (start_time and end_time is None) or\
            (end_time and start_time is None):
@@ -170,6 +182,14 @@ class OffersController(rest.RestController):
         offer_dict['uuid'] = uuidutils.generate_uuid()
         if 'resource_type' not in offer_dict:
             offer_dict['resource_type'] = CONF.api.default_resource_type
+
+        resource = ro_factory.ResourceObjectFactory.get_resource_object(
+            offer_dict['resource_type'], offer_dict['resource_uuid'])
+        offer_dict['resource_uuid'] = resource.get_resource_uuid()
+
+        if 'lessee_id' in offer_dict:
+            offer_dict['lessee_id'] = keystone.get_project_uuid_from_ident(
+                offer_dict['lessee_id'])
 
         if 'start_time' not in offer_dict:
             offer_dict['start_time'] = datetime.datetime.now()

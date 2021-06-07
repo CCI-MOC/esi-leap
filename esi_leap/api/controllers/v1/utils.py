@@ -56,10 +56,10 @@ def get_offer_authorized(uuid_or_name, cdict, status_filter=None):
     return offer_objs[0]
 
 
-def check_resource_admin(cdict, resource_type, resource_uuid, project_id,
+def check_resource_admin(cdict, resource_type, resource_ident, project_id,
                          start_time, end_time):
     resource = ro_factory.ResourceObjectFactory.get_resource_object(
-        resource_type, resource_uuid)
+        resource_type, resource_ident)
     if not resource.check_admin(project_id, start_time, end_time):
         policy.authorize('esi_leap:offer:offer_admin', cdict, cdict)
 
