@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_utils import uuidutils
+
 from esi_leap.common import exception
 from esi_leap.resource_objects import dummy_node
 from esi_leap.resource_objects import ironic_node
@@ -21,11 +23,14 @@ RESOURCE_TYPES = ['ironic_node', 'dummy_node', 'test_node']
 class ResourceObjectFactory(object):
 
     @staticmethod
-    def get_resource_object(resource_type, resource_uuid):
+    def get_resource_object(resource_type, resource_ident):
         if resource_type == 'ironic_node':
-            return ironic_node.IronicNode(resource_uuid)
+            if uuidutils.is_uuid_like(resource_ident):
+                return ironic_node.IronicNode(resource_ident)
+            else:
+                return ironic_node.IronicNode.get_by_name(resource_ident)
         elif resource_type == 'dummy_node':
-            return dummy_node.DummyNode(resource_uuid)
+            return dummy_node.DummyNode(resource_ident)
         elif resource_type == 'test_node':
-            return test_node.TestNode(resource_uuid)
+            return test_node.TestNode(resource_ident)
         raise exception.ResourceTypeUnknown(resource_type=resource_type)

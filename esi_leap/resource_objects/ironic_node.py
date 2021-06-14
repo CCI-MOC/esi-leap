@@ -46,6 +46,11 @@ class IronicNode(base.ResourceObjectInterface):
     def __init__(self, uuid):
         self._uuid = uuid
 
+    @classmethod
+    def get_by_name(cls, name):
+        node = get_ironic_client().node.get(name)
+        return IronicNode(node.uuid)
+
     def get_resource_uuid(self):
         return self._uuid
 
