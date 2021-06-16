@@ -18,6 +18,7 @@ import threading
 
 from esi_leap.common import exception
 from esi_leap.common import statuses
+from esi_leap.objects import lease
 from esi_leap.objects import offer
 from esi_leap.tests import base
 
@@ -40,9 +41,32 @@ class TestOfferObject(base.DBTestCase):
             'end_time': start + datetime.timedelta(days=100),
             'status': statuses.AVAILABLE,
             'properties': {'floor_price': 3},
+            'parent_lease_uuid': None,
             'created_at': None,
             'updated_at': None
         }
+        self.test_offer_create_data = {
+            'name': "o",
+            'project_id': '0wn5r',
+            'resource_type': 'dummy_node',
+            'resource_uuid': '1718',
+            'start_time': start,
+            'end_time': start + datetime.timedelta(days=100),
+            'properties': {'floor_price': 3},
+        }
+        self.test_offer_create_parent_lease_data = \
+            self.test_offer_create_data.copy()
+        self.test_offer_create_parent_lease_data['parent_lease_uuid'] \
+            = 'parent-lease-uuid'
+        self.test_parent_lease = lease.Lease(
+            uuid=uuidutils.generate_uuid(),
+            status=statuses.ACTIVE,
+        )
+        self.test_parent_lease_expired = lease.Lease(
+            uuid=uuidutils.generate_uuid(),
+            status=statuses.EXPIRED,
+        )
+
         self.config(lock_path=tempfile.mkdtemp(), group='oslo_concurrency')
 
     @mock.patch('esi_leap.db.sqlalchemy.api.offer_get_by_uuid')
@@ -129,7 +153,7 @@ class TestOfferObject(base.DBTestCase):
     @mock.patch('esi_leap.db.sqlalchemy.api.offer_create')
     def test_create(self, mock_oc, mock_rva):
         o = offer.Offer(
-            self.context, **self.test_offer_data)
+            self.context, **self.test_offer_create_data)
         mock_oc.return_value = self.test_offer_data
 
         o.create(self.context)
@@ -139,14 +163,12 @@ class TestOfferObject(base.DBTestCase):
                                          o.start_time,
                                          o.end_time,
                                          is_owner_change=False)
-        mock_oc.assert_called_once_with(self.test_offer_data)
+        mock_oc.assert_called_once_with(self.test_offer_create_data)
 
     def test_create_invalid_time(self):
         start = self.test_offer_data['start_time']
         bad_offer = {
-            'id': 27,
             'name': "o",
-            'uuid': '534653c9-880d-4c2d-6d6d-11111111111',
             'project_id': '0wn5r',
             'resource_type': 'dummy_node',
             'resource_uuid': '1718',
@@ -154,8 +176,6 @@ class TestOfferObject(base.DBTestCase):
             'end_time': start,
             'status': statuses.AVAILABLE,
             'properties': {'floor_price': 3},
-            'created_at': None,
-            'updated_at': None
         }
 
         o = offer.Offer(
@@ -163,13 +183,47 @@ class TestOfferObject(base.DBTestCase):
 
         self.assertRaises(exception.InvalidTimeRange, o.create)
 
+    @mock.patch('esi_leap.db.sqlalchemy.api.lease_verify_child_availability')
+    @mock.patch('esi_leap.objects.lease.Lease.get')
+    @mock.patch('esi_leap.db.sqlalchemy.api.offer_create')
+    def test_create_with_parent_lease(self, mock_oc, mock_lg, mock_lvca):
+        o = offer.Offer(
+            self.context, **self.test_offer_create_parent_lease_data)
+        mock_lg.return_value = self.test_parent_lease
+        mock_oc.return_value = self.test_offer_data
+
+        o.create(self.context)
+
+        mock_lg.assert_called_once_with('parent-lease-uuid')
+        mock_lvca.assert_called_once_with(self.test_parent_lease,
+                                          o.start_time,
+                                          o.end_time)
+        mock_oc.assert_called_once_with(
+            self.test_offer_create_parent_lease_data)
+
+    @mock.patch('esi_leap.db.sqlalchemy.api.lease_verify_child_availability')
+    @mock.patch('esi_leap.objects.lease.Lease.get')
+    @mock.patch('esi_leap.db.sqlalchemy.api.offer_create')
+    def test_create_with_parent_lease_expired(self, mock_oc, mock_lg,
+                                              mock_lvca):
+        o = offer.Offer(
+            self.context, **self.test_offer_create_parent_lease_data)
+        mock_lg.return_value = self.test_parent_lease_expired
+        mock_oc.return_value = self.test_offer_data
+
+        self.assertRaises(exception.LeaseNotActive, o.create, self.context)
+
+        mock_lg.assert_called_once_with('parent-lease-uuid')
+        mock_lvca.assert_not_called()
+        mock_oc.assert_not_called()
+
     @mock.patch('esi_leap.db.sqlalchemy.api.resource_verify_availability')
     @mock.patch('esi_leap.db.sqlalchemy.api.offer_create')
     def test_create_concurrent(self, mock_oc, mock_rva):
         o = offer.Offer(
-            self.context, **self.test_offer_data)
+            self.context, **self.test_offer_create_data)
         o2 = offer.Offer(
-            self.context, **self.test_offer_data)
+            self.context, **self.test_offer_create_data)
 
         o2.id = 28
 

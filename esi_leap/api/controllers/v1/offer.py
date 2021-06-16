@@ -49,6 +49,7 @@ class Offer(base.ESILEAPBase):
     status = wsme.wsattr(wtypes.text, readonly=True)
     properties = {wtypes.text: types.jsontype}
     availabilities = wsme.wsattr([[datetime.datetime]], readonly=True)
+    parent_lease_uuid = wsme.wsattr(wtypes.text, readonly=True)
 
     def __init__(self, **kwargs):
 
@@ -202,12 +203,22 @@ class OffersController(rest.RestController):
                                  start_time=str(offer_dict['start_time']),
                                  end_time=str(offer_dict['end_time']))
 
-        utils.check_resource_admin(cdict,
-                                   offer_dict.get('resource_type'),
-                                   offer_dict.get('resource_uuid'),
-                                   offer_dict.get('project_id'),
-                                   offer_dict.get('start_time'),
-                                   offer_dict.get('end_time'))
+        try:
+            utils.check_resource_admin(cdict,
+                                       resource,
+                                       request.project_id,
+                                       offer_dict.get('start_time'),
+                                       offer_dict.get('end_time'))
+        except oslo_policy.PolicyNotAuthorized:
+            parent_lease_uuid = utils.check_resource_lease_admin(
+                cdict,
+                resource,
+                request.project_id,
+                offer_dict.get('start_time'),
+                offer_dict.get('end_time'))
+            if parent_lease_uuid is None:
+                raise
+            offer_dict['parent_lease_uuid'] = parent_lease_uuid
 
         o = offer_obj.Offer(**offer_dict)
         o.create()
@@ -242,6 +253,9 @@ class OffersController(rest.RestController):
         lease_dict['resource_type'] = offer.resource_type
         lease_dict['resource_uuid'] = offer.resource_uuid
         lease_dict['owner_id'] = offer.project_id
+
+        if offer.parent_lease_uuid is not None:
+            lease_dict['parent_lease_uuid'] = offer.parent_lease_uuid
 
         if 'start_time' not in lease_dict:
             lease_dict['start_time'] = datetime.datetime.now()

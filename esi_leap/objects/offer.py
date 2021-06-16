@@ -41,6 +41,7 @@ class Offer(base.ESILEAPObject):
         'end_time': fields.DateTimeField(nullable=True),
         'status': fields.StringField(),
         'properties': fields.FlexibleDictField(nullable=True),
+        'parent_lease_uuid': fields.UUIDField(nullable=True),
     }
 
     @classmethod
@@ -103,10 +104,22 @@ class Offer(base.ESILEAPObject):
                     end_time=str(updates['end_time'])
                 )
 
-            ro = ro_factory.ResourceObjectFactory.get_resource_object(
-                updates['resource_type'], updates['resource_uuid'])
-            ro.verify_availability(updates['start_time'],
-                                   updates['end_time'])
+            if updates.get('parent_lease_uuid'):
+                # offer is a child of an existing lease
+                parent_lease = lease_obj.Lease.get(
+                    updates['parent_lease_uuid'])
+
+                if parent_lease.status != statuses.ACTIVE:
+                    raise exception.LeaseNotActive(
+                        updates['parent_lease_uuid'])
+
+                parent_lease.verify_child_availability(updates['start_time'],
+                                                       updates['end_time'])
+            else:
+                ro = ro_factory.ResourceObjectFactory.get_resource_object(
+                    updates['resource_type'], updates['resource_uuid'])
+                ro.verify_availability(updates['start_time'],
+                                       updates['end_time'])
 
             db_offer = self.dbapi.offer_create(updates)
             self._from_db_object(context, self, db_offer)
@@ -131,10 +144,11 @@ class Offer(base.ESILEAPObject):
 
     def expire(self, context=None):
         leases = lease_obj.Lease.get_all(
-            {'offer_uuid': self.uuid}, None)
+            {'offer_uuid': self.uuid,
+             'status': [statuses.CREATED, statuses.ACTIVE]},
+            None)
         for lease in leases:
-            if lease.status != statuses.EXPIRED:
-                lease.expire(context)
+            lease.expire(context)
 
         @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
                                                          self.resource_uuid))

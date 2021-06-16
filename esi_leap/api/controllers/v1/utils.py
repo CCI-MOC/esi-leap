@@ -18,7 +18,6 @@ from esi_leap.common import keystone
 from esi_leap.common import policy
 from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
-from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 
 def get_offer_authorized(uuid_or_name, cdict, status_filter=None):
@@ -56,12 +55,27 @@ def get_offer_authorized(uuid_or_name, cdict, status_filter=None):
     return offer_objs[0]
 
 
-def check_resource_admin(cdict, resource_type, resource_ident, project_id,
+def check_resource_admin(cdict, resource, project_id,
                          start_time, end_time):
-    resource = ro_factory.ResourceObjectFactory.get_resource_object(
-        resource_type, resource_ident)
     if not resource.check_admin(project_id, start_time, end_time):
         policy.authorize('esi_leap:offer:offer_admin', cdict, cdict)
+
+
+def check_resource_lease_admin(cdict, resource, project_id,
+                               start_time, end_time):
+    # check to see if project is current lessee
+    if project_id == resource.get_project_id():
+        parent_lease_uuid = resource.get_lease_uuid()
+        if parent_lease_uuid is not None:
+            parent_lease = lease_obj.Lease.get(parent_lease_uuid)
+
+            # don't allow sub-sub-leases
+            if parent_lease.parent_lease_uuid is None:
+                # check if offer is within start and end time bounds
+                if start_time >= parent_lease.start_time and \
+                   end_time <= parent_lease.end_time:
+                    return parent_lease_uuid
+    return
 
 
 def get_offer(uuid_or_name, status_filter=None):

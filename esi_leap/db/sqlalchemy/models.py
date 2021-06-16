@@ -57,6 +57,13 @@ class Offer(Base):
     end_time = Column(DateTime)
     status = Column(String(15), nullable=False, default=statuses.AVAILABLE)
     properties = Column(db_types.JsonEncodedDict, nullable=True)
+    parent_lease_uuid = Column(String(36),
+                               ForeignKey('leases.uuid'),
+                               nullable=True)
+    parent_lease = orm.relationship(
+        "Lease",
+        foreign_keys=[parent_lease_uuid],
+    )
 
 
 class Lease(Base):
@@ -86,11 +93,18 @@ class Lease(Base):
     offer_uuid = Column(String(36),
                         ForeignKey('offers.uuid'),
                         nullable=True)
+    parent_lease_uuid = Column(String(36),
+                               ForeignKey('leases.uuid'),
+                               nullable=True)
     offer = orm.relationship(
         Offer,
         backref=orm.backref('offers'),
         foreign_keys=offer_uuid,
         primaryjoin=offer_uuid == Offer.uuid)
+    parent_lease = orm.relationship(
+        "Lease",
+        backref=orm.backref('child_leases', remote_side=uuid),
+    )
 
 
 class OwnerChange(Base):

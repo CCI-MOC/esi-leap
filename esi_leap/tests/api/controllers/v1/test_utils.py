@@ -467,22 +467,15 @@ class TestCheckResourceAdminUtils(testtools.TestCase):
     @mock.patch.object(test_node_1, 'check_admin',
                        return_value=True)
     @mock.patch.object(policy, 'authorize', spec=True)
-    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
-                'ResourceObjectFactory.get_resource_object',
-                return_value=test_node_1)
     def test_check_resource_admin_owner(self,
-                                        mock_gro,
                                         mock_authorize,
                                         mock_ca):
 
-        utils.check_resource_admin(
-            owner_ctx.to_policy_values(), test_offer.resource_type,
-            test_offer.resource_uuid, test_offer.project_id, start,
-            end)
+        utils.check_resource_admin(owner_ctx.to_policy_values(),
+                                   test_node_1,
+                                   test_offer.project_id,
+                                   start, end)
 
-        mock_gro.assert_called_once_with(
-            test_offer.resource_type,
-            test_offer.resource_uuid)
         mock_ca.assert_called_once_with(test_offer.project_id,
                                         start, end)
         assert not mock_authorize.called
@@ -490,11 +483,7 @@ class TestCheckResourceAdminUtils(testtools.TestCase):
     @mock.patch.object(test_node_2, 'check_admin',
                        return_value=False)
     @mock.patch.object(policy, 'authorize', spec=True)
-    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
-                'ResourceObjectFactory.get_resource_object',
-                return_value=test_node_2)
     def test_check_resource_admin_admin(self,
-                                        mock_gro,
                                         mock_authorize,
                                         mock_ca):
 
@@ -505,14 +494,10 @@ class TestCheckResourceAdminUtils(testtools.TestCase):
         )
 
         utils.check_resource_admin(admin_ctx.to_policy_values(),
-                                   bad_test_offer.resource_type,
-                                   bad_test_offer.resource_uuid,
+                                   test_node_2,
                                    bad_test_offer.project_id,
                                    start, end)
 
-        mock_gro.assert_called_once_with(
-            bad_test_offer.resource_type,
-            bad_test_offer.resource_uuid)
         mock_ca.assert_called_once_with(
             bad_test_offer.project_id, start, end)
         mock_authorize.assert_called_once_with('esi_leap:offer:offer_admin',
@@ -522,11 +507,7 @@ class TestCheckResourceAdminUtils(testtools.TestCase):
     @mock.patch.object(test_node_2, 'check_admin',
                        return_value=False)
     @mock.patch.object(policy, 'authorize', spec=True)
-    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
-                'ResourceObjectFactory.get_resource_object',
-                return_value=test_node_2)
     def test_check_resource_admin_invalid_owner(self,
-                                                mock_gro,
                                                 mock_authorize,
                                                 mock_ca):
 
@@ -543,18 +524,143 @@ class TestCheckResourceAdminUtils(testtools.TestCase):
         self.assertRaises(oslo_policy.PolicyNotAuthorized,
                           utils.check_resource_admin,
                           owner_ctx_2.to_policy_values(),
-                          bad_test_offer.resource_type,
-                          bad_test_offer.resource_uuid,
+                          test_node_2,
                           bad_test_offer.project_id, start, end)
 
-        mock_gro.assert_called_once_with(
-            bad_test_offer.resource_type,
-            bad_test_offer.resource_uuid)
         mock_ca.assert_called_once_with(
             bad_test_offer.project_id, start, end)
         mock_authorize.assert_called_once_with('esi_leap:offer:offer_admin',
                                                owner_ctx_2.to_policy_values(),
                                                owner_ctx_2.to_policy_values())
+
+
+class TestCheckResourceLeaseAdminUtils(testtools.TestCase):
+
+    def setUp(self):
+        super(TestCheckResourceLeaseAdminUtils, self).setUp()
+
+        self.test_lease = lease.Lease(
+            uuid=uuidutils.generate_uuid(),
+            start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
+            end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
+            parent_lease_uuid=None
+        )
+        self.test_lease_with_parent = lease.Lease(
+            uuid=uuidutils.generate_uuid(),
+            start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
+            end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
+            parent_lease_uuid='parent-lease-uuid'
+        )
+
+    @mock.patch('esi_leap.objects.lease.Lease.get')
+    @mock.patch.object(test_node_1, 'get_lease_uuid',
+                       return_value='a-lease-uuid')
+    @mock.patch.object(test_node_1, 'get_project_id',
+                       return_value=test_offer.project_id)
+    def test_check_resource_lease_admin_okay(self,
+                                             mock_gpi,
+                                             mock_glu,
+                                             mock_lease_get):
+        mock_lease_get.return_value = self.test_lease
+        parent_lease_uuid = utils.check_resource_lease_admin(
+            owner_ctx.to_policy_values(),
+            test_node_1,
+            test_offer.project_id,
+            datetime.datetime(2016, 7, 16, 19, 20, 30),
+            datetime.datetime(2016, 8, 16, 19, 20, 30))
+
+        mock_gpi.assert_called_once()
+        mock_glu.assert_called_once()
+        mock_lease_get.assert_called_once_with('a-lease-uuid')
+        self.assertEqual('a-lease-uuid', parent_lease_uuid)
+
+    @mock.patch('esi_leap.objects.lease.Lease.get')
+    @mock.patch.object(test_node_1, 'get_lease_uuid',
+                       return_value='a-lease-uuid')
+    @mock.patch.object(test_node_1, 'get_project_id',
+                       return_value='other-lessee')
+    def test_check_resource_lease_admin_not_lessee(self,
+                                                   mock_gpi,
+                                                   mock_glu,
+                                                   mock_lease_get):
+        mock_lease_get.return_value = self.test_lease
+        parent_lease_uuid = utils.check_resource_lease_admin(
+            owner_ctx.to_policy_values(),
+            test_node_1,
+            test_offer.project_id,
+            datetime.datetime(2016, 7, 16, 19, 20, 30),
+            datetime.datetime(2016, 8, 16, 19, 20, 30))
+
+        mock_gpi.assert_called_once()
+        mock_glu.assert_not_called()
+        mock_lease_get.assert_not_called()
+        self.assertIsNone(parent_lease_uuid)
+
+    @mock.patch('esi_leap.objects.lease.Lease.get')
+    @mock.patch.object(test_node_1, 'get_lease_uuid',
+                       return_value=None)
+    @mock.patch.object(test_node_1, 'get_project_id',
+                       return_value=test_offer.project_id)
+    def test_check_resource_lease_admin_not_lease(self,
+                                                  mock_gpi,
+                                                  mock_glu,
+                                                  mock_lease_get):
+        mock_lease_get.return_value = self.test_lease
+        parent_lease_uuid = utils.check_resource_lease_admin(
+            owner_ctx.to_policy_values(),
+            test_node_1,
+            test_offer.project_id,
+            datetime.datetime(2016, 7, 16, 19, 20, 30),
+            datetime.datetime(2016, 8, 16, 19, 20, 30))
+
+        mock_gpi.assert_called_once()
+        mock_glu.assert_called_once()
+        mock_lease_get.assert_not_called()
+        self.assertIsNone(parent_lease_uuid)
+
+    @mock.patch('esi_leap.objects.lease.Lease.get')
+    @mock.patch.object(test_node_1, 'get_lease_uuid',
+                       return_value='a-lease-uuid')
+    @mock.patch.object(test_node_1, 'get_project_id',
+                       return_value=test_offer.project_id)
+    def test_check_resource_lease_admin_parent_lease(self,
+                                                     mock_gpi,
+                                                     mock_glu,
+                                                     mock_lease_get):
+        mock_lease_get.return_value = self.test_lease_with_parent
+        parent_lease_uuid = utils.check_resource_lease_admin(
+            owner_ctx.to_policy_values(),
+            test_node_1,
+            test_offer.project_id,
+            datetime.datetime(2016, 7, 16, 19, 20, 30),
+            datetime.datetime(2016, 8, 16, 19, 20, 30))
+
+        mock_gpi.assert_called_once()
+        mock_glu.assert_called_once()
+        mock_lease_get.assert_called_once_with('a-lease-uuid')
+        self.assertIsNone(parent_lease_uuid)
+
+    @mock.patch('esi_leap.objects.lease.Lease.get')
+    @mock.patch.object(test_node_1, 'get_lease_uuid',
+                       return_value='a-lease-uuid')
+    @mock.patch.object(test_node_1, 'get_project_id',
+                       return_value=test_offer.project_id)
+    def test_check_resource_lease_admin_bad_time(self,
+                                                 mock_gpi,
+                                                 mock_glu,
+                                                 mock_lease_get):
+        mock_lease_get.return_value = self.test_lease
+        parent_lease_uuid = utils.check_resource_lease_admin(
+            owner_ctx.to_policy_values(),
+            test_node_1,
+            test_offer.project_id,
+            datetime.datetime(2016, 7, 15, 19, 20, 30),
+            datetime.datetime(2016, 8, 16, 19, 20, 30))
+
+        mock_gpi.assert_called_once()
+        mock_glu.assert_called_once()
+        mock_lease_get.assert_called_once_with('a-lease-uuid')
+        self.assertIsNone(parent_lease_uuid)
 
 
 class TestOfferLesseeUtils(testtools.TestCase):

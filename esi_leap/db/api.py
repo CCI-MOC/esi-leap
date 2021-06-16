@@ -142,6 +142,11 @@ def lease_destroy(lease_uuid):
     return IMPL.lease_destroy(lease_uuid)
 
 
+def lease_verify_child_availability(lease_ref, start, end):
+    return IMPL.lease_verify_child_availability(
+        lease_ref, start, end)
+
+
 # Resource object
 def resource_verify_availability(r_type, r_uuid, start, end):
     return IMPL.resource_verify_availability(
