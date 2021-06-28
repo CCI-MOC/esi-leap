@@ -123,7 +123,7 @@ class OwnerChange(base.ESILEAPObject):
             resource = self.resource_object()
             resource.set_owner(self.from_owner_id)
 
-            self.status = statuses.CANCELLED
+            self.status = statuses.DELETED
             self.expire_time = datetime.datetime.now()
             self.save(None)
 

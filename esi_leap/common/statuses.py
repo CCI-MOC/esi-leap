@@ -12,6 +12,6 @@
 
 ACTIVE = 'active'
 AVAILABLE = 'available'
-CANCELLED = 'cancelled'
+DELETED = 'deleted'
 CREATED = 'created'
 EXPIRED = 'expired'

@@ -151,7 +151,7 @@ class TestOwnerChangeObject(base.DBTestCase):
     @mock.patch('esi_leap.db.sqlalchemy.api.owner_change_update')
     def test_save(self, mock_ocu):
         oc = owner_change.OwnerChange(self.context, **self.test_oc_data)
-        new_status = statuses.CANCELLED
+        new_status = statuses.DELETED
         updated_at = datetime.datetime(2006, 12, 11, 0, 0)
 
         updated_oc = self.test_oc_data.copy()
@@ -192,7 +192,7 @@ class TestOwnerChangeObject(base.DBTestCase):
         mock_offers.return_value = [self.test_offer, self.test_offer]
         mock_leases.return_value = [self.test_lease, self.test_lease]
         oc_cancel_data = self.test_oc_data.copy()
-        oc_cancel_data['status'] = statuses.CANCELLED
+        oc_cancel_data['status'] = statuses.DELETED
         mock_ocu.return_value = oc_cancel_data
 
         oc = owner_change.OwnerChange(self.context, **self.test_oc_data)

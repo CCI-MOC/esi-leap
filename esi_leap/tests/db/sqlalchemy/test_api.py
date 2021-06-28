@@ -133,7 +133,7 @@ test_lease_4 = dict(
     start_time=now + datetime.timedelta(days=85),
     end_time=now + datetime.timedelta(days=90),
     properties={},
-    status=statuses.CANCELLED,
+    status=statuses.DELETED,
 )
 
 test_lease_5 = dict(

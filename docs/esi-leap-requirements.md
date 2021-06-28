@@ -34,7 +34,7 @@ Based on the above APIs, ESI Leap can provide various of functionalities for use
 The lifecycle of an offer is
 * 'available' on offer creation.
 * 'expired' once an offer's end_time has passed
-* 'cancelled' if an offer is prematurely deleted
+* 'deleted' if an offer is prematurely deleted
 
 The offer api endpoint can be reached at /v1/offers
 
@@ -86,7 +86,7 @@ An offer response has the following fields:
 * "status" is the status of the offer. There are three valid statuses for an offer
   * available: an offer can be leased. This is the state of an offer on creation.
   * expired: an offer is no longer available for leasing. When an offer's end_time has passed, it's status is set to "expired".
-  * cancelled: an offer is no longer available for leasing. An offer is set to cancelled when it is manually revoked by a user before its end_time has passed.
+  * deleted: an offer is no longer available for leasing. An offer is set to deleted when it is manually revoked by a user before its end_time has passed.
 * "properties" is the baremetal properties of an offer.
 * "availabilities" is a list of [start, end] datetime pairings representing a continuous time range in which an offer is available for leasing.
    * "availabilities" is not kept in the schema and is computed when retrieving an offer. 

@@ -392,7 +392,7 @@ class TestGetObjectUtils(testtools.TestCase):
 
         self.assertRaises(exception.OfferNotFound,
                           utils.get_offer,
-                          test_offer.uuid, statuses.CANCELLED)
+                          test_offer.uuid, statuses.DELETED)
 
         mock_is_uuid_like.assert_called_once_with(test_offer.uuid)
         mock_offer_get.assert_called_once_with(test_offer.uuid)
