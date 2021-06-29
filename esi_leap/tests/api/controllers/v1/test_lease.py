@@ -14,7 +14,6 @@ import datetime
 import http.client as http_client
 import mock
 from oslo_context import context as ctx
-from oslo_policy import policy
 from oslo_utils import uuidutils
 import testtools
 
@@ -153,10 +152,8 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_gro.return_value = resource
         mock_gpufi.return_value = 'lesseeid'
         mock_generate_uuid.return_value = self.test_lease_with_parent.uuid
-        mock_cra.side_effect = policy.PolicyNotAuthorized(
-            'esi_leap:offer:offer_admin',
-            self.context.to_policy_values(),
-            self.context.to_policy_values())
+        mock_cra.side_effect = exception.HTTPResourceForbidden(
+            resource_type='ironic_node', resource='1234567890')
         mock_crla.return_value = self.test_lease_with_parent.parent_lease_uuid
 
         data = {
@@ -206,10 +203,8 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_gro.return_value = resource
         mock_gpufi.return_value = 'lesseeid'
         mock_generate_uuid.return_value = self.test_lease.uuid
-        mock_cra.side_effect = policy.PolicyNotAuthorized(
-            'esi_leap:offer:offer_admin',
-            self.context.to_policy_values(),
-            self.context.to_policy_values())
+        mock_cra.side_effect = exception.HTTPResourceForbidden(
+            resource_type='ironic_node', resource='1234567890')
         mock_crla.return_value = None
 
         data = {
@@ -235,7 +230,7 @@ class TestLeasesController(test_api_base.APITestCase):
             datetime.datetime(2016, 7, 17, 19, 20, 30),
             datetime.datetime(2016, 8, 14, 19, 20, 30))
         mock_create.assert_not_called()
-        self.assertEqual(http_client.INTERNAL_SERVER_ERROR, request.status_int)
+        self.assertEqual(http_client.FORBIDDEN, request.status_int)
 
     @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
                 '_lease_get_all_authorize_filters')
@@ -396,7 +391,7 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         self.assertEqual(expected_filters, filters)
 
         # random
-        self.assertRaises(policy.PolicyNotAuthorized,
+        self.assertRaises(exception.HTTPForbidden,
                           LeasesController.
                           _lease_get_all_authorize_filters,
                           self.random_ctx.to_policy_values(),
@@ -424,7 +419,7 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
             status='random')
         self.assertEqual(expected_filters, filters)
 
-        self.assertRaises(policy.PolicyNotAuthorized,
+        self.assertRaises(exception.HTTPForbidden,
                           LeasesController.
                           _lease_get_all_authorize_filters,
                           self.random_ctx.to_policy_values(),
@@ -440,7 +435,7 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         self.assertEqual(expected_filters, filters)
 
         # random
-        self.assertRaises(policy.PolicyNotAuthorized,
+        self.assertRaises(exception.HTTPForbidden,
                           LeasesController.
                           _lease_get_all_authorize_filters,
                           self.random_ctx.to_policy_values(),
@@ -497,7 +492,7 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         self.assertEqual(expected_filters, filters)
 
         # random
-        self.assertRaises(policy.PolicyNotAuthorized,
+        self.assertRaises(exception.HTTPForbidden,
                           LeasesController.
                           _lease_get_all_authorize_filters,
                           self.random_ctx.to_policy_values(),
@@ -518,21 +513,21 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         self.assertEqual(expected_filters, filters)
 
         # not admin
-        self.assertRaises(policy.PolicyNotAuthorized,
+        self.assertRaises(exception.HTTPForbidden,
                           LeasesController.
                           _lease_get_all_authorize_filters,
                           self.lessee_ctx.to_policy_values(),
                           view='all',
                           status='random')
 
-        self.assertRaises(policy.PolicyNotAuthorized,
+        self.assertRaises(exception.HTTPForbidden,
                           LeasesController.
                           _lease_get_all_authorize_filters,
                           self.owner_ctx.to_policy_values(),
                           view='all',
                           status='random')
 
-        self.assertRaises(policy.PolicyNotAuthorized,
+        self.assertRaises(exception.HTTPForbidden,
                           LeasesController.
                           _lease_get_all_authorize_filters,
                           self.random_ctx.to_policy_values(),

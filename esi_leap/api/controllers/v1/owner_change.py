@@ -12,7 +12,6 @@
 
 import datetime
 import http.client as http_client
-from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 import pecan
 from pecan import rest
@@ -22,8 +21,8 @@ import wsmeext.pecan as wsme_pecan
 
 from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
+from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
-from esi_leap.common import policy
 from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.objects import owner_change as owner_change_obj
@@ -64,7 +63,7 @@ class OwnerChangesController(rest.RestController):
         request = pecan.request.context
         cdict = request.to_policy_values()
 
-        policy.authorize('esi_leap:owner_change:get', cdict, cdict)
+        utils.policy_authorize('esi_leap:owner_change:get', cdict)
 
         oc = owner_change_obj.OwnerChange.get(owner_change_uuid)
         if oc is None:
@@ -72,8 +71,8 @@ class OwnerChangesController(rest.RestController):
                 owner_change_uuid=owner_change_uuid)
 
         if cdict['project_id'] not in (oc.from_owner_id, oc.to_owner_id):
-            policy.authorize('esi_leap:owner_change:owner_change_admin',
-                             cdict, cdict)
+            utils.policy_authorize('esi_leap:owner_change:owner_change_admin',
+                                   cdict, 'owner change', owner_change_uuid)
 
         return OwnerChange(**oc.to_dict())
 
@@ -88,7 +87,7 @@ class OwnerChangesController(rest.RestController):
         request = pecan.request.context
 
         cdict = request.to_policy_values()
-        policy.authorize('esi_leap:owner_change:get', cdict, cdict)
+        utils.policy_authorize('esi_leap:owner_change:get', cdict)
 
         if (start_time and end_time is None) or\
            (end_time and start_time is None):
@@ -108,10 +107,10 @@ class OwnerChangesController(rest.RestController):
             status = None
 
         try:
-            policy.authorize('esi_leap:owner_change:owner_change_admin',
-                             cdict, cdict)
+            utils.policy_authorize(
+                'esi_leap:owner_change:owner_change_admin', cdict)
             from_or_to_owner_id = None
-        except oslo_policy.PolicyNotAuthorized:
+        except exception.HTTPForbidden:
             from_or_to_owner_id = cdict['project_id']
 
         possible_filters = {
@@ -142,7 +141,7 @@ class OwnerChangesController(rest.RestController):
     def post(self, new_owner_change):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        policy.authorize('esi_leap:owner_change:create', cdict, cdict)
+        utils.policy_authorize('esi_leap:owner_change:create', cdict)
 
         owner_change_dict = new_owner_change.to_dict()
         owner_change_dict['uuid'] = uuidutils.generate_uuid()
@@ -174,7 +173,7 @@ class OwnerChangesController(rest.RestController):
     def delete(self, owner_change_uuid):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        policy.authorize('esi_leap:owner_change:delete', cdict, cdict)
+        utils.policy_authorize('esi_leap:owner_change:delete', cdict)
 
         oc = owner_change_obj.OwnerChange.get(owner_change_uuid)
         if oc is None:
@@ -182,7 +181,7 @@ class OwnerChangesController(rest.RestController):
                 owner_change_uuid=owner_change_uuid)
 
         if cdict['project_id'] not in (oc.from_owner_id, oc.to_owner_id):
-            policy.authorize('esi_leap:owner_change:owner_change_admin',
-                             cdict, cdict)
+            utils.policy_authorize('esi_leap:owner_change:owner_change_admin',
+                                   cdict, 'owner change', owner_change_uuid)
 
         oc.cancel()
