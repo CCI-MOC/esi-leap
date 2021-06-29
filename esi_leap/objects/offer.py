@@ -124,7 +124,7 @@ class Offer(base.ESILEAPObject):
         @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
                                                          self.resource_uuid))
         def _cancel_offer():
-            self.status = statuses.CANCELLED
+            self.status = statuses.DELETED
             self.save(None)
 
         _cancel_offer()

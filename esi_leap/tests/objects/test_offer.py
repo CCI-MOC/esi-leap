@@ -199,7 +199,7 @@ class TestOfferObject(base.DBTestCase):
     @mock.patch('esi_leap.db.sqlalchemy.api.offer_update')
     def test_save(self, mock_offer_update):
         o = offer.Offer(self.context, **self.test_offer_data)
-        new_status = statuses.CANCELLED
+        new_status = statuses.DELETED
         updated_at = datetime.datetime(2006, 12, 11, 0, 0)
 
         updated_offer = self.test_offer_data.copy()

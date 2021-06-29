@@ -82,7 +82,7 @@ class TestOffersController(test_api_base.APITestCase):
             resource_uuid=uuidutils.generate_uuid(),
             name="test_offer2",
             uuid=uuidutils.generate_uuid(),
-            status=statuses.CANCELLED,
+            status=statuses.DELETED,
             start_time=start,
             end_time=start + datetime.timedelta(days=100),
             project_id=self.context.project_id,

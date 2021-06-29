@@ -105,7 +105,7 @@ class Lease(base.ESILEAPObject):
             if resource.get_lease_uuid() == self.uuid:
                 resource.expire_lease(self)
 
-            self.status = statuses.CANCELLED
+            self.status = statuses.DELETED
             self.expire_time = datetime.datetime.now()
             self.save(None)
 
