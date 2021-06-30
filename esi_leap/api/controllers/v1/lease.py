@@ -37,9 +37,12 @@ class Lease(base.ESILEAPBase):
     name = wsme.wsattr(wtypes.text)
     uuid = wsme.wsattr(wtypes.text, readonly=True)
     project_id = wsme.wsattr(wtypes.text)
+    project = wsme.wsattr(wtypes.text, readonly=True)
     owner_id = wsme.wsattr(wtypes.text, readonly=True)
+    owner = wsme.wsattr(wtypes.text, readonly=True)
     resource_type = wsme.wsattr(wtypes.text)
     resource_uuid = wsme.wsattr(wtypes.text)
+    resource = wsme.wsattr(wtypes.text, readonly=True)
     start_time = wsme.wsattr(datetime.datetime)
     fulfill_time = wsme.wsattr(datetime.datetime, readonly=True)
     expire_time = wsme.wsattr(datetime.datetime, readonly=True)
@@ -53,6 +56,9 @@ class Lease(base.ESILEAPBase):
         self.fields = lease_obj.Lease.fields
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
+
+        for attr in ['project', 'owner', 'resource']:
+            setattr(self, attr, kwargs.get(attr, wtypes.Unset))
 
 
 class LeaseCollection(types.Collection):
@@ -70,9 +76,9 @@ class LeasesController(rest.RestController):
         cdict = request.to_policy_values()
         utils.policy_authorize('esi_leap:lease:get', cdict)
 
-        permitted = utils.get_lease_authorized(lease_id, cdict)
+        lease = utils.get_lease_authorized(lease_id, cdict)
 
-        return Lease(**permitted.to_dict())
+        return Lease(**LeasesController._lease_get_dict_with_names(lease))
 
     @wsme_pecan.wsexpose(LeaseCollection, wtypes.text,
                          datetime.datetime, datetime.datetime, wtypes.text,
@@ -107,8 +113,10 @@ class LeasesController(rest.RestController):
 
         lease_collection = LeaseCollection()
         leases = lease_obj.Lease.get_all(filters, request)
-        lease_collection.leases = [
-            Lease(**lease.to_dict()) for lease in leases]
+        lease_collection.leases = []
+        for lease in leases:
+            lease_collection.leases.append(
+                Lease(**LeasesController._lease_get_dict_with_names(lease)))
         return lease_collection
 
     @wsme_pecan.wsexpose(Lease, body=Lease, status_code=http_client.CREATED)
@@ -156,7 +164,7 @@ class LeasesController(rest.RestController):
 
         lease = lease_obj.Lease(**lease_dict)
         lease.create(request)
-        return Lease(**lease.to_dict())
+        return Lease(**LeasesController._lease_get_dict_with_names(lease))
 
     @wsme_pecan.wsexpose(Lease, wtypes.text)
     def delete(self, lease_id):
@@ -234,3 +242,13 @@ class LeasesController(rest.RestController):
                 filters[k] = v
 
         return filters
+
+    @staticmethod
+    def _lease_get_dict_with_names(lease):
+        resource = lease.resource_object()
+
+        lease_dict = lease.to_dict()
+        lease_dict['project'] = keystone.get_project_name(lease.project_id)
+        lease_dict['owner'] = keystone.get_project_name(lease.owner_id)
+        lease_dict['resource'] = resource.get_resource_name()
+        return lease_dict

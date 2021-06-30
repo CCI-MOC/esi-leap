@@ -22,8 +22,8 @@ from esi_leap.objects import offer as offer_obj
 from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 from oslo_config import cfg
-from oslo_versionedobjects import base as versioned_objects_base
 from oslo_log import log as logging
+from oslo_versionedobjects import base as versioned_objects_base
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)

@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
+
 from keystoneauth1 import loading as ks_loading
 from keystoneclient import client as keystone_client
 from oslo_utils import uuidutils
@@ -20,6 +22,7 @@ import esi_leap.conf
 
 CONF = esi_leap.conf.CONF
 _cached_keystone_client = None
+_cached_project_list = None
 
 
 def get_keystone_client():
@@ -54,3 +57,38 @@ def get_project_uuid_from_ident(project_ident):
             # projects have unique names
             return projects[0].id
         raise exception.ProjectNoSuchName(name=project_ident)
+
+
+def refresh_project_list():
+    global _cached_project_list
+    _cached_project_list = get_keystone_client().projects.list()
+
+
+def get_project_list():
+    if _cached_project_list is None:
+        refresh_project_list()
+    return _cached_project_list
+
+
+@functools.lru_cache(maxsize=100)
+def search_project_list(search_value, search_key='id'):
+    project = next((p for p in get_project_list()
+                   if getattr(p, search_key) == search_value),
+                   None)
+    if project is None:
+        # refresh once to see if project is recently created
+        refresh_project_list()
+        project = next((p for p in get_project_list()
+                       if getattr(p, search_key) == search_value),
+                       None)
+    return project
+
+
+@functools.lru_cache(maxsize=100)
+def get_project_name(project_id):
+    project_name = ''
+    if project_id:
+        project = search_project_list(project_id)
+        if project:
+            project_name = project.name
+    return project_name
