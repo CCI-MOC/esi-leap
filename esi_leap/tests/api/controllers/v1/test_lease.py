@@ -32,13 +32,24 @@ class TestLeasesController(test_api_base.APITestCase):
         super(TestLeasesController, self).setUp()
 
         self.test_lease = lease_obj.Lease(
-            start_date=datetime.datetime(2016, 7, 16, 19, 20, 30),
-            end_date=datetime.datetime(2016, 8, 16, 19, 20, 30),
+            start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
+            end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
             uuid=uuidutils.generate_uuid(),
             resource_type='test_node',
             resource_uuid='111',
             project_id='lesseeid',
-            owner_id='ownerid'
+            owner_id='ownerid',
+            parent_lease_uuid=None
+        )
+        self.test_lease_with_parent = lease_obj.Lease(
+            start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
+            end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
+            uuid=uuidutils.generate_uuid(),
+            resource_type='test_node',
+            resource_uuid='111',
+            project_id='lesseeid',
+            owner_id='ownerid',
+            parent_lease_uuid='parent-lease-uuid'
         )
 
     def test_empty(self):
@@ -52,7 +63,7 @@ class TestLeasesController(test_api_base.APITestCase):
         self.assertEqual(self.test_lease.uuid,
                          data['leases'][0]["uuid"])
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
@@ -60,7 +71,8 @@ class TestLeasesController(test_api_base.APITestCase):
     @mock.patch('esi_leap.objects.lease.Lease.create')
     def test_post(self, mock_create, mock_cra, mock_generate_uuid,
                   mock_gpufi, mock_gro):
-        mock_gro.return_value = TestNode('1234567890')
+        resource = TestNode('1234567890')
+        mock_gro.return_value = resource
         mock_gpufi.return_value = 'lesseeid'
         mock_generate_uuid.return_value = self.test_lease.uuid
 
@@ -80,7 +92,7 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_generate_uuid.assert_called_once()
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
-            'test_node', '1234567890',
+            resource,
             self.context.project_id,
             datetime.datetime(2016, 7, 16, 19, 20, 30),
             datetime.datetime(2016, 8, 16, 19, 20, 30))
@@ -88,7 +100,7 @@ class TestLeasesController(test_api_base.APITestCase):
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
@@ -97,7 +109,8 @@ class TestLeasesController(test_api_base.APITestCase):
     def test_post_default_resource_type(self, mock_create, mock_cra,
                                         mock_generate_uuid, mock_gpufi,
                                         mock_gro):
-        mock_gro.return_value = IronicNode('1234567890')
+        resource = IronicNode('1234567890')
+        mock_gro.return_value = resource
         mock_gpufi.return_value = 'lesseeid'
         mock_generate_uuid.return_value = self.test_lease.uuid
 
@@ -117,13 +130,112 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_generate_uuid.assert_called_once()
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
-            'ironic_node', '1234567890',
+            resource,
             self.context.project_id,
             datetime.datetime(2016, 7, 16, 19, 20, 30),
             datetime.datetime(2016, 8, 16, 19, 20, 30))
         mock_create.assert_called_once()
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_resource_lease_admin')
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
+                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
+    @mock.patch('oslo_utils.uuidutils.generate_uuid')
+    @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
+    @mock.patch('esi_leap.objects.lease.Lease.create')
+    def test_post_non_admin_parent_lease(self, mock_create, mock_cra,
+                                         mock_generate_uuid, mock_gpufi,
+                                         mock_gro, mock_crla):
+        resource = IronicNode('1234567890')
+        mock_gro.return_value = resource
+        mock_gpufi.return_value = 'lesseeid'
+        mock_generate_uuid.return_value = self.test_lease_with_parent.uuid
+        mock_cra.side_effect = policy.PolicyNotAuthorized(
+            'esi_leap:offer:offer_admin',
+            self.context.to_policy_values(),
+            self.context.to_policy_values())
+        mock_crla.return_value = self.test_lease_with_parent.parent_lease_uuid
+
+        data = {
+            "project_id": "lesseeid",
+            "resource_uuid": "1234567890",
+            "start_time": "2016-07-17T19:20:30",
+            "end_time": "2016-08-14T19:20:30"
+        }
+        request = self.post_json('/leases', data)
+
+        data['owner_id'] = self.context.project_id
+        data['uuid'] = self.test_lease_with_parent.uuid
+        data['resource_type'] = 'ironic_node'
+        data['parent_lease_uuid'] = \
+            self.test_lease_with_parent.parent_lease_uuid
+
+        mock_gro.assert_called_once_with('ironic_node', '1234567890')
+        mock_generate_uuid.assert_called_once()
+        mock_cra.assert_called_once_with(
+            self.context.to_policy_values(),
+            resource,
+            self.context.project_id,
+            datetime.datetime(2016, 7, 17, 19, 20, 30),
+            datetime.datetime(2016, 8, 14, 19, 20, 30))
+        mock_crla.assert_called_once_with(
+            self.context.to_policy_values(),
+            resource,
+            self.context.project_id,
+            datetime.datetime(2016, 7, 17, 19, 20, 30),
+            datetime.datetime(2016, 8, 14, 19, 20, 30))
+        mock_create.assert_called_once()
+        self.assertEqual(data, request.json)
+        self.assertEqual(http_client.CREATED, request.status_int)
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_resource_lease_admin')
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
+                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
+    @mock.patch('oslo_utils.uuidutils.generate_uuid')
+    @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
+    @mock.patch('esi_leap.objects.lease.Lease.create')
+    def test_post_non_admin_no_parent_lease(self, mock_create, mock_cra,
+                                            mock_generate_uuid, mock_gpufi,
+                                            mock_gro, mock_crla):
+        resource = IronicNode('1234567890')
+        mock_gro.return_value = resource
+        mock_gpufi.return_value = 'lesseeid'
+        mock_generate_uuid.return_value = self.test_lease.uuid
+        mock_cra.side_effect = policy.PolicyNotAuthorized(
+            'esi_leap:offer:offer_admin',
+            self.context.to_policy_values(),
+            self.context.to_policy_values())
+        mock_crla.return_value = None
+
+        data = {
+            "project_id": "lesseeid",
+            "resource_uuid": "1234567890",
+            "start_time": "2016-07-17T19:20:30",
+            "end_time": "2016-08-14T19:20:30"
+        }
+        request = self.post_json('/leases', data, expect_errors=True)
+
+        mock_gro.assert_called_once_with('ironic_node', '1234567890')
+        mock_generate_uuid.assert_called_once()
+        mock_cra.assert_called_once_with(
+            self.context.to_policy_values(),
+            resource,
+            self.context.project_id,
+            datetime.datetime(2016, 7, 17, 19, 20, 30),
+            datetime.datetime(2016, 8, 14, 19, 20, 30))
+        mock_crla.assert_called_once_with(
+            self.context.to_policy_values(),
+            resource,
+            self.context.project_id,
+            datetime.datetime(2016, 7, 17, 19, 20, 30),
+            datetime.datetime(2016, 8, 14, 19, 20, 30))
+        mock_create.assert_not_called()
+        self.assertEqual(http_client.INTERNAL_SERVER_ERROR, request.status_int)
 
     @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
                 '_lease_get_all_authorize_filters')
@@ -190,7 +302,7 @@ class TestLeasesController(test_api_base.APITestCase):
 
         mock_get_all.assert_called_once()
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
                 '_lease_get_all_authorize_filters')
@@ -215,7 +327,7 @@ class TestLeasesController(test_api_base.APITestCase):
 
         mock_get_all.assert_called_once()
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
                 '_lease_get_all_authorize_filters')

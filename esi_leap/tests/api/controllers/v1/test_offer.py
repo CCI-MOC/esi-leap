@@ -36,7 +36,8 @@ def _get_offer_response(o):
         'end_time': '2016-10-24T00:00:00',
         'status': o.status,
         'availabilities': [],
-        'uuid': o.uuid
+        'uuid': o.uuid,
+        'parent_lease_uuid': None
     }
 
 
@@ -55,6 +56,7 @@ class TestOffersController(test_api_base.APITestCase):
             start_time=start,
             end_time=start + datetime.timedelta(days=100),
             project_id=self.context.project_id,
+            parent_lease_uuid=None
         )
         self.test_offer_drt = offer.Offer(
             resource_type='ironic_node',
@@ -65,6 +67,7 @@ class TestOffersController(test_api_base.APITestCase):
             start_time=start,
             end_time=start + datetime.timedelta(days=100),
             project_id=self.context.project_id,
+            parent_lease_uuid=None
         )
         self.test_offer_lessee = offer.Offer(
             resource_type='test_node',
@@ -76,6 +79,7 @@ class TestOffersController(test_api_base.APITestCase):
             start_time=start,
             end_time=start + datetime.timedelta(days=100),
             project_id=self.context.project_id,
+            parent_lease_uuid=None
         )
         self.test_offer_2 = offer.Offer(
             resource_type='test_node',
@@ -86,6 +90,18 @@ class TestOffersController(test_api_base.APITestCase):
             start_time=start,
             end_time=start + datetime.timedelta(days=100),
             project_id=self.context.project_id,
+            parent_lease_uuid=None
+        )
+        self.test_offer_with_parent = offer.Offer(
+            resource_type='test_node',
+            resource_uuid=uuidutils.generate_uuid(),
+            name="test_offer",
+            uuid=uuidutils.generate_uuid(),
+            status=statuses.AVAILABLE,
+            start_time=start,
+            end_time=start + datetime.timedelta(days=100),
+            project_id=self.context.project_id,
+            parent_lease_uuid='parent-lease-uuid'
         )
 
     def test_empty(self):
@@ -97,7 +113,7 @@ class TestOffersController(test_api_base.APITestCase):
         data = self.get_json('/offers')
         self.assertEqual(self.test_offer.uuid, data['offers'][0]["uuid"])
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
@@ -106,7 +122,8 @@ class TestOffersController(test_api_base.APITestCase):
                 'OffersController._add_offer_availabilities')
     def test_post(self, mock_aoa, mock_create, mock_cra, mock_generate_uuid,
                   mock_gro):
-        mock_gro.return_value = TestNode(self.test_offer.resource_uuid)
+        resource = TestNode(self.test_offer.resource_uuid)
+        mock_gro.return_value = resource
         mock_generate_uuid.return_value = self.test_offer.uuid
         mock_create.return_value = self.test_offer
         mock_aoa.return_value = self.test_offer.to_dict()
@@ -124,13 +141,13 @@ class TestOffersController(test_api_base.APITestCase):
         data['project_id'] = self.context.project_id
         data['uuid'] = self.test_offer.uuid
         data['status'] = statuses.AVAILABLE
+        data['parent_lease_uuid'] = None
 
         mock_gro.assert_called_once_with(self.test_offer.resource_type,
                                          self.test_offer.resource_uuid)
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
-            self.test_offer.resource_type,
-            self.test_offer.resource_uuid,
+            resource,
             self.context.project_id,
             datetime.datetime(2016, 7, 16, 0, 0, 0),
             datetime.datetime(2016, 10, 24, 0, 0, 0))
@@ -139,7 +156,7 @@ class TestOffersController(test_api_base.APITestCase):
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
@@ -148,7 +165,8 @@ class TestOffersController(test_api_base.APITestCase):
                 'OffersController._add_offer_availabilities')
     def test_post_default_resource_type(self, mock_aoa, mock_create, mock_cra,
                                         mock_generate_uuid, mock_gro):
-        mock_gro.return_value = IronicNode(self.test_offer_drt.resource_uuid)
+        resource = IronicNode(self.test_offer_drt.resource_uuid)
+        mock_gro.return_value = resource
         mock_generate_uuid.return_value = self.test_offer_drt.uuid
         mock_aoa.return_value = self.test_offer_drt.to_dict()
 
@@ -165,13 +183,13 @@ class TestOffersController(test_api_base.APITestCase):
         data['uuid'] = self.test_offer_drt.uuid
         data['status'] = statuses.AVAILABLE
         data['resource_type'] = 'ironic_node'
+        data['parent_lease_uuid'] = None
 
         mock_gro.assert_called_once_with(self.test_offer_drt.resource_type,
                                          self.test_offer_drt.resource_uuid)
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
-            'ironic_node',
-            self.test_offer_drt.resource_uuid,
+            resource,
             self.context.project_id,
             datetime.datetime(2016, 7, 16, 0, 0, 0),
             datetime.datetime(2016, 10, 24, 0, 0, 0))
@@ -180,7 +198,7 @@ class TestOffersController(test_api_base.APITestCase):
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
@@ -190,7 +208,8 @@ class TestOffersController(test_api_base.APITestCase):
                 'OffersController._add_offer_availabilities')
     def test_post_lessee(self, mock_aoa, mock_create, mock_cra,
                          mock_generate_uuid, mock_gpufi, mock_gro):
-        mock_gro.return_value = TestNode(self.test_offer_lessee.resource_uuid)
+        resource = TestNode(self.test_offer_lessee.resource_uuid)
+        mock_gro.return_value = resource
         mock_gpufi.return_value = 'lessee_uuid'
         mock_generate_uuid.return_value = self.test_offer_lessee.uuid
         mock_create.return_value = self.test_offer_lessee
@@ -210,14 +229,14 @@ class TestOffersController(test_api_base.APITestCase):
         data['project_id'] = self.context.project_id
         data['uuid'] = self.test_offer_lessee.uuid
         data['status'] = statuses.AVAILABLE
+        data['parent_lease_uuid'] = None
 
         mock_gro.assert_called_once_with(self.test_offer_lessee.resource_type,
                                          self.test_offer_lessee.resource_uuid)
         mock_gpufi.assert_called_once_with('lessee-uuid')
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
-            self.test_offer_lessee.resource_type,
-            self.test_offer_lessee.resource_uuid,
+            resource,
             self.context.project_id,
             datetime.datetime(2016, 7, 16, 0, 0, 0),
             datetime.datetime(2016, 10, 24, 0, 0, 0))
@@ -225,6 +244,117 @@ class TestOffersController(test_api_base.APITestCase):
         mock_aoa.assert_called_once()
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_resource_lease_admin')
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
+                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('oslo_utils.uuidutils.generate_uuid')
+    @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
+    @mock.patch('esi_leap.objects.offer.Offer.create')
+    @mock.patch('esi_leap.api.controllers.v1.offer.' +
+                'OffersController._add_offer_availabilities')
+    def test_post_non_admin_parent_lease(self, mock_aoa, mock_create,
+                                         mock_cra, mock_generate_uuid,
+                                         mock_gro, mock_crla):
+        resource = TestNode(self.test_offer_with_parent.resource_uuid)
+        mock_gro.return_value = resource
+        mock_generate_uuid.return_value = self.test_offer_with_parent.uuid
+        mock_create.return_value = self.test_offer_with_parent
+        mock_aoa.return_value = self.test_offer_with_parent.to_dict()
+        mock_cra.side_effect = oslo_policy.PolicyNotAuthorized(
+            'esi_leap:offer:offer_admin',
+            self.context.to_policy_values(),
+            self.context.to_policy_values())
+        mock_crla.return_value = self.test_offer_with_parent.parent_lease_uuid
+
+        data = {
+            "resource_type": self.test_offer_with_parent.resource_type,
+            "resource_uuid": self.test_offer_with_parent.resource_uuid,
+            "name": self.test_offer_with_parent.name,
+            "start_time": "2016-07-16T00:00:00",
+            "end_time": "2016-10-24T00:00:00"
+        }
+
+        request = self.post_json('/offers', data)
+
+        data['project_id'] = self.context.project_id
+        data['uuid'] = self.test_offer_with_parent.uuid
+        data['status'] = statuses.AVAILABLE
+        data['parent_lease_uuid'] = \
+            self.test_offer_with_parent.parent_lease_uuid
+
+        mock_gro.assert_called_once_with(
+            self.test_offer_with_parent.resource_type,
+            self.test_offer_with_parent.resource_uuid)
+        mock_cra.assert_called_once_with(
+            self.context.to_policy_values(),
+            resource,
+            self.context.project_id,
+            datetime.datetime(2016, 7, 16, 0, 0, 0),
+            datetime.datetime(2016, 10, 24, 0, 0, 0))
+        mock_crla.assert_called_once_with(
+            self.context.to_policy_values(),
+            resource,
+            self.context.project_id,
+            datetime.datetime(2016, 7, 16, 0, 0, 0),
+            datetime.datetime(2016, 10, 24, 0, 0, 0))
+        mock_create.assert_called_once()
+        mock_aoa.assert_called_once()
+        self.assertEqual(data, request.json)
+        self.assertEqual(http_client.CREATED, request.status_int)
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_resource_lease_admin')
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
+                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('oslo_utils.uuidutils.generate_uuid')
+    @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
+    @mock.patch('esi_leap.objects.offer.Offer.create')
+    @mock.patch('esi_leap.api.controllers.v1.offer.' +
+                'OffersController._add_offer_availabilities')
+    def test_post_non_admin_no_parent_lease(self, mock_aoa, mock_create,
+                                            mock_cra, mock_generate_uuid,
+                                            mock_gro, mock_crla):
+        resource = TestNode(self.test_offer_with_parent.resource_uuid)
+        mock_gro.return_value = resource
+        mock_generate_uuid.return_value = self.test_offer_with_parent.uuid
+        mock_create.return_value = self.test_offer_with_parent
+        mock_aoa.return_value = self.test_offer_with_parent.to_dict()
+        mock_cra.side_effect = oslo_policy.PolicyNotAuthorized(
+            'esi_leap:offer:offer_admin',
+            self.context.to_policy_values(),
+            self.context.to_policy_values())
+        mock_crla.return_value = None
+
+        data = {
+            "resource_type": self.test_offer_with_parent.resource_type,
+            "resource_uuid": self.test_offer_with_parent.resource_uuid,
+            "name": self.test_offer_with_parent.name,
+            "start_time": "2016-07-16T00:00:00",
+            "end_time": "2016-10-24T00:00:00"
+        }
+
+        request = self.post_json('/offers', data, expect_errors=True)
+
+        mock_gro.assert_called_once_with(
+            self.test_offer_with_parent.resource_type,
+            self.test_offer_with_parent.resource_uuid)
+        mock_cra.assert_called_once_with(
+            self.context.to_policy_values(),
+            resource,
+            self.context.project_id,
+            datetime.datetime(2016, 7, 16, 0, 0, 0),
+            datetime.datetime(2016, 10, 24, 0, 0, 0))
+        mock_crla.assert_called_once_with(
+            self.context.to_policy_values(),
+            resource,
+            self.context.project_id,
+            datetime.datetime(2016, 7, 16, 0, 0, 0),
+            datetime.datetime(2016, 10, 24, 0, 0, 0))
+        mock_create.assert_not_called()
+        mock_aoa.assert_not_called()
+        self.assertEqual(http_client.INTERNAL_SERVER_ERROR, request.status_int)
 
     @mock.patch('esi_leap.objects.offer.Offer.get_availabilities')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
@@ -283,7 +413,7 @@ class TestOffersController(test_api_base.APITestCase):
         assert mock_get_availabilities.call_count == 2
         self.assertEqual(request, expected_resp)
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.objects.offer.Offer.get_availabilities')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
@@ -308,7 +438,7 @@ class TestOffersController(test_api_base.APITestCase):
         assert mock_get_availabilities.call_count == 2
         self.assertEqual(request, expected_resp)
 
-    @mock.patch('esi_leap.api.controllers.v1.utils.ro_factory.'
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.objects.offer.Offer.get_availabilities')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
@@ -408,6 +538,42 @@ class TestOffersController(test_api_base.APITestCase):
                                                statuses.AVAILABLE)
         mock_col.assert_called_once_with(self.context.to_policy_values(),
                                          self.test_offer)
+        mock_lease_create.assert_called_once()
+        self.assertEqual(data, request.json)
+        self.assertEqual(http_client.CREATED, request.status_int)
+
+    @mock.patch('oslo_utils.uuidutils.generate_uuid')
+    @mock.patch('esi_leap.objects.lease.Lease.create')
+    @mock.patch('esi_leap.api.controllers.v1.utils.check_offer_lessee')
+    @mock.patch('esi_leap.api.controllers.v1.utils.get_offer')
+    def test_claim_parent_lease(self, mock_get_offer, mock_col,
+                                mock_lease_create, mock_generate_uuid):
+        lease_uuid = '12345'
+        mock_generate_uuid.return_value = lease_uuid
+        mock_get_offer.return_value = self.test_offer_with_parent
+        data = {
+            "name": "lease_claim",
+            "start_time": "2016-07-16T19:20:30",
+            "end_time": "2016-08-16T19:20:30"
+        }
+
+        request = self.post_json(
+            '/offers/' + self.test_offer_with_parent.uuid + '/claim',
+            data)
+
+        data['project_id'] = self.context.project_id
+        data['uuid'] = lease_uuid
+        data['offer_uuid'] = self.test_offer_with_parent.uuid
+        data['resource_type'] = self.test_offer_with_parent.resource_type
+        data['resource_uuid'] = self.test_offer_with_parent.resource_uuid
+        data['owner_id'] = self.test_offer_with_parent.project_id
+        data['parent_lease_uuid'] = \
+            self.test_offer_with_parent.parent_lease_uuid
+
+        mock_get_offer.assert_called_once_with(
+            self.test_offer_with_parent.uuid, statuses.AVAILABLE)
+        mock_col.assert_called_once_with(self.context.to_policy_values(),
+                                         self.test_offer_with_parent)
         mock_lease_create.assert_called_once()
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)

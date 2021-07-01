@@ -46,6 +46,7 @@ class Lease(base.ESILEAPObject):
         'status': fields.StringField(),
         'properties': fields.FlexibleDictField(nullable=True),
         'offer_uuid': fields.UUIDField(nullable=True),
+        'parent_lease_uuid': fields.UUIDField(nullable=True),
     }
 
     @classmethod
@@ -75,7 +76,9 @@ class Lease(base.ESILEAPObject):
                     end_time=str(updates['end_time'])
                     )
 
+            # check availability
             if 'offer_uuid' in updates:
+                # lease is being created from an offer
                 related_offer = offer_obj.Offer.get(updates['offer_uuid'])
 
                 if related_offer.status != statuses.AVAILABLE:
@@ -85,6 +88,16 @@ class Lease(base.ESILEAPObject):
 
                 related_offer.verify_availability(updates['start_time'],
                                                   updates['end_time'])
+            elif 'parent_lease_uuid' in updates:
+                # lease is a child of an existing lease
+                parent_lease = Lease.get(updates['parent_lease_uuid'])
+
+                if parent_lease.status != statuses.ACTIVE:
+                    raise exception.LeaseNotActive(
+                        updates['parent_lease_uuid'])
+
+                parent_lease.verify_child_availability(updates['start_time'],
+                                                       updates['end_time'])
             else:
                 ro = ro_factory.ResourceObjectFactory.get_resource_object(
                     updates['resource_type'], updates['resource_uuid'])
@@ -97,6 +110,19 @@ class Lease(base.ESILEAPObject):
         _create_lease()
 
     def cancel(self):
+        leases = Lease.get_all(
+            {'parent_lease_uuid': self.uuid,
+             'status': [statuses.CREATED, statuses.ACTIVE]},
+            None)
+        for lease in leases:
+            lease.cancel()
+        offers = offer_obj.Offer.get_all(
+            {'parent_lease_uuid': self.uuid,
+             'status': statuses.AVAILABLE},
+            None)
+        for offer in offers:
+            offer.cancel()
+
         @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
                                                          self.resource_uuid),
                             external=True)
@@ -104,6 +130,9 @@ class Lease(base.ESILEAPObject):
             resource = self.resource_object()
             if resource.get_lease_uuid() == self.uuid:
                 resource.expire_lease(self)
+                if self.parent_lease_uuid is not None:
+                    parent_lease = Lease.get(self.parent_lease_uuid)
+                    resource.set_lease(parent_lease)
 
             self.status = statuses.DELETED
             self.expire_time = datetime.datetime.now()
@@ -138,16 +167,41 @@ class Lease(base.ESILEAPObject):
         _fulfill_lease()
 
     def expire(self, context=None):
-        # unassign resource
-        resource = self.resource_object()
-        if resource.get_lease_uuid() == self.uuid:
-            resource.expire_lease(self)
+        leases = Lease.get_all(
+            {'parent_lease_uuid': self.uuid,
+             'status': [statuses.CREATED, statuses.ACTIVE]},
+            None)
+        for lease in leases:
+            lease.expire(context)
+        offers = offer_obj.Offer.get_all(
+            {'parent_lease_uuid': self.uuid,
+             'status': statuses.AVAILABLE},
+            None)
+        for offer in offers:
+            offer.expire(context)
 
-        # expire lease
-        self.status = statuses.EXPIRED
-        self.expire_time = datetime.datetime.now()
-        self.save(context)
+        @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
+                                                         self.resource_uuid),
+                            external=True)
+        def _expire_lease():
+            resource = self.resource_object()
+            if resource.get_lease_uuid() == self.uuid:
+                resource.expire_lease(self)
+                if self.parent_lease_uuid is not None:
+                    parent_lease = Lease.get(self.parent_lease_uuid)
+                    resource.set_lease(parent_lease)
+
+            # expire lease
+            self.status = statuses.EXPIRED
+            self.expire_time = datetime.datetime.now()
+            self.save(context)
+
+        _expire_lease()
 
     def resource_object(self):
         return ro_factory.ResourceObjectFactory.get_resource_object(
             self.resource_type, self.resource_uuid)
+
+    def verify_child_availability(self, start_time, end_time):
+        return self.dbapi.lease_verify_child_availability(
+            self, start_time, end_time)

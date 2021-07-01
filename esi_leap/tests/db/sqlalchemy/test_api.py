@@ -12,6 +12,7 @@
 
 import datetime
 import mock
+from oslo_utils import uuidutils
 
 from esi_leap.common import exception as e
 from esi_leap.common import statuses
@@ -558,6 +559,127 @@ class TestLeaseAPI(base.DBTestCase):
         self.assertEqual(api.lease_get_by_uuid('lease_4'), None)
 
 
+class TestLeaseVerifyChildAvailability(base.DBTestCase):
+
+    def setUp(self):
+        super(TestLeaseVerifyChildAvailability, self).setUp()
+
+        self.parent_lease_data = dict(
+            uuid=uuidutils.generate_uuid(),
+            project_id=uuidutils.generate_uuid(),
+            owner_id=uuidutils.generate_uuid(),
+            resource_uuid='1111',
+            resource_type='dummy_node',
+            start_time=now + datetime.timedelta(days=50),
+            end_time=now + datetime.timedelta(days=100),
+            status=statuses.ACTIVE,
+        )
+        self.child_lease_data = dict(
+            uuid=uuidutils.generate_uuid(),
+            project_id=uuidutils.generate_uuid(),
+            owner_id=uuidutils.generate_uuid(),
+            parent_lease_uuid=self.parent_lease_data['uuid'],
+            resource_uuid='1111',
+            resource_type='dummy_node',
+            start_time=now + datetime.timedelta(days=60),
+            end_time=now + datetime.timedelta(days=70),
+            status=statuses.ACTIVE,
+        )
+        self.child_offer_data = dict(
+            uuid=uuidutils.generate_uuid(),
+            project_id=uuidutils.generate_uuid(),
+            parent_lease_uuid=self.parent_lease_data['uuid'],
+            resource_uuid='1111',
+            resource_type='dummy_node',
+            start_time=now + datetime.timedelta(days=70),
+            end_time=now + datetime.timedelta(days=80),
+            status=statuses.AVAILABLE,
+        )
+
+    def test_lease_verify_child_availability(self):
+        parent_lease = api.lease_create(self.parent_lease_data)
+
+        start = self.parent_lease_data['start_time'] + \
+            datetime.timedelta(days=1)
+        end = self.parent_lease_data['end_time'] + datetime.timedelta(days=-1)
+        api.lease_verify_child_availability(parent_lease, start, end)
+
+        start = self.parent_lease_data['start_time'] + \
+            datetime.timedelta(days=-1)
+        end = self.parent_lease_data['end_time'] + datetime.timedelta(days=-1)
+        self.assertRaises(e.LeaseNoTimeAvailabilities,
+                          api.lease_verify_child_availability,
+                          parent_lease, start, end,)
+
+        start = self.parent_lease_data['start_time'] + \
+            datetime.timedelta(days=1)
+        end = self.parent_lease_data['end_time'] + datetime.timedelta(days=1)
+        self.assertRaises(e.LeaseNoTimeAvailabilities,
+                          api.lease_verify_child_availability,
+                          parent_lease, start, end,)
+
+        start = self.parent_lease_data['start_time'] + \
+            datetime.timedelta(days=-1)
+        end = self.parent_lease_data['end_time'] + datetime.timedelta(days=1)
+        self.assertRaises(e.LeaseNoTimeAvailabilities,
+                          api.lease_verify_child_availability,
+                          parent_lease, start, end,)
+
+    def test_lease_verify_child_availability_lease_conflict(self):
+        parent_lease = api.lease_create(self.parent_lease_data)
+        api.lease_create(self.child_lease_data)
+
+        start = self.child_lease_data['start_time'] + \
+            datetime.timedelta(days=-5)
+        end = self.child_lease_data['start_time'] + datetime.timedelta(days=-1)
+        api.lease_verify_child_availability(parent_lease, start, end)
+
+        start = self.child_lease_data['end_time'] + datetime.timedelta(days=1)
+        end = self.child_lease_data['end_time'] + datetime.timedelta(days=5)
+        api.lease_verify_child_availability(parent_lease, start, end)
+
+        start = self.child_lease_data['start_time'] + \
+            datetime.timedelta(days=1)
+        end = self.child_lease_data['end_time'] + datetime.timedelta(days=5)
+        self.assertRaises(e.LeaseNoTimeAvailabilities,
+                          api.lease_verify_child_availability,
+                          parent_lease, start, end,)
+
+        start = self.child_lease_data['start_time'] + \
+            datetime.timedelta(days=-1)
+        end = self.child_lease_data['end_time'] + datetime.timedelta(days=-1)
+        self.assertRaises(e.LeaseNoTimeAvailabilities,
+                          api.lease_verify_child_availability,
+                          parent_lease, start, end,)
+
+    def test_lease_verify_child_availability_offer_conflict(self):
+        parent_lease = api.lease_create(self.parent_lease_data)
+        api.offer_create(self.child_offer_data)
+
+        start = self.child_offer_data['start_time'] + \
+            datetime.timedelta(days=-5)
+        end = self.child_offer_data['start_time'] + datetime.timedelta(days=-1)
+        api.lease_verify_child_availability(parent_lease, start, end)
+
+        start = self.child_offer_data['end_time'] + datetime.timedelta(days=1)
+        end = self.child_offer_data['end_time'] + datetime.timedelta(days=5)
+        api.lease_verify_child_availability(parent_lease, start, end)
+
+        start = self.child_offer_data['start_time'] + \
+            datetime.timedelta(days=1)
+        end = self.child_offer_data['end_time'] + datetime.timedelta(days=5)
+        self.assertRaises(e.LeaseNoTimeAvailabilities,
+                          api.lease_verify_child_availability,
+                          parent_lease, start, end,)
+
+        start = self.child_offer_data['start_time'] + \
+            datetime.timedelta(days=-1)
+        end = self.child_offer_data['end_time'] + datetime.timedelta(days=-1)
+        self.assertRaises(e.LeaseNoTimeAvailabilities,
+                          api.lease_verify_child_availability,
+                          parent_lease, start, end,)
+
+
 class TestOwnerChangeAPI(base.DBTestCase):
 
     def setUp(self):
@@ -687,7 +809,7 @@ class TestOwnerChangeAPI(base.DBTestCase):
                           'someuuid')
 
 
-class TestResourceVeifyAvailabilityAPI(base.DBTestCase):
+class TestResourceVerifyAvailabilityAPI(base.DBTestCase):
 
     def test_resource_verify_availability_offer_conflict(self):
         o1 = api.offer_create(test_offer_4)

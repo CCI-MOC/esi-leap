@@ -12,6 +12,7 @@
 
 import datetime
 import http.client as http_client
+from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 import pecan
 from pecan import rest
@@ -48,7 +49,7 @@ class Lease(base.ESILEAPBase):
     status = wsme.wsattr(wtypes.text, readonly=True)
     properties = {wtypes.text: types.jsontype}
     offer_uuid = wsme.wsattr(wtypes.text, readonly=True)
-    offer_uuid_or_name = wsme.wsattr(wtypes.text)
+    parent_lease_uuid = wsme.wsattr(wtypes.text, readonly=True)
 
     def __init__(self, **kwargs):
         self.fields = lease_obj.Lease.fields
@@ -138,12 +139,22 @@ class LeasesController(rest.RestController):
         if 'end_time' not in lease_dict:
             lease_dict['end_time'] = datetime.datetime.max
 
-        utils.check_resource_admin(cdict,
-                                   lease_dict.get('resource_type'),
-                                   lease_dict.get('resource_uuid'),
-                                   request.project_id,
-                                   lease_dict.get('start_time'),
-                                   lease_dict.get('end_time'))
+        try:
+            utils.check_resource_admin(cdict,
+                                       resource,
+                                       request.project_id,
+                                       lease_dict.get('start_time'),
+                                       lease_dict.get('end_time'))
+        except oslo_policy.PolicyNotAuthorized:
+            parent_lease_uuid = utils.check_resource_lease_admin(
+                cdict,
+                resource,
+                request.project_id,
+                lease_dict.get('start_time'),
+                lease_dict.get('end_time'))
+            if parent_lease_uuid is None:
+                raise
+            lease_dict['parent_lease_uuid'] = parent_lease_uuid
 
         lease = lease_obj.Lease(**lease_dict)
         lease.create(request)

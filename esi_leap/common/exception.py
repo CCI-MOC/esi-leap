@@ -46,12 +46,21 @@ class LeaseDuplicateName(ESILeapException):
     msg_fmt = _("Duplicate leases with name %(name)s.")
 
 
+class LeaseNotActive(ESILeapException):
+    msg_fmt = _("Lease with name or uuid %(lease_id)s not active.")
+
+
 class LeaseNotFound(ESILeapException):
     msg_fmt = _("Lease with name or uuid %(lease_id)s not found.")
 
 
 class LeaseNoOfferUUID(ESILeapException):
     msg_fmt = _("Cannot create lease without parameter offer_uuid.")
+
+
+class LeaseNoTimeAvailabilities(ESILeapException):
+    msg_fmt = _("Lease %(lease_uuid)s has no availabilities at given "
+                "time range %(start_time)s, %(end_time)s.")
 
 
 class OfferNoPermission(ESILeapException):
