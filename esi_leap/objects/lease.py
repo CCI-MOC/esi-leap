@@ -23,8 +23,10 @@ from esi_leap.resource_objects import resource_object_factory as ro_factory
 
 from oslo_config import cfg
 from oslo_versionedobjects import base as versioned_objects_base
+from oslo_log import log as logging
 
 CONF = cfg.CONF
+LOG = logging.getLogger(__name__)
 
 
 @versioned_objects_base.VersionedObjectRegistry.register
@@ -127,6 +129,7 @@ class Lease(base.ESILEAPObject):
                                                          self.resource_uuid),
                             external=True)
         def _cancel_lease():
+            LOG.info("Deleting lease %s", self.uuid)
             resource = self.resource_object()
             if resource.get_lease_uuid() == self.uuid:
                 resource.expire_lease(self)
@@ -155,7 +158,7 @@ class Lease(base.ESILEAPObject):
                                                          self.resource_uuid),
                             external=True)
         def _fulfill_lease():
-
+            LOG.info("Fulfilling lease %s", self.uuid)
             resource = self.resource_object()
             resource.set_lease(self)
 
@@ -184,13 +187,13 @@ class Lease(base.ESILEAPObject):
                                                          self.resource_uuid),
                             external=True)
         def _expire_lease():
+            LOG.info("Expiring lease %s", self.uuid)
             resource = self.resource_object()
             if resource.get_lease_uuid() == self.uuid:
                 resource.expire_lease(self)
                 if self.parent_lease_uuid is not None:
                     parent_lease = Lease.get(self.parent_lease_uuid)
                     resource.set_lease(parent_lease)
-
             # expire lease
             self.status = statuses.EXPIRED
             self.expire_time = datetime.datetime.now()
