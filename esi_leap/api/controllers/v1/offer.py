@@ -12,7 +12,6 @@
 
 import datetime
 import http.client as http_client
-from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 import pecan
 from pecan import rest
@@ -26,7 +25,6 @@ from esi_leap.api.controllers.v1 import lease
 from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
 from esi_leap.common import keystone
-from esi_leap.common import policy
 from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.objects import lease as lease_obj
@@ -79,7 +77,7 @@ class OffersController(rest.RestController):
         request = pecan.request.context
         cdict = request.to_policy_values()
 
-        policy.authorize('esi_leap:offer:get', cdict, cdict)
+        utils.policy_authorize('esi_leap:offer:get', cdict)
 
         o_object = utils.get_offer(offer_id)
         utils.check_offer_lessee(cdict, o_object)
@@ -99,7 +97,7 @@ class OffersController(rest.RestController):
         request = pecan.request.context
 
         cdict = request.to_policy_values()
-        policy.authorize('esi_leap:offer:get', cdict, cdict)
+        utils.policy_authorize('esi_leap:offer:get', cdict)
 
         if project_id is not None:
             project_id = keystone.get_project_uuid_from_ident(project_id)
@@ -141,10 +139,9 @@ class OffersController(rest.RestController):
             status = None
 
         try:
-            policy.authorize('esi_leap:offer:offer_admin',
-                             cdict, cdict)
+            utils.policy_authorize('esi_leap:offer:offer_admin', cdict)
             lessee_id = None
-        except oslo_policy.PolicyNotAuthorized:
+        except exception.HTTPForbidden:
             lessee_id = cdict['project_id']
 
         possible_filters = {
@@ -176,7 +173,7 @@ class OffersController(rest.RestController):
     def post(self, new_offer):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        policy.authorize('esi_leap:offer:create', cdict, cdict)
+        utils.policy_authorize('esi_leap:offer:create', cdict)
 
         offer_dict = new_offer.to_dict()
         offer_dict['project_id'] = request.project_id
@@ -209,7 +206,7 @@ class OffersController(rest.RestController):
                                        request.project_id,
                                        offer_dict.get('start_time'),
                                        offer_dict.get('end_time'))
-        except oslo_policy.PolicyNotAuthorized:
+        except exception.HTTPResourceForbidden:
             parent_lease_uuid = utils.check_resource_lease_admin(
                 cdict,
                 resource,
@@ -228,7 +225,7 @@ class OffersController(rest.RestController):
     def delete(self, offer_id):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        policy.authorize('esi_leap:offer:delete', cdict, cdict)
+        utils.policy_authorize('esi_leap:offer:delete', cdict)
 
         o_object = utils.get_offer_authorized(offer_id,
                                               cdict,
@@ -241,7 +238,7 @@ class OffersController(rest.RestController):
     def claim(self, offer_uuid, new_lease):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        policy.authorize('esi_leap:offer:claim', cdict, cdict)
+        utils.policy_authorize('esi_leap:offer:claim', cdict)
 
         offer = utils.get_offer(offer_uuid, statuses.AVAILABLE)
         utils.check_offer_lessee(cdict, offer)

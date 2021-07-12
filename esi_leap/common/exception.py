@@ -10,12 +10,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from http import client as http_client
+
 from esi_leap.common.i18n import _
 
 
 class ESILeapException(Exception):
     msg_fmt = _("An unknown exception occurred.")
-    code = 500
+    code = http_client.INTERNAL_SERVER_ERROR
     safe = False
 
     def __init__(self, message=None, **kwargs):
@@ -35,6 +37,16 @@ class ESILeapException(Exception):
 
         self.message = message
         super(ESILeapException, self).__init__(message)
+
+
+class HTTPForbidden(ESILeapException):
+    code = http_client.FORBIDDEN
+    msg_fmt = _("Access was denied to %(rule)s.")
+
+
+class HTTPResourceForbidden(ESILeapException):
+    code = http_client.FORBIDDEN
+    msg_fmt = _("Access was denied to %(resource_type)s %(resource)s.")
 
 
 class LeaseNoPermission(ESILeapException):

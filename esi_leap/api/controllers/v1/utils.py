@@ -28,19 +28,20 @@ def get_offer_authorized(uuid_or_name, cdict, status_filter=None):
         if not status_filter or o.status == status_filter:
             try:
                 if o.project_id != cdict['project_id']:
-                    policy.authorize('esi_leap:offer:offer_admin',
-                                     cdict, cdict)
+                    policy_authorize('esi_leap:offer:offer_admin',
+                                     cdict, 'offer', uuid_or_name)
                 offer_objs.append(o)
-            except oslo_policy.PolicyNotAuthorized:
+            except exception.HTTPResourceForbidden:
                 pass
 
     else:
         try:
-            policy.authorize('esi_leap:offer:offer_admin', cdict, cdict)
+            policy_authorize('esi_leap:offer:offer_admin', cdict, 'offer',
+                             uuid_or_name)
             offer_objs = offer_obj.Offer.get_all({'name': uuid_or_name,
                                                   'status': status_filter})
 
-        except oslo_policy.PolicyNotAuthorized:
+        except exception.HTTPResourceForbidden:
             offer_objs = offer_obj.Offer.get_all(
                 {'name': uuid_or_name,
                  'project_id': cdict['project_id'],
@@ -58,7 +59,9 @@ def get_offer_authorized(uuid_or_name, cdict, status_filter=None):
 def check_resource_admin(cdict, resource, project_id,
                          start_time, end_time):
     if not resource.check_admin(project_id, start_time, end_time):
-        policy.authorize('esi_leap:offer:offer_admin', cdict, cdict)
+        policy_authorize('esi_leap:offer:offer_admin', cdict,
+                         resource.resource_type,
+                         resource.get_resource_uuid())
 
 
 def check_resource_lease_admin(cdict, resource, project_id,
@@ -117,7 +120,7 @@ def get_lease_authorized(uuid_or_name, cdict, status_filters=[]):
         try:
             lease_authorize_management(lease, cdict)
             permitted.append(lease)
-        except oslo_policy.PolicyNotAuthorized:
+        except exception.HTTPResourceForbidden:
             continue
 
         if len(permitted) > 1:
@@ -133,13 +136,13 @@ def lease_authorize_management(lease, cdict):
 
     if cdict['project_id'] not in (lease.project_id, lease.owner_id):
         try:
-            policy.authorize('esi_leap:lease:lease_admin',
-                             cdict, cdict)
-        except oslo_policy.PolicyNotAuthorized:
+            policy_authorize('esi_leap:lease:lease_admin',
+                             cdict, 'lease', lease.uuid)
+        except exception.HTTPResourceForbidden:
             o = offer_obj.Offer.get(lease.offer_uuid)
             if o.project_id != cdict['project_id']:
-                policy.authorize('esi_leap:offer:offer_admin',
-                                 cdict, cdict)
+                policy_authorize('esi_leap:offer:offer_admin',
+                                 cdict, 'lease', lease.uuid)
 
 
 def check_offer_lessee(cdict, offer):
@@ -152,4 +155,16 @@ def check_offer_lessee(cdict, offer):
 
     if offer.lessee_id not in keystone.get_parent_project_id_tree(
             project_id):
-        policy.authorize('esi_leap:offer:offer_admin', cdict, cdict)
+        policy_authorize('esi_leap:offer:offer_admin', cdict,
+                         'offer', offer.uuid)
+
+
+def policy_authorize(policy_name, cdict, resource_type=None, resource=None):
+    try:
+        policy.authorize(policy_name, cdict, cdict)
+    except oslo_policy.PolicyNotAuthorized:
+        if resource_type:
+            raise exception.HTTPResourceForbidden(resource_type=resource_type,
+                                                  resource=resource)
+        else:
+            raise exception.HTTPForbidden(rule=policy_name)
