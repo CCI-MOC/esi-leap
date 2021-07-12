@@ -39,9 +39,12 @@ class Offer(base.ESILEAPBase):
     name = wsme.wsattr(wtypes.text)
     uuid = wsme.wsattr(wtypes.text, readonly=True)
     project_id = wsme.wsattr(wtypes.text, readonly=True)
+    project = wsme.wsattr(wtypes.text, readonly=True)
     lessee_id = wsme.wsattr(wtypes.text)
+    lessee = wsme.wsattr(wtypes.text, readonly=True)
     resource_type = wsme.wsattr(wtypes.text)
     resource_uuid = wsme.wsattr(wtypes.text, mandatory=True)
+    resource = wsme.wsattr(wtypes.text, readonly=True)
     start_time = wsme.wsattr(datetime.datetime)
     end_time = wsme.wsattr(datetime.datetime)
     status = wsme.wsattr(wtypes.text, readonly=True)
@@ -55,8 +58,8 @@ class Offer(base.ESILEAPBase):
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
-        setattr(self, 'availabilities', kwargs.get('availabilities',
-                                                   wtypes.Unset))
+        for attr in ['availabilities', 'project', 'lessee', 'resource']:
+            setattr(self, attr, kwargs.get(attr, wtypes.Unset))
 
 
 class OfferCollection(types.Collection):
@@ -81,7 +84,7 @@ class OffersController(rest.RestController):
 
         o_object = utils.get_offer(offer_id)
         utils.check_offer_lessee(cdict, o_object)
-        o = OffersController._add_offer_availabilities(o_object)
+        o = OffersController._add_offer_availabilities_and_names(o_object)
 
         return Offer(**o)
 
@@ -165,7 +168,7 @@ class OffersController(rest.RestController):
         offers = offer_obj.Offer.get_all(filters, request)
 
         offer_collection.offers = [
-            Offer(**OffersController._add_offer_availabilities(o))
+            Offer(**OffersController._add_offer_availabilities_and_names(o))
             for o in offers]
         return offer_collection
 
@@ -219,7 +222,7 @@ class OffersController(rest.RestController):
 
         o = offer_obj.Offer(**offer_dict)
         o.create()
-        return Offer(**OffersController._add_offer_availabilities(o))
+        return Offer(**OffersController._add_offer_availabilities_and_names(o))
 
     @wsme_pecan.wsexpose(Offer, wtypes.text)
     def delete(self, offer_id):
@@ -270,8 +273,13 @@ class OffersController(rest.RestController):
         return lease.Lease(**new_lease.to_dict())
 
     @staticmethod
-    def _add_offer_availabilities(o):
-        availabilities = o.get_availabilities()
-        o = o.to_dict()
+    def _add_offer_availabilities_and_names(offer):
+        availabilities = offer.get_availabilities()
+        resource = offer.resource_object()
+
+        o = offer.to_dict()
         o['availabilities'] = availabilities
+        o['project'] = keystone.get_project_name(offer.project_id)
+        o['lessee'] = keystone.get_project_name(offer.lessee_id)
+        o['resource'] = resource.get_resource_name()
         return o

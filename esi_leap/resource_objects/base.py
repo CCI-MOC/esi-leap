@@ -27,6 +27,12 @@ class ResourceObjectInterface(object, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
+    def get_resource_name(self):
+        """Returns resource's name
+
+        """
+
+    @abc.abstractmethod
     def get_lease_uuid(self):
         """Returns resource's associated lease, if any
 

@@ -31,6 +31,9 @@ class DummyNode(base.ResourceObjectInterface):
     def get_resource_uuid(self):
         return self._uuid
 
+    def get_resource_name(self):
+        return "dummy-node-%s" % self._uuid
+
     def get_lease_uuid(self):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)

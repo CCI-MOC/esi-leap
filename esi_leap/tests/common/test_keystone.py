@@ -61,3 +61,67 @@ class KeystoneTestCase(base.TestCase):
         mock_iul.assert_called_once_with('name')
         mock_keystone.return_value.projects.list.assert_called_once_with(
             name='name')
+
+    @mock.patch('esi_leap.common.keystone.get_project_list')
+    def test_search_project_list(self, mock_gpl):
+        test_project1 = mock.Mock(id='12345')
+        test_project2 = mock.Mock(id='67890')
+        test_project1.name = 'test-project-1'
+        test_project2.name = 'test-project-2'
+
+        mock_gpl.return_value = [test_project1, test_project2]
+
+        project = keystone.search_project_list('67890')
+
+        mock_gpl.assert_called_once()
+        self.assertEqual(test_project2, project)
+
+    @mock.patch('esi_leap.common.keystone.refresh_project_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
+    def test_search_project_list_refresh(self, mock_gpl, mock_rpl):
+        test_project1 = mock.Mock(id='12345')
+        test_project2 = mock.Mock(id='67890')
+        test_project1.name = 'test-project-1'
+        test_project2.name = 'test-project-2'
+
+        mock_gpl.side_effect = [[test_project1],
+                                [test_project1, test_project2]]
+
+        project = keystone.search_project_list('67890')
+
+        self.assertEqual(2, mock_gpl.call_count)
+        mock_rpl.assert_called_once()
+        self.assertEqual(test_project2, project)
+
+    @mock.patch('esi_leap.common.keystone.search_project_list')
+    def test_get_project_name(self, mock_spl):
+        test_project = mock.Mock(id='12345', name='test-project')
+        test_project.name = 'test-project'
+
+        mock_spl.return_value = test_project
+
+        project_name = keystone.get_project_name('12345')
+
+        mock_spl.assert_called_once_with('12345')
+        self.assertEqual('test-project', project_name)
+
+    @mock.patch('esi_leap.common.keystone.search_project_list')
+    def test_get_project_name_no_id(self, mock_spl):
+        test_project = mock.Mock(id='12345', name='test-project')
+        test_project.name = 'test-project'
+
+        mock_spl.return_value = test_project
+
+        project_name = keystone.get_project_name(None)
+
+        mock_spl.assert_not_called()
+        self.assertEqual('', project_name)
+
+    @mock.patch('esi_leap.common.keystone.search_project_list')
+    def test_get_project_name_no_match(self, mock_spl):
+        mock_spl.return_value = None
+
+        project_name = keystone.get_project_name('123456')
+
+        mock_spl.assert_called_once_with('123456')
+        self.assertEqual('', project_name)

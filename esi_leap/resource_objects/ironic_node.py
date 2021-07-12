@@ -54,6 +54,10 @@ class IronicNode(base.ResourceObjectInterface):
     def get_resource_uuid(self):
         return self._uuid
 
+    def get_resource_name(self):
+        node = get_ironic_client().node.get(self._uuid)
+        return node.name
+
     def get_lease_uuid(self):
         node = get_ironic_client().node.get(self._uuid)
         return node.properties.get('lease_uuid', None)

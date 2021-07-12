@@ -24,6 +24,9 @@ class TestNode(base.ResourceObjectInterface):
     def get_resource_uuid(self):
         return self._uuid
 
+    def get_resource_name(self):
+        return "test-node-%s" % self._uuid
+
     def get_lease_uuid(self):
         return '12345'
 
