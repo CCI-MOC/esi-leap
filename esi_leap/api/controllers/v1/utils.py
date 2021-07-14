@@ -21,39 +21,16 @@ from esi_leap.objects import offer as offer_obj
 
 
 def get_offer_authorized(uuid_or_name, cdict, status_filter=None):
-    if uuidutils.is_uuid_like(uuid_or_name):
-        o = offer_obj.Offer.get(uuid_or_name)
-        offer_objs = []
+    offer = get_offer(uuid_or_name, status_filter)
 
-        if not status_filter or o.status == status_filter:
-            try:
-                if o.project_id != cdict['project_id']:
-                    policy_authorize('esi_leap:offer:offer_admin',
-                                     cdict, 'offer', uuid_or_name)
-                offer_objs.append(o)
-            except exception.HTTPResourceForbidden:
-                pass
-
-    else:
+    if offer.project_id != cdict['project_id']:
         try:
-            policy_authorize('esi_leap:offer:offer_admin', cdict, 'offer',
-                             uuid_or_name)
-            offer_objs = offer_obj.Offer.get_all({'name': uuid_or_name,
-                                                  'status': status_filter})
-
+            policy_authorize('esi_leap:offer:offer_admin',
+                             cdict, 'offer', uuid_or_name)
         except exception.HTTPResourceForbidden:
-            offer_objs = offer_obj.Offer.get_all(
-                {'name': uuid_or_name,
-                 'project_id': cdict['project_id'],
-                 'status': status_filter}
-            )
+            raise exception.OfferNotFound(offer_uuid=uuid_or_name)
 
-    if len(offer_objs) == 0:
-        raise exception.OfferNotFound(offer_uuid=uuid_or_name)
-    elif len(offer_objs) > 1:
-        raise exception.OfferDuplicateName(name=uuid_or_name)
-
-    return offer_objs[0]
+    return offer
 
 
 def check_resource_admin(cdict, resource, project_id,
@@ -82,54 +59,42 @@ def check_resource_lease_admin(cdict, resource, project_id,
 
 
 def get_offer(uuid_or_name, status_filter=None):
+    filters = {}
+    if status_filter:
+        filters['status'] = status_filter
     if uuidutils.is_uuid_like(uuid_or_name):
-        o = offer_obj.Offer.get(uuid_or_name)
-        if not status_filter or o.status == status_filter:
-            return o
-        else:
-            raise exception.OfferNotFound(
-                offer_uuid=uuid_or_name)
+        filters['uuid'] = uuid_or_name
     else:
-        offer_objs = offer_obj.Offer.get_all({'name': uuid_or_name,
-                                              'status': status_filter})
+        filters['name'] = uuid_or_name
 
-        if len(offer_objs) > 1:
-            raise exception.OfferDuplicateName(
-                name=uuid_or_name)
-        elif len(offer_objs) == 0:
-            raise exception.OfferNotFound(
-                offer_uuid=uuid_or_name)
+    offers = offer_obj.Offer.get_all(filters)
 
-        return offer_objs[0]
+    # duplicate names or uuids should not be possible
+    if len(offers) > 0:
+        return offers[0]
+
+    raise exception.OfferNotFound(offer_uuid=uuid_or_name)
 
 
 def get_lease_authorized(uuid_or_name, cdict, status_filters=[]):
-
+    filters = {'status': status_filters}
     if uuidutils.is_uuid_like(uuid_or_name):
-        lease = lease_obj.Lease.get(uuid_or_name)
-        leases = []
-        if not status_filters or lease.status in status_filters:
-            leases.append(lease)
-
+        filters['uuid'] = uuid_or_name
     else:
-        leases = lease_obj.Lease.get_all({'name': uuid_or_name,
-                                          'status': status_filters})
+        filters['name'] = uuid_or_name
 
-    permitted = []
-    for lease in leases:
+    leases = lease_obj.Lease.get_all(filters)
+
+    # duplicate names or uuids should not be possible
+    if len(leases) > 0:
+        lease = leases[0]
         try:
             lease_authorize_management(lease, cdict)
-            permitted.append(lease)
+            return lease
         except exception.HTTPResourceForbidden:
-            continue
+            pass
 
-        if len(permitted) > 1:
-            raise exception.LeaseDuplicateName(name=uuid_or_name)
-
-    if len(permitted) == 0:
-        raise exception.LeaseNotFound(lease_id=uuid_or_name)
-
-    return permitted[0]
+    raise exception.LeaseNotFound(lease_id=uuid_or_name)
 
 
 def lease_authorize_management(lease, cdict):

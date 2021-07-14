@@ -106,7 +106,7 @@ def offer_get_by_uuid(offer_uuid):
 
 def offer_get_by_name(name):
     query = model_query(models.Offer)
-    offers = query.filter_by(name=name).all()
+    offers = query.filter_by(name=name).one_or_none()
     return offers
 
 
@@ -271,7 +271,7 @@ def lease_get_by_uuid(lease_uuid):
 
 def lease_get_by_name(name):
     query = model_query(models.Lease)
-    leases = query.filter_by(name=name).all()
+    leases = query.filter_by(name=name).one_or_none()
     return leases
 
 

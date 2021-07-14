@@ -37,7 +37,7 @@ test_offer_2 = dict(
     uuid='22222',
     project_id='0wn3r',
     lessee_id='12345',
-    name='o1',
+    name='o2',
     resource_uuid='1111',
     resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=25),
@@ -50,7 +50,7 @@ test_offer_3 = dict(
     uuid='33333',
     project_id='0wn3r_2',
     lessee_id='67890',
-    name='o1',
+    name='o3',
     resource_uuid='1111',
     resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=50),
@@ -63,7 +63,7 @@ test_offer_4 = dict(
     uuid='44444',
     project_id='0wn3r_2',
     lessee_id='ABCDE',
-    name='o2',
+    name='o4',
     resource_uuid='1111',
     resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=75),
@@ -76,7 +76,7 @@ test_offer_5 = dict(
     uuid='55555',
     project_id='12345',
     lessee_id='ABCDE',
-    name='o2',
+    name='o5',
     resource_uuid='1111',
     resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=105),
@@ -102,7 +102,7 @@ test_lease_2 = dict(
     uuid='22222',
     project_id='1e5533',
     owner_id='0wn3r',
-    name='l1',
+    name='l2',
     resource_uuid='1111',
     resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=20),
@@ -115,7 +115,7 @@ test_lease_3 = dict(
     uuid='33333',
     project_id='1e5533_2',
     owner_id='0wn3r_2',
-    name='l1',
+    name='l3',
     resource_uuid='1111',
     resource_type='dummy_node',
     start_time=now + datetime.timedelta(days=50),
@@ -302,24 +302,17 @@ class TestOfferAPI(base.DBTestCase):
         assert api.offer_get_by_uuid('some_uuid') is None
 
     def test_offer_get_by_name(self):
-        o1 = api.offer_create(test_offer_1)
-        o2 = api.offer_create(test_offer_2)
+        api.offer_create(test_offer_1)
+        api.offer_create(test_offer_2)
         o3 = api.offer_create(test_offer_3)
         api.offer_create(test_offer_4)
 
-        res = api.offer_get_by_name('o1')
-        assert len(res) == 3
-        self.assertEqual(o1.uuid, res[0].uuid)
-        self.assertEqual(o1.project_id, res[0].project_id)
-
-        self.assertEqual(o2.uuid, res[1].uuid)
-        self.assertEqual(o2.project_id, res[1].project_id)
-
-        self.assertEqual(o3.uuid, res[2].uuid)
-        self.assertEqual(o3.project_id, res[2].project_id)
+        res = api.offer_get_by_name('o3')
+        self.assertEqual(o3.uuid, res.uuid)
+        self.assertEqual(o3.project_id, res.project_id)
 
     def test_offer_get_by_name_not_found(self):
-        self.assertEqual(api.offer_get_by_name('some_name'), [])
+        self.assertEqual(api.offer_get_by_name('some_name'), None)
 
     def test_offer_destroy(self):
         o1 = api.offer_create(test_offer_2)
@@ -428,23 +421,17 @@ class TestLeaseAPI(base.DBTestCase):
         test_lease_2['offer_uuid'] = o2.uuid
         test_lease_3['offer_uuid'] = o3.uuid
         test_lease_4['offer_uuid'] = o4.uuid
-        l1 = api.lease_create(test_lease_1)
-        l2 = api.lease_create(test_lease_2)
+        api.lease_create(test_lease_1)
+        api.lease_create(test_lease_2)
         l3 = api.lease_create(test_lease_3)
         api.lease_create(test_lease_4)
-        res = api.lease_get_by_name('l1')
-        assert len(res) == 3
-        self.assertEqual(l1.uuid, res[0].uuid)
-        self.assertEqual(l1.project_id, res[0].project_id)
+        res = api.lease_get_by_name('l3')
 
-        self.assertEqual(l2.uuid, res[1].uuid)
-        self.assertEqual(l2.project_id, res[1].project_id)
-
-        self.assertEqual(l3.uuid, res[2].uuid)
-        self.assertEqual(l3.project_id, res[2].project_id)
+        self.assertEqual(l3.uuid, res.uuid)
+        self.assertEqual(l3.project_id, res.project_id)
 
     def test_lease_get_by_name_not_found(self):
-        self.assertEqual(api.lease_get_by_name('some_name'), [])
+        self.assertEqual(api.lease_get_by_name('some_name'), None)
 
     def test_lease_get_all(self):
         api.lease_create(test_lease_1)

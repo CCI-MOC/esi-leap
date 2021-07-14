@@ -48,7 +48,7 @@ class Offer(Base):
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     uuid = Column(String(36), nullable=False, unique=True)
-    name = Column(String(35), nullable=True, unique=False)
+    name = Column(String(35), nullable=True, unique=True)
     project_id = Column(String(255), nullable=False)
     lessee_id = Column(String(255), nullable=True)
     resource_type = Column(String(36), nullable=False)
@@ -79,7 +79,7 @@ class Lease(Base):
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     uuid = Column(String(36), nullable=False, unique=True)
-    name = Column(String(35), nullable=True, unique=False)
+    name = Column(String(35), nullable=True, unique=True)
     project_id = Column(String(255), nullable=False)
     owner_id = Column(String(255), nullable=False)
     resource_type = Column(String(36), nullable=False)
