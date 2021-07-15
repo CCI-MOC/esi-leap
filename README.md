@@ -17,10 +17,33 @@ To  install the python code:
     $ sudo python setup.py install
 ```
 
+
 ### Client
 
 esi-leap has a command line client which can be found here:
 https://github.com/CCI-MOC/python-esileapclient
+
+
+### Create the esi-leap Database
+
+The esi-leap service requires a database to store its information. To set this up using
+the MySQL databse used by other OpenStack services, run the following, replacing
+\<PASSWORD\> with a suitable password and \<DATABASE\_IP\> with the IP address of your
+MySQL database (if you're not sure, use localhost or 127.0.0.1).
+
+```
+    $ mysql -u root -p
+    mysql> CREATE USER 'esi_leap'@'<DATABASE_IP>' IDENTIFIED BY '<PASSWORD>';
+    mysql> CREATE DATABASE esi_leap CHARACTER SET utf8;
+    mysql> GRANT ALL PRIVILEGES ON esi_leap.* TO 'esi_leap'@'<DATABASE_IP>';
+    mysql> FLUSH PRIVILEGES;
+```
+
+If you use this method, the resulting database connection string should be:
+
+```
+    mysql+pymysql://esi_leap:PASSWORD@DATABASE_IP/esi_leap
+```
 
 
 ### Configuration
@@ -45,8 +68,20 @@ transport_url=<transport URL for messaging>
 [database]
 connection=<db connection string>
 
+# End-user authentication configuration
 [keystone_authtoken]
 www_authenticate_uri=<public Keystone endpoint>
+auth_type=password
+auth_url=<keystone auth URL>
+username=admin
+password=<password>
+user_domain_name=Default
+project_name=admin
+project_domain_name=Default
+
+# esi-leap internal authentication configuration
+[keystone]
+api_endpoint=<admin Keystone endpoint>
 auth_type=password
 auth_url=<keystone auth URL>
 username=admin
@@ -77,7 +112,8 @@ password = <ironic password>
 dummy_node_dir=/tmp/nodes
 ```
 
-### Create the Openstack Service
+
+### Create the OpenStack Service
 
 ```
     $ openstack service create --name esi-leap lease
