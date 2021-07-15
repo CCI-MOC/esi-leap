@@ -13,12 +13,18 @@
 from oslo_db.sqlalchemy import models
 from oslo_db.sqlalchemy import types as db_types
 
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import orm
 from sqlalchemy import Column, DateTime, ForeignKey
 from sqlalchemy import Index, Integer, String
 
 from esi_leap.common import statuses
+
+
+@compiles(DateTime, "mysql")
+def compile_datetime_mysql(type_, compiler, **kw):
+    return "DATETIME(6)"
 
 
 class ESILEAPBase(models.TimestampMixin, models.ModelBase):
