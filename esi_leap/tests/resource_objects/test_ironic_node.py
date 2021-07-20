@@ -54,16 +54,15 @@ class TestIronicNode(base.TestCase):
         test_ironic_node = ironic_node.IronicNode("1111")
         self.assertEqual("1111", test_ironic_node.get_resource_uuid())
 
-    @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
-    def test_get_resource_name(self, client_mock):
-        fake_get_node = FakeIronicNode()
-        client_mock.return_value.node.get.return_value = fake_get_node
+    @mock.patch('esi_leap.common.ironic.get_node_name')
+    def test_get_resource_name(self, mock_gnn):
+        mock_gnn.return_value = 'node-name'
         test_ironic_node = ironic_node.IronicNode("1111")
+
         resource_name = test_ironic_node.get_resource_name()
-        self.assertEqual('fake-node', resource_name)
-        client_mock.assert_called_once()
-        client_mock.return_value.node.get.assert_called_once_with(
-            test_ironic_node._uuid)
+
+        self.assertEqual('node-name', resource_name)
+        mock_gnn.assert_called_once_with('1111', None)
 
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
     def test_get_by_name(self, client_mock):

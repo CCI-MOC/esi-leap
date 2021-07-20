@@ -10,10 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from keystoneauth1 import loading as ks_loading
-
-from ironicclient import client as ironic_client
-
+from esi_leap.common import ironic
 import esi_leap.conf
 from esi_leap.resource_objects import base
 
@@ -24,19 +21,9 @@ _cached_ironic_client = None
 
 def get_ironic_client():
     global _cached_ironic_client
-    if _cached_ironic_client is not None:
-        return _cached_ironic_client
-
-    auth_plugin = ks_loading.load_auth_from_conf_options(CONF, 'ironic')
-    sess = ks_loading.load_session_from_conf_options(CONF, 'ironic',
-                                                     auth=auth_plugin)
-
-    kwargs = {'os_ironic_api_version': '1.65'}
-    cli = ironic_client.get_client(1,
-                                   session=sess, **kwargs)
-    _cached_ironic_client = cli
-
-    return cli
+    if _cached_ironic_client is None:
+        _cached_ironic_client = ironic.get_ironic_client()
+    return _cached_ironic_client
 
 
 class IronicNode(base.ResourceObjectInterface):
@@ -54,9 +41,8 @@ class IronicNode(base.ResourceObjectInterface):
     def get_resource_uuid(self):
         return self._uuid
 
-    def get_resource_name(self):
-        node = get_ironic_client().node.get(self._uuid)
-        return node.name
+    def get_resource_name(self, resource_list=None):
+        return ironic.get_node_name(self._uuid, resource_list)
 
     def get_lease_uuid(self):
         node = get_ironic_client().node.get(self._uuid)

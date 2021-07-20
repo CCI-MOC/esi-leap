@@ -44,9 +44,9 @@ class NodesController(rest.RestController):
     @wsme_pecan.wsexpose(NodeCollection)
     def get_all(self):
         context = pecan.request.context
-        client = ironic.get_ironic_client(context)
-        node_collection = NodeCollection()
-        nodes = client.node.list()
+        nodes = ironic.get_node_list(context)
 
+        node_collection = NodeCollection()
         node_collection.nodes = [Node(name=n.name) for n in nodes]
+
         return node_collection

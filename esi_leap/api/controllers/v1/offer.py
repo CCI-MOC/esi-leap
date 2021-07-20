@@ -24,6 +24,7 @@ from esi_leap.api.controllers import types
 from esi_leap.api.controllers.v1 import lease
 from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
+from esi_leap.common import ironic
 from esi_leap.common import keystone
 from esi_leap.common import statuses
 import esi_leap.conf
@@ -166,10 +167,15 @@ class OffersController(rest.RestController):
 
         offer_collection = OfferCollection()
         offers = offer_obj.Offer.get_all(filters, request)
+        offer_collection.offers = []
+        if len(offers) > 0:
+            project_list = keystone.get_project_list()
+            node_list = ironic.get_node_list()
+            offer_collection.offers = [
+                Offer(**OffersController._add_offer_availabilities_and_names(
+                    o, project_list, node_list))
+                for o in offers]
 
-        offer_collection.offers = [
-            Offer(**OffersController._add_offer_availabilities_and_names(o))
-            for o in offers]
         return offer_collection
 
     @wsme_pecan.wsexpose(Offer, body=Offer, status_code=http_client.CREATED)
@@ -273,13 +279,16 @@ class OffersController(rest.RestController):
         return lease.Lease(**new_lease.to_dict())
 
     @staticmethod
-    def _add_offer_availabilities_and_names(offer):
+    def _add_offer_availabilities_and_names(offer, project_list=None,
+                                            node_list=None):
         availabilities = offer.get_availabilities()
         resource = offer.resource_object()
 
         o = offer.to_dict()
         o['availabilities'] = availabilities
-        o['project'] = keystone.get_project_name(offer.project_id)
-        o['lessee'] = keystone.get_project_name(offer.lessee_id)
-        o['resource'] = resource.get_resource_name()
+        o['project'] = keystone.get_project_name(offer.project_id,
+                                                 project_list)
+        o['lessee'] = keystone.get_project_name(offer.lessee_id,
+                                                project_list)
+        o['resource'] = resource.get_resource_name(node_list)
         return o

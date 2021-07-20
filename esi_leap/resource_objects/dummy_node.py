@@ -31,7 +31,7 @@ class DummyNode(base.ResourceObjectInterface):
     def get_resource_uuid(self):
         return self._uuid
 
-    def get_resource_name(self):
+    def get_resource_name(self, resource_list=None):
         return "dummy-node-%s" % self._uuid
 
     def get_lease_uuid(self):

@@ -13,7 +13,6 @@
 import mock
 
 from esi_leap.tests.api import base as test_api_base
-from esi_leap.common import ironic
 
 
 class FakeIronicNode(object):
@@ -26,10 +25,12 @@ class TestNodesController(test_api_base.APITestCase):
     def setUp(self):
         super(TestNodesController, self).setUp()
 
-    @mock.patch.object(ironic, 'get_ironic_client', autospec=True)
-    def test_get_all(self, client_mock):
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    def test_get_all(self, mock_gnl):
         fake_node = FakeIronicNode()
-        client_mock.return_value.node.list.return_value = [fake_node]
+        mock_gnl.return_value = [fake_node]
+
         data = self.get_json("/nodes")
-        client_mock.assert_called_once()
+
+        mock_gnl.assert_called_once_with(self.context)
         self.assertEqual(data["nodes"][0]["name"], "fake-node")
