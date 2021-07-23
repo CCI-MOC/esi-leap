@@ -74,10 +74,9 @@ class LeasesController(rest.RestController):
     @wsme_pecan.wsexpose(Lease, wtypes.text)
     def get_one(self, lease_id):
         request = pecan.request.context
-        cdict = request.to_policy_values()
-        utils.policy_authorize('esi_leap:lease:get', cdict)
 
-        lease = utils.get_lease_authorized(lease_id, cdict)
+        lease = utils.check_lease_policy_and_retrieve(
+            request, 'esi_leap:lease:get', lease_id)
 
         return Lease(**LeasesController._lease_get_dict_with_names(lease))
 
@@ -128,7 +127,7 @@ class LeasesController(rest.RestController):
     def post(self, new_lease):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        utils.policy_authorize('esi_leap:lease:create', cdict)
+        utils.policy_authorize('esi_leap:lease:create', cdict, cdict)
 
         lease_dict = new_lease.to_dict()
         lease_dict['owner_id'] = request.project_id
@@ -174,13 +173,12 @@ class LeasesController(rest.RestController):
     @wsme_pecan.wsexpose(Lease, wtypes.text)
     def delete(self, lease_id):
         request = pecan.request.context
-        cdict = request.to_policy_values()
-        utils.policy_authorize('esi_leap:lease:delete', cdict)
 
-        permitted = utils.get_lease_authorized(
-            lease_id, cdict, [statuses.CREATED, statuses.ACTIVE])
+        lease = utils.check_lease_policy_and_retrieve(
+            request, 'esi_leap:lease:get', lease_id,
+            [statuses.CREATED, statuses.ACTIVE])
 
-        permitted.cancel()
+        lease.cancel()
 
     @staticmethod
     def _lease_get_all_authorize_filters(cdict,
@@ -207,15 +205,16 @@ class LeasesController(rest.RestController):
         }
 
         if view == 'all':
-            utils.policy_authorize('esi_leap:lease:lease_admin', cdict)
+            utils.policy_authorize('esi_leap:lease:lease_admin', cdict, cdict)
             possible_filters['owner_id'] = owner_id
             possible_filters['project_id'] = project_id
         else:
-            utils.policy_authorize('esi_leap:lease:get', cdict)
+            utils.policy_authorize('esi_leap:lease:get_all', cdict, cdict)
 
             if owner_id:
                 if cdict['project_id'] != owner_id:
-                    utils.policy_authorize('esi_leap:lease:lease_admin', cdict)
+                    utils.policy_authorize('esi_leap:lease:lease_admin', cdict,
+                                           cdict)
 
                 possible_filters['owner_id'] = owner_id
                 possible_filters['project_id'] = project_id
@@ -226,7 +225,7 @@ class LeasesController(rest.RestController):
                 else:
                     if project_id != cdict['project_id']:
                         utils.policy_authorize('esi_leap:lease:lease_admin',
-                                               cdict)
+                                               cdict, cdict)
                     possible_filters['project_id'] = project_id
 
         if (start_time and end_time is None) or \

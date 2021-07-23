@@ -540,20 +540,19 @@ class TestOffersController(test_api_base.APITestCase):
         self.assertEqual(request, expected_resp)
 
     @mock.patch('esi_leap.api.controllers.v1.utils.check_offer_lessee')
-    @mock.patch('esi_leap.api.controllers.v1.utils.get_offer')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_offer_policy_and_retrieve')
     @mock.patch('esi_leap.api.controllers.v1.offer.' +
                 'OffersController._add_offer_availabilities_and_names')
-    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
-    def test_get_one(self, mock_authorize, mock_aoa, mock_get_offer,
-                     mock_col):
-        mock_get_offer.return_value = self.test_offer
+    def test_get_one(self, mock_aoa, mock_copar, mock_col):
+        mock_copar.return_value = self.test_offer
         mock_aoa.return_value = self.test_offer.to_dict()
 
         self.get_json('/offers/' + self.test_offer.uuid)
 
-        mock_authorize.assert_called_once_with('esi_leap:offer:get',
-                                               self.context.to_policy_values())
-        mock_get_offer.assert_called_once_with(self.test_offer.uuid)
+        mock_copar.assert_called_once_with(self.context,
+                                           'esi_leap:offer:get',
+                                           self.test_offer.uuid)
         mock_col.assert_called_once_with(self.context.to_policy_values(),
                                          self.test_offer)
         mock_aoa.assert_called_once_with(self.test_offer)
@@ -561,12 +560,13 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.objects.lease.Lease.create')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_offer_lessee')
-    @mock.patch('esi_leap.api.controllers.v1.utils.get_offer')
-    def test_claim(self, mock_get_offer, mock_col, mock_lease_create,
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_offer_policy_and_retrieve')
+    def test_claim(self, mock_copar, mock_col, mock_lease_create,
                    mock_generate_uuid):
         lease_uuid = '12345'
         mock_generate_uuid.return_value = lease_uuid
-        mock_get_offer.return_value = self.test_offer
+        mock_copar.return_value = self.test_offer
         data = {
             "name": "lease_claim",
             "start_time": "2016-07-16T19:20:30",
@@ -583,8 +583,10 @@ class TestOffersController(test_api_base.APITestCase):
         data['resource_uuid'] = self.test_offer.resource_uuid
         data['owner_id'] = self.test_offer.project_id
 
-        mock_get_offer.assert_called_once_with(self.test_offer.uuid,
-                                               statuses.AVAILABLE)
+        mock_copar.assert_called_once_with(self.context,
+                                           'esi_leap:offer:claim',
+                                           self.test_offer.uuid,
+                                           statuses.AVAILABLE)
         mock_col.assert_called_once_with(self.context.to_policy_values(),
                                          self.test_offer)
         mock_lease_create.assert_called_once()
@@ -594,12 +596,13 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.objects.lease.Lease.create')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_offer_lessee')
-    @mock.patch('esi_leap.api.controllers.v1.utils.get_offer')
-    def test_claim_parent_lease(self, mock_get_offer, mock_col,
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_offer_policy_and_retrieve')
+    def test_claim_parent_lease(self, mock_copar, mock_col,
                                 mock_lease_create, mock_generate_uuid):
         lease_uuid = '12345'
         mock_generate_uuid.return_value = lease_uuid
-        mock_get_offer.return_value = self.test_offer_with_parent
+        mock_copar.return_value = self.test_offer_with_parent
         data = {
             "name": "lease_claim",
             "start_time": "2016-07-16T19:20:30",
@@ -619,8 +622,10 @@ class TestOffersController(test_api_base.APITestCase):
         data['parent_lease_uuid'] = \
             self.test_offer_with_parent.parent_lease_uuid
 
-        mock_get_offer.assert_called_once_with(
-            self.test_offer_with_parent.uuid, statuses.AVAILABLE)
+        mock_copar.assert_called_once_with(self.context,
+                                           'esi_leap:offer:claim',
+                                           self.test_offer_with_parent.uuid,
+                                           statuses.AVAILABLE)
         mock_col.assert_called_once_with(self.context.to_policy_values(),
                                          self.test_offer_with_parent)
         mock_lease_create.assert_called_once()
