@@ -23,6 +23,7 @@ from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
 from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
+from esi_leap.common import ironic
 from esi_leap.common import keystone
 from esi_leap.common import statuses
 import esi_leap.conf
@@ -114,9 +115,13 @@ class LeasesController(rest.RestController):
         lease_collection = LeaseCollection()
         leases = lease_obj.Lease.get_all(filters, request)
         lease_collection.leases = []
-        for lease in leases:
-            lease_collection.leases.append(
-                Lease(**LeasesController._lease_get_dict_with_names(lease)))
+        if len(leases) > 0:
+            project_list = keystone.get_project_list()
+            node_list = ironic.get_node_list()
+            for lease in leases:
+                lease_collection.leases.append(
+                    Lease(**LeasesController._lease_get_dict_with_names(
+                        lease, project_list, node_list)))
         return lease_collection
 
     @wsme_pecan.wsexpose(Lease, body=Lease, status_code=http_client.CREATED)
@@ -244,11 +249,13 @@ class LeasesController(rest.RestController):
         return filters
 
     @staticmethod
-    def _lease_get_dict_with_names(lease):
+    def _lease_get_dict_with_names(lease, project_list=None, node_list=None):
         resource = lease.resource_object()
 
         lease_dict = lease.to_dict()
-        lease_dict['project'] = keystone.get_project_name(lease.project_id)
-        lease_dict['owner'] = keystone.get_project_name(lease.owner_id)
-        lease_dict['resource'] = resource.get_resource_name()
+        lease_dict['project'] = keystone.get_project_name(lease.project_id,
+                                                          project_list)
+        lease_dict['owner'] = keystone.get_project_name(lease.owner_id,
+                                                        project_list)
+        lease_dict['resource'] = resource.get_resource_name(node_list)
         return lease_dict

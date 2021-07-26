@@ -27,7 +27,7 @@ class ResourceObjectInterface(object, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def get_resource_name(self):
+    def get_resource_name(self, resource_list):
         """Returns resource's name
 
         """

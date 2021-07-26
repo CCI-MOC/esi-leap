@@ -355,14 +355,19 @@ class TestOffersController(test_api_base.APITestCase):
         mock_aoa.assert_not_called()
         self.assertEqual(http_client.FORBIDDEN, request.status_int)
 
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.api.controllers.v1.offer.' +
                 'OffersController._add_offer_availabilities_and_names')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
-    def test_get_nofilters(self, mock_get_all, mock_aoaan):
+    def test_get_nofilters(self, mock_get_all, mock_aoaan, mock_gpl,
+                           mock_gnl):
         mock_get_all.return_value = [self.test_offer, self.test_offer_2]
         mock_aoaan.side_effect = [
             _get_offer_response(self.test_offer, use_datetime=True),
             _get_offer_response(self.test_offer_2, use_datetime=True)]
+        mock_gpl.return_value = []
+        mock_gnl.return_value = []
 
         expected_filters = {'status': 'available'}
         expected_resp = {'offers': [_get_offer_response(self.test_offer),
@@ -371,17 +376,24 @@ class TestOffersController(test_api_base.APITestCase):
         request = self.get_json('/offers')
 
         mock_get_all.assert_called_once_with(expected_filters, self.context)
+        mock_gpl.assert_called_once()
+        mock_gnl.assert_called_once()
         assert mock_aoaan.call_count == 2
         self.assertEqual(request, expected_resp)
 
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.api.controllers.v1.offer.' +
                 'OffersController._add_offer_availabilities_and_names')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
-    def test_get_any_status(self, mock_get_all, mock_aoaan):
+    def test_get_any_status(self, mock_get_all, mock_aoaan, mock_gpl,
+                            mock_gnl):
         mock_get_all.return_value = [self.test_offer, self.test_offer_2]
         mock_aoaan.side_effect = [
             _get_offer_response(self.test_offer, use_datetime=True),
             _get_offer_response(self.test_offer_2, use_datetime=True)]
+        mock_gpl.return_value = []
+        mock_gnl.return_value = []
 
         expected_filters = {}
         expected_resp = {'offers': [_get_offer_response(self.test_offer),
@@ -390,21 +402,26 @@ class TestOffersController(test_api_base.APITestCase):
         request = self.get_json('/offers/?status=any')
 
         mock_get_all.assert_called_once_with(expected_filters, self.context)
+        mock_gpl.assert_called_once()
+        mock_gnl.assert_called_once()
         assert mock_aoaan.call_count == 2
         self.assertEqual(request, expected_resp)
 
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('esi_leap.api.controllers.v1.offer.' +
                 'OffersController._add_offer_availabilities_and_names')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
     def test_get_project_filter(self, mock_get_all, mock_aoaan,
-                                mock_gpufi):
-
+                                mock_gpufi, mock_gpl, mock_gnl):
         mock_get_all.return_value = [self.test_offer, self.test_offer_2]
         mock_aoaan.side_effect = [
             _get_offer_response(self.test_offer, use_datetime=True),
             _get_offer_response(self.test_offer_2, use_datetime=True)]
         mock_gpufi.return_value = self.context.project_id
+        mock_gpl.return_value = []
+        mock_gnl.return_value = []
 
         expected_filters = {'project_id': self.context.project_id,
                             'status': 'available'}
@@ -416,20 +433,27 @@ class TestOffersController(test_api_base.APITestCase):
 
         mock_gpufi.assert_called_once_with(self.context.project_id)
         mock_get_all.assert_called_once_with(expected_filters, self.context)
+        mock_gpl.assert_called_once()
+        mock_gnl.assert_called_once()
         assert mock_aoaan.call_count == 2
         self.assertEqual(request, expected_resp)
 
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.api.controllers.v1.offer.' +
                 'OffersController._add_offer_availabilities_and_names')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
-    def test_get_resource_filter(self, mock_get_all, mock_aoaan, mock_gro):
+    def test_get_resource_filter(self, mock_get_all, mock_aoaan, mock_gro,
+                                 mock_gpl, mock_gnl):
         mock_get_all.return_value = [self.test_offer, self.test_offer_2]
         mock_aoaan.side_effect = [
             _get_offer_response(self.test_offer, use_datetime=True),
             _get_offer_response(self.test_offer_2, use_datetime=True)]
         mock_gro.return_value = TestNode('54321')
+        mock_gpl.return_value = []
+        mock_gnl.return_value = []
 
         expected_filters = {'status': 'available',
                             'resource_uuid': '54321',
@@ -442,9 +466,13 @@ class TestOffersController(test_api_base.APITestCase):
 
         mock_gro.assert_called_once_with('test_node', '54321')
         mock_get_all.assert_called_once_with(expected_filters, self.context)
+        mock_gpl.assert_called_once()
+        mock_gnl.assert_called_once()
         assert mock_aoaan.call_count == 2
         self.assertEqual(request, expected_resp)
 
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.api.controllers.v1.offer.' +
@@ -452,12 +480,16 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
     def test_get_resource_filter_default_resource_type(self, mock_get_all,
                                                        mock_aoaan,
-                                                       mock_gro):
+                                                       mock_gro,
+                                                       mock_gpl,
+                                                       mock_gnl):
         mock_get_all.return_value = [self.test_offer, self.test_offer_2]
         mock_aoaan.side_effect = [
             _get_offer_response(self.test_offer, use_datetime=True),
             _get_offer_response(self.test_offer_2, use_datetime=True)]
         mock_gro.return_value = IronicNode('54321')
+        mock_gpl.return_value = []
+        mock_gnl.return_value = []
 
         expected_filters = {'status': 'available',
                             'resource_uuid': '54321',
@@ -470,15 +502,19 @@ class TestOffersController(test_api_base.APITestCase):
 
         mock_gro.assert_called_once_with('ironic_node', '54321')
         mock_get_all.assert_called_once_with(expected_filters, self.context)
+        mock_gpl.assert_called_once()
+        mock_gnl.assert_called_once()
         assert mock_aoaan.call_count == 2
         self.assertEqual(request, expected_resp)
 
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.api.controllers.v1.offer.' +
                 'OffersController._add_offer_availabilities_and_names')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
     @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_get_lessee_filter(self, mock_authorize, mock_get_all,
-                               mock_aoaan):
+                               mock_aoaan, mock_gpl, mock_gnl):
         mock_get_all.return_value = [self.test_offer, self.test_offer_2]
         mock_aoaan.side_effect = [
             _get_offer_response(self.test_offer, use_datetime=True),
@@ -487,6 +523,8 @@ class TestOffersController(test_api_base.APITestCase):
             None,
             exception.HTTPForbidden(rule='esi_leap:offer:get')
         ]
+        mock_gpl.return_value = []
+        mock_gnl.return_value = []
 
         expected_filters = {'status': 'available',
                             'lessee_id': self.context.project_id}
@@ -496,6 +534,8 @@ class TestOffersController(test_api_base.APITestCase):
         request = self.get_json('/offers')
 
         mock_get_all.assert_called_once_with(expected_filters, self.context)
+        mock_gpl.assert_called_once()
+        mock_gnl.assert_called_once()
         assert mock_aoaan.call_count == 2
         self.assertEqual(request, expected_resp)
 
