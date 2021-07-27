@@ -20,9 +20,8 @@ from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
 
 
-def check_resource_admin(cdict, resource, project_id,
-                         start_time, end_time):
-    if not resource.check_admin(project_id, start_time, end_time):
+def check_resource_admin(cdict, resource, project_id):
+    if project_id != resource.resource_admin_project_id():
         resource_policy_authorize('esi_leap:offer:offer_admin',
                                   cdict, cdict,
                                   resource.resource_type,

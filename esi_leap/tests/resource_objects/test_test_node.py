@@ -80,9 +80,6 @@ class TestTestNode(base.TestCase):
             self.fake_test_node.expire_lease(
                 fake_lease), None)
 
-    def test_set_owner(self):
-        self.assertEqual(self.fake_test_node.set_owner('12345'), None)
-
     def test_resource_admin_project_id(self):
         self.assertEqual(
             self.fake_admin_project_id_2,

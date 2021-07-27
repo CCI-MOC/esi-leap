@@ -17,14 +17,12 @@ from pecan import rest
 from esi_leap.api.controllers.v1 import lease
 from esi_leap.api.controllers.v1 import node
 from esi_leap.api.controllers.v1 import offer
-from esi_leap.api.controllers.v1 import owner_change
 
 
 class Controller(rest.RestController):
 
     leases = lease.LeasesController()
     offers = offer.OffersController()
-    owner_changes = owner_change.OwnerChangesController()
     nodes = node.NodesController()
 
     @pecan.expose(content_type='application/json')

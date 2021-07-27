@@ -149,9 +149,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
             resource,
-            self.context.project_id,
-            datetime.datetime(2016, 7, 16, 0, 0, 0),
-            datetime.datetime(2016, 10, 24, 0, 0, 0))
+            self.context.project_id)
         mock_create.assert_called_once()
         mock_aoa.assert_called_once()
         self.assertEqual(data, request.json)
@@ -191,9 +189,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
             resource,
-            self.context.project_id,
-            datetime.datetime(2016, 7, 16, 0, 0, 0),
-            datetime.datetime(2016, 10, 24, 0, 0, 0))
+            self.context.project_id)
         mock_create.assert_called_once()
         mock_aoa.assert_called_once()
         self.assertEqual(data, request.json)
@@ -238,9 +234,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
             resource,
-            self.context.project_id,
-            datetime.datetime(2016, 7, 16, 0, 0, 0),
-            datetime.datetime(2016, 10, 24, 0, 0, 0))
+            self.context.project_id)
         mock_create.assert_called_once()
         mock_aoa.assert_called_once()
         self.assertEqual(data, request.json)
@@ -290,9 +284,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
             resource,
-            self.context.project_id,
-            datetime.datetime(2016, 7, 16, 0, 0, 0),
-            datetime.datetime(2016, 10, 24, 0, 0, 0))
+            self.context.project_id)
         mock_crla.assert_called_once_with(
             self.context.to_policy_values(),
             resource,
@@ -342,9 +334,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
             resource,
-            self.context.project_id,
-            datetime.datetime(2016, 7, 16, 0, 0, 0),
-            datetime.datetime(2016, 10, 24, 0, 0, 0))
+            self.context.project_id)
         mock_crla.assert_called_once_with(
             self.context.to_policy_values(),
             resource,

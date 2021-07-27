@@ -276,28 +276,26 @@ class TestGetObjectUtils(testtools.TestCase):
 
 class TestCheckResourceAdminUtils(testtools.TestCase):
 
-    @mock.patch.object(test_node_1, 'check_admin',
-                       return_value=True)
+    @mock.patch.object(test_node_1, 'resource_admin_project_id')
     @mock.patch('esi_leap.api.controllers.v1.utils.resource_policy_authorize')
     def test_check_resource_admin_owner(self,
                                         mock_authorize,
-                                        mock_ca):
+                                        mock_ra):
+        mock_ra.return_value = owner_ctx.project_id
 
         utils.check_resource_admin(owner_ctx.to_policy_values(),
                                    test_node_1,
-                                   test_offer.project_id,
-                                   start, end)
+                                   test_offer.project_id)
 
-        mock_ca.assert_called_once_with(test_offer.project_id,
-                                        start, end)
+        mock_ra.assert_called_once()
         assert not mock_authorize.called
 
-    @mock.patch.object(test_node_2, 'check_admin',
-                       return_value=False)
+    @mock.patch.object(test_node_2, 'resource_admin_project_id')
     @mock.patch('esi_leap.api.controllers.v1.utils.resource_policy_authorize')
     def test_check_resource_admin_admin(self,
                                         mock_authorize,
-                                        mock_ca):
+                                        mock_ra):
+        mock_ra.return_value = owner_ctx_2.project_id
 
         bad_test_offer = offer.Offer(
             resource_type='test_node',
@@ -307,23 +305,20 @@ class TestCheckResourceAdminUtils(testtools.TestCase):
 
         utils.check_resource_admin(admin_ctx.to_policy_values(),
                                    test_node_2,
-                                   bad_test_offer.project_id,
-                                   start, end)
+                                   bad_test_offer.project_id)
 
-        mock_ca.assert_called_once_with(
-            bad_test_offer.project_id, start, end)
+        mock_ra.assert_called_once()
         mock_authorize.assert_called_once_with('esi_leap:offer:offer_admin',
                                                admin_ctx.to_policy_values(),
                                                admin_ctx.to_policy_values(),
                                                'test_node', test_node_2._uuid)
 
-    @mock.patch.object(test_node_2, 'check_admin',
-                       return_value=False)
+    @mock.patch.object(test_node_2, 'resource_admin_project_id')
     @mock.patch('esi_leap.api.controllers.v1.utils.resource_policy_authorize')
     def test_check_resource_admin_invalid_owner(self,
                                                 mock_authorize,
-                                                mock_ca):
-
+                                                mock_ra):
+        mock_ra.return_value = owner_ctx_2.project_id
         mock_authorize.side_effect = exception.HTTPResourceForbidden(
             resource_type='test_node', resource=test_node_2._uuid)
 
@@ -337,10 +332,9 @@ class TestCheckResourceAdminUtils(testtools.TestCase):
                           utils.check_resource_admin,
                           owner_ctx_2.to_policy_values(),
                           test_node_2,
-                          bad_test_offer.project_id, start, end)
+                          bad_test_offer.project_id)
 
-        mock_ca.assert_called_once_with(
-            bad_test_offer.project_id, start, end)
+        mock_ra.assert_called_once()
         mock_authorize.assert_called_once_with('esi_leap:offer:offer_admin',
                                                owner_ctx_2.to_policy_values(),
                                                owner_ctx_2.to_policy_values(),

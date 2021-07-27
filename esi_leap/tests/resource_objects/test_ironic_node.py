@@ -156,13 +156,6 @@ class TestIronicNode(base.TestCase):
             mock_lease_uuid_false.assert_called_once()
 
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
-    def test_set_owner(self, client_mock):
-        test_ironic_node = ironic_node.IronicNode("1111")
-        test_ironic_node.set_owner('54321')
-        client_mock.assert_called_once()
-        client_mock.return_value.node.update.assert_called_once()
-
-    @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
     def test_resource_admin_project_id(self, client_mock):
         fake_get_node = FakeIronicNode()
         client_mock.return_value.node.get.return_value = fake_get_node

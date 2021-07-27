@@ -92,14 +92,6 @@ class IronicNode(base.ResourceObjectInterface):
         if state == "active":
             get_ironic_client().node.set_provision_state(self._uuid, "deleted")
 
-    def set_owner(self, owner_id):
-        patches = [{
-            "op": "add",
-            "path": "/owner",
-            "value": owner_id,
-        }]
-        get_ironic_client().node.update(self._uuid, patches)
-
     def resource_admin_project_id(self):
         node = get_ironic_client().node.get(self._uuid)
         return node.owner
