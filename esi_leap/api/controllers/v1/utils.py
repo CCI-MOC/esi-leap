@@ -20,48 +20,13 @@ from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
 
 
-def get_offer_authorized(uuid_or_name, cdict, status_filter=None):
-    if uuidutils.is_uuid_like(uuid_or_name):
-        o = offer_obj.Offer.get(uuid_or_name)
-        offer_objs = []
-
-        if not status_filter or o.status == status_filter:
-            try:
-                if o.project_id != cdict['project_id']:
-                    policy_authorize('esi_leap:offer:offer_admin',
-                                     cdict, 'offer', uuid_or_name)
-                offer_objs.append(o)
-            except exception.HTTPResourceForbidden:
-                pass
-
-    else:
-        try:
-            policy_authorize('esi_leap:offer:offer_admin', cdict, 'offer',
-                             uuid_or_name)
-            offer_objs = offer_obj.Offer.get_all({'name': uuid_or_name,
-                                                  'status': status_filter})
-
-        except exception.HTTPResourceForbidden:
-            offer_objs = offer_obj.Offer.get_all(
-                {'name': uuid_or_name,
-                 'project_id': cdict['project_id'],
-                 'status': status_filter}
-            )
-
-    if len(offer_objs) == 0:
-        raise exception.OfferNotFound(offer_uuid=uuid_or_name)
-    elif len(offer_objs) > 1:
-        raise exception.OfferDuplicateName(name=uuid_or_name)
-
-    return offer_objs[0]
-
-
 def check_resource_admin(cdict, resource, project_id,
                          start_time, end_time):
     if not resource.check_admin(project_id, start_time, end_time):
-        policy_authorize('esi_leap:offer:offer_admin', cdict,
-                         resource.resource_type,
-                         resource.get_resource_uuid())
+        resource_policy_authorize('esi_leap:offer:offer_admin',
+                                  cdict, cdict,
+                                  resource.resource_type,
+                                  resource.get_resource_uuid())
 
 
 def check_resource_lease_admin(cdict, resource, project_id,
@@ -87,8 +52,7 @@ def get_offer(uuid_or_name, status_filter=None):
         if not status_filter or o.status == status_filter:
             return o
         else:
-            raise exception.OfferNotFound(
-                offer_uuid=uuid_or_name)
+            raise exception.OfferNotFound(offer_uuid=uuid_or_name)
     else:
         offer_objs = offer_obj.Offer.get_all({'name': uuid_or_name,
                                               'status': status_filter})
@@ -103,46 +67,64 @@ def get_offer(uuid_or_name, status_filter=None):
         return offer_objs[0]
 
 
-def get_lease_authorized(uuid_or_name, cdict, status_filters=[]):
-
+def get_lease(uuid_or_name, status_filters=[]):
     if uuidutils.is_uuid_like(uuid_or_name):
         lease = lease_obj.Lease.get(uuid_or_name)
-        leases = []
         if not status_filters or lease.status in status_filters:
-            leases.append(lease)
-
+            return lease
+        else:
+            raise exception.LeaseNotFound(lease_id=uuid_or_name)
     else:
         leases = lease_obj.Lease.get_all({'name': uuid_or_name,
                                           'status': status_filters})
 
-    permitted = []
-    for lease in leases:
-        try:
-            lease_authorize_management(lease, cdict)
-            permitted.append(lease)
-        except exception.HTTPResourceForbidden:
-            continue
-
-        if len(permitted) > 1:
+        if len(leases) > 1:
             raise exception.LeaseDuplicateName(name=uuid_or_name)
+        elif len(leases) == 0:
+            raise exception.LeaseNotFound(lease_id=uuid_or_name)
 
-    if len(permitted) == 0:
-        raise exception.LeaseNotFound(lease_id=uuid_or_name)
-
-    return permitted[0]
+        return leases[0]
 
 
-def lease_authorize_management(lease, cdict):
+def policy_authorize(policy_name, target, creds):
+    try:
+        policy.authorize(policy_name, target, creds)
+    except oslo_policy.PolicyNotAuthorized:
+        raise exception.HTTPForbidden(rule=policy_name)
 
-    if cdict['project_id'] not in (lease.project_id, lease.owner_id):
-        try:
-            policy_authorize('esi_leap:lease:lease_admin',
-                             cdict, 'lease', lease.uuid)
-        except exception.HTTPResourceForbidden:
-            o = offer_obj.Offer.get(lease.offer_uuid)
-            if o.project_id != cdict['project_id']:
-                policy_authorize('esi_leap:offer:offer_admin',
-                                 cdict, 'lease', lease.uuid)
+
+def resource_policy_authorize(policy_name, target, creds,
+                              resource_type, resource):
+    try:
+        policy_authorize(policy_name, target, creds)
+    except exception.HTTPForbidden:
+        raise exception.HTTPResourceForbidden(resource_type=resource_type,
+                                              resource=resource)
+
+
+def check_lease_policy_and_retrieve(request, policy_name, lease_ident,
+                                    status_filters=[]):
+    lease = get_lease(lease_ident, status_filters)
+
+    cdict = request.to_policy_values()
+    target = dict(cdict)
+    target['lease.owner_id'] = lease.owner_id
+    target['lease.project_id'] = lease.project_id
+
+    resource_policy_authorize(policy_name, target, cdict, 'lease', lease.uuid)
+    return lease
+
+
+def check_offer_policy_and_retrieve(request, policy_name, offer_ident,
+                                    status_filter=None):
+    offer = get_offer(offer_ident, status_filter)
+
+    cdict = request.to_policy_values()
+    target = dict(cdict)
+    target['offer.project_id'] = offer.project_id
+
+    resource_policy_authorize(policy_name, target, cdict, 'offer', offer.uuid)
+    return offer
 
 
 def check_offer_lessee(cdict, offer):
@@ -155,16 +137,6 @@ def check_offer_lessee(cdict, offer):
 
     if offer.lessee_id not in keystone.get_parent_project_id_tree(
             project_id):
-        policy_authorize('esi_leap:offer:offer_admin', cdict,
-                         'offer', offer.uuid)
-
-
-def policy_authorize(policy_name, cdict, resource_type=None, resource=None):
-    try:
-        policy.authorize(policy_name, cdict, cdict)
-    except oslo_policy.PolicyNotAuthorized:
-        if resource_type:
-            raise exception.HTTPResourceForbidden(resource_type=resource_type,
-                                                  resource=resource)
-        else:
-            raise exception.HTTPForbidden(rule=policy_name)
+        resource_policy_authorize(
+            'esi_leap:offer:offer_admin',
+            cdict, cdict, 'offer', offer.uuid)

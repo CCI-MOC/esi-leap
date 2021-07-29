@@ -81,11 +81,11 @@ class OffersController(rest.RestController):
         request = pecan.request.context
         cdict = request.to_policy_values()
 
-        utils.policy_authorize('esi_leap:offer:get', cdict)
+        offer = utils.check_offer_policy_and_retrieve(
+            request, 'esi_leap:offer:get', offer_id)
+        utils.check_offer_lessee(cdict, offer)
 
-        o_object = utils.get_offer(offer_id)
-        utils.check_offer_lessee(cdict, o_object)
-        o = OffersController._add_offer_availabilities_and_names(o_object)
+        o = OffersController._add_offer_availabilities_and_names(offer)
 
         return Offer(**o)
 
@@ -97,11 +97,9 @@ class OffersController(rest.RestController):
                 resource_uuid=None, start_time=None, end_time=None,
                 available_start_time=None, available_end_time=None,
                 status=None):
-
         request = pecan.request.context
-
         cdict = request.to_policy_values()
-        utils.policy_authorize('esi_leap:offer:get', cdict)
+        utils.policy_authorize('esi_leap:offer:get_all', cdict, cdict)
 
         if project_id is not None:
             project_id = keystone.get_project_uuid_from_ident(project_id)
@@ -143,7 +141,7 @@ class OffersController(rest.RestController):
             status = None
 
         try:
-            utils.policy_authorize('esi_leap:offer:offer_admin', cdict)
+            utils.policy_authorize('esi_leap:offer:offer_admin', cdict, cdict)
             lessee_id = None
         except exception.HTTPForbidden:
             lessee_id = cdict['project_id']
@@ -182,7 +180,7 @@ class OffersController(rest.RestController):
     def post(self, new_offer):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        utils.policy_authorize('esi_leap:offer:create', cdict)
+        utils.policy_authorize('esi_leap:offer:create', cdict, cdict)
 
         offer_dict = new_offer.to_dict()
         offer_dict['project_id'] = request.project_id
@@ -233,23 +231,19 @@ class OffersController(rest.RestController):
     @wsme_pecan.wsexpose(Offer, wtypes.text)
     def delete(self, offer_id):
         request = pecan.request.context
-        cdict = request.to_policy_values()
-        utils.policy_authorize('esi_leap:offer:delete', cdict)
 
-        o_object = utils.get_offer_authorized(offer_id,
-                                              cdict,
-                                              statuses.AVAILABLE)
-
-        o_object.cancel()
+        offer = utils.check_offer_policy_and_retrieve(
+            request, 'esi_leap:offer:delete', offer_id, statuses.AVAILABLE)
+        offer.cancel()
 
     @wsme_pecan.wsexpose(lease.Lease, wtypes.text, body=lease.Lease,
                          status_code=http_client.CREATED)
     def claim(self, offer_uuid, new_lease):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        utils.policy_authorize('esi_leap:offer:claim', cdict)
 
-        offer = utils.get_offer(offer_uuid, statuses.AVAILABLE)
+        offer = utils.check_offer_policy_and_retrieve(
+            request, 'esi_leap:offer:claim', offer_uuid, statuses.AVAILABLE)
         utils.check_offer_lessee(cdict, offer)
 
         lease_dict = new_lease.to_dict()

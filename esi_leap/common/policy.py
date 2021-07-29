@@ -29,6 +29,15 @@ default_policies = [
     policy.RuleDefault('is_lessee',
                        'role:lessee or role:esi_leap_lessee',
                        description='Lessee API access'),
+    policy.RuleDefault('is_offer_owner',
+                       'project_id:%(offer.project_id)s',
+                       description='Owner of offer'),
+    policy.RuleDefault('is_lease_owner',
+                       'project_id:%(lease.owner_id)s',
+                       description='Owner of lease'),
+    policy.RuleDefault('is_lease_lessee',
+                       'project_id:%(lease.project_id)s',
+                       description='Lessee of lease'),
 ]
 
 lease_policies = [
@@ -47,13 +56,17 @@ lease_policies = [
         [{'path': '/leases', 'method': 'POST'}]),
     policy.DocumentedRuleDefault(
         'esi_leap:lease:get',
-        'rule:is_admin or rule:is_lessee or rule:is_owner',
+        'rule:is_admin or rule:is_lease_owner or rule:is_lease_lessee',
+        'Retrieve a single lease',
+        [{'path': '/leases/{lease_ident}', 'method': 'GET'}]),
+    policy.DocumentedRuleDefault(
+        'esi_leap:lease:get_all',
+        'rule:is_admin or rule:is_owner or rule:is_lessee',
         'Retrieve all leases owned by project_id',
-        [{'path': '/leases', 'method': 'GET'},
-         {'path': '/leases/{lease_ident}', 'method': 'GET'}]),
+        [{'path': '/leases', 'method': 'GET'}]),
     policy.DocumentedRuleDefault(
         'esi_leap:lease:delete',
-        'rule:is_admin or rule:is_owner or rule:is_lessee',
+        'rule:is_admin or rule:is_lease_owner or rule:is_lease_lessee',
         'Delete lease',
         [{'path': '/leases/{lease_ident}', 'method': 'DELETE'}]),
 ]
@@ -75,17 +88,21 @@ offer_policies = [
     policy.DocumentedRuleDefault(
         'esi_leap:offer:get',
         'rule:is_admin or rule:is_owner or rule:is_lessee',
-        'Retrieve offer',
-        [{'path': '/offers', 'method': 'GET'},
-         {'path': '/offers/{offer_ident}', 'method': 'GET'}]),
+        'Retrieve a single offer',
+        [{'path': '/offers/{offer_ident}', 'method': 'GET'}]),
+    policy.DocumentedRuleDefault(
+        'esi_leap:offer:get_all',
+        'rule:is_admin or rule:is_owner or rule:is_lessee',
+        'Retrieve multiple offers',
+        [{'path': '/offers', 'method': 'GET'}]),
     policy.DocumentedRuleDefault(
         'esi_leap:offer:delete',
-        'rule:is_admin or rule:is_owner',
+        'rule:is_admin or rule:is_offer_owner',
         'Delete offer',
         [{'path': '/offers/{offer_ident}', 'method': 'DELETE'}]),
     policy.DocumentedRuleDefault(
         'esi_leap:offer:claim',
-        'rule:is_admin or rule:is_lessee',
+        'rule:is_admin or rule:is_owner or rule:is_lessee',
         'Claim an offer',
         [{'path': '/offers/{offer_ident}/claim', 'method': 'POST'}]),
 ]

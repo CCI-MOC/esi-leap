@@ -13,9 +13,9 @@
 import datetime
 import http.client as http_client
 import mock
-from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 
+from esi_leap.common import exception
 from esi_leap.common import statuses
 from esi_leap.objects import owner_change
 from esi_leap.tests.api import base as test_api_base
@@ -75,7 +75,7 @@ class TestOwnerChangesController(test_api_base.APITestCase):
                          data['owner_changes'][0]["uuid"])
 
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.get_all')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_get_all(self, mock_authorize, mock_get_all):
         mock_get_all.return_value = [self.test_oc, self.test_oc2]
 
@@ -101,7 +101,7 @@ class TestOwnerChangesController(test_api_base.APITestCase):
         self.assertEqual(expected_resp, response)
 
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.get_all')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_get_all_any_status(self, mock_authorize, mock_get_all):
         mock_get_all.return_value = [self.test_oc, self.test_oc2]
 
@@ -127,14 +127,12 @@ class TestOwnerChangesController(test_api_base.APITestCase):
         self.assertEqual(expected_resp, response)
 
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.get_all')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_get_all_non_admin(self, mock_authorize, mock_get_all):
         mock_get_all.return_value = [self.test_oc, self.test_oc2]
         mock_authorize.side_effect = [
             None,
-            oslo_policy.PolicyNotAuthorized('esi_leap:offer:offer_admin',
-                                            self.context.to_policy_values(),
-                                            self.context.to_policy_values())
+            exception.HTTPForbidden('esi_leap:offer:offer_admin')
         ]
 
         expected_filters = {'status': [statuses.CREATED, statuses.ACTIVE],
@@ -160,7 +158,7 @@ class TestOwnerChangesController(test_api_base.APITestCase):
         self.assertEqual(expected_resp, response)
 
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.get_all')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_get_all_valid_time(self, mock_authorize, mock_get_all):
         mock_get_all.return_value = [self.test_oc, self.test_oc2]
 
@@ -194,7 +192,7 @@ class TestOwnerChangesController(test_api_base.APITestCase):
         self.assertEqual(expected_resp, response)
 
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.get_all')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_get_all_invalid_time(self, mock_authorize, mock_get_all):
         mock_get_all.return_value = [self.test_oc, self.test_oc2]
 
@@ -214,7 +212,7 @@ class TestOwnerChangesController(test_api_base.APITestCase):
                          response.status_int)
 
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.get')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_get(self, mock_authorize, mock_get):
         mock_get.return_value = self.test_oc
 
@@ -230,29 +228,32 @@ class TestOwnerChangesController(test_api_base.APITestCase):
                          response)
 
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.get')
-    @mock.patch('esi_leap.common.policy.authorize')
-    def test_get_not_to_or_from_owner(self, mock_authorize, mock_get):
+    @mock.patch('esi_leap.api.controllers.v1.utils.resource_policy_authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
+    def test_get_not_to_or_from_owner(self, mock_authorize, mock_rpa,
+                                      mock_get):
         mock_get.return_value = self.test_oc2
 
         response = self.get_json('/owner_changes/' + self.test_oc2.uuid)
 
-        assert mock_authorize.call_count == 2
-        mock_authorize.assert_any_call(
+        mock_authorize.assert_called_once_with(
             'esi_leap:owner_change:get',
             self.context.to_policy_values(),
             self.context.to_policy_values()
         )
-        mock_authorize.assert_any_call(
+        mock_rpa.assert_any_call(
             'esi_leap:owner_change:owner_change_admin',
             self.context.to_policy_values(),
-            self.context.to_policy_values()
+            self.context.to_policy_values(),
+            'owner change',
+            self.test_oc2.uuid
         )
         mock_get.assert_called_once_with(self.test_oc2.uuid)
         self.assertEqual(_get_owner_change_response(self.test_oc2),
                          response)
 
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.get')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_get_not_exist(self, mock_authorize, mock_get):
         mock_get.return_value = None
 
@@ -270,7 +271,7 @@ class TestOwnerChangesController(test_api_base.APITestCase):
 
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.create')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_post(self, mock_authorize, mock_create, mock_generate_uuid):
         mock_generate_uuid.return_value = self.test_oc.uuid
         mock_create.return_value = self.test_oc
@@ -299,7 +300,7 @@ class TestOwnerChangesController(test_api_base.APITestCase):
 
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.create')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_post_default_resource_type(self, mock_authorize, mock_create,
                                         mock_generate_uuid):
         mock_generate_uuid.return_value = self.test_oc.uuid
@@ -329,7 +330,7 @@ class TestOwnerChangesController(test_api_base.APITestCase):
 
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.create')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_post_invalid_time(self, mock_authorize, mock_create,
                                mock_generate_uuid):
         mock_generate_uuid.return_value = self.test_oc.uuid
@@ -357,7 +358,7 @@ class TestOwnerChangesController(test_api_base.APITestCase):
 
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.create')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_post_same_from_and_to_owner(self, mock_authorize, mock_create,
                                          mock_generate_uuid):
         mock_generate_uuid.return_value = self.test_oc.uuid
@@ -385,7 +386,7 @@ class TestOwnerChangesController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.cancel')
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.get')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_delete(self, mock_authorize, mock_get, mock_cancel):
         mock_get.return_value = self.test_oc
 
@@ -402,7 +403,7 @@ class TestOwnerChangesController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.cancel')
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.get')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_delete_not_to_or_from_owner(self, mock_authorize, mock_get,
                                          mock_cancel):
         mock_get.return_value = self.test_oc2
@@ -426,7 +427,7 @@ class TestOwnerChangesController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.cancel')
     @mock.patch('esi_leap.objects.owner_change.OwnerChange.get')
-    @mock.patch('esi_leap.common.policy.authorize')
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
     def test_delete_not_exist(self, mock_authorize, mock_get, mock_cancel):
         mock_get.return_value = None
 
