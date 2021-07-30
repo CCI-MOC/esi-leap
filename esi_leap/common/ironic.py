@@ -46,7 +46,7 @@ def get_ironic_client(context=None):
 
 
 def get_node_list(context=None):
-    return get_ironic_client(context).node.list()
+    return get_ironic_client(context).node.list(detail=True)
 
 
 def get_node_name(node_uuid, node_list=None):
