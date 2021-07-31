@@ -150,11 +150,7 @@ class LeasesController(rest.RestController):
             lease_dict['end_time'] = datetime.datetime.max
 
         try:
-            utils.check_resource_admin(cdict,
-                                       resource,
-                                       request.project_id,
-                                       lease_dict.get('start_time'),
-                                       lease_dict.get('end_time'))
+            utils.check_resource_admin(cdict, resource, request.project_id)
         except exception.HTTPResourceForbidden:
             parent_lease_uuid = utils.check_resource_lease_admin(
                 cdict,

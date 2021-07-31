@@ -18,7 +18,6 @@ from esi_leap.common import statuses
 from esi_leap.manager.service import ManagerService
 from esi_leap.objects import lease
 from esi_leap.objects import offer
-from esi_leap.objects import owner_change
 from esi_leap.tests import base
 
 
@@ -46,17 +45,6 @@ class TestService(base.TestCase):
             status=statuses.CREATED,
             start_time=datetime.datetime(3000, 7, 16),
             end_time=datetime.datetime(4000, 7, 16),
-        )
-
-        self.test_owner_change = owner_change.OwnerChange(
-            resource_type='test_node',
-            resource_uuid='abc',
-            uuid=uuidutils.generate_uuid(),
-            status=statuses.CREATED,
-            start_time=datetime.datetime(3000, 7, 16),
-            end_time=datetime.datetime(4000, 7, 16),
-            from_project_id='ownerid',
-            to_project_id='ownerid2',
         )
 
     @mock.patch('esi_leap.objects.lease.Lease.fulfill')
@@ -102,34 +90,4 @@ class TestService(base.TestCase):
         assert mock_expire.call_count == 2
         mock_ga.assert_called_once_with({
             'status': statuses.AVAILABLE
-        }, s._context)
-
-    @mock.patch('esi_leap.objects.owner_change.OwnerChange.fulfill')
-    @mock.patch('oslo_utils.timeutils.utcnow')
-    @mock.patch('esi_leap.objects.owner_change.OwnerChange.get_all')
-    def test__fulfill_owner_changes(self, mock_ga, mock_utcnow, mock_fulfill):
-        mock_ga.return_value = [self.test_owner_change, self.test_owner_change]
-        mock_utcnow.return_value = datetime.datetime(3500, 7, 16)
-
-        s = ManagerService()
-        s._fulfill_owner_changes()
-
-        assert mock_fulfill.call_count == 2
-        mock_ga.assert_called_once_with({
-            'status': [statuses.CREATED]
-        }, s._context)
-
-    @mock.patch('esi_leap.objects.owner_change.OwnerChange.expire')
-    @mock.patch('oslo_utils.timeutils.utcnow')
-    @mock.patch('esi_leap.objects.owner_change.OwnerChange.get_all')
-    def test__expire_owner_changes(self, mock_ga, mock_utcnow, mock_expire):
-        mock_ga.return_value = [self.test_owner_change, self.test_owner_change]
-        mock_utcnow.return_value = datetime.datetime(5000, 7, 16)
-
-        s = ManagerService()
-        s._expire_owner_changes()
-
-        assert mock_expire.call_count == 2
-        mock_ga.assert_called_once_with({
-            'status': [statuses.ACTIVE, statuses.CREATED]
         }, s._context)

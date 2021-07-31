@@ -137,8 +137,7 @@ class TestLeaseObject(base.DBTestCase):
         mock_rva.assert_called_once_with(lease.resource_type,
                                          lease.resource_uuid,
                                          lease.start_time,
-                                         lease.end_time,
-                                         is_owner_change=False)
+                                         lease.end_time)
 
     @mock.patch('esi_leap.db.sqlalchemy.api.resource_verify_availability')
     @mock.patch('esi_leap.db.sqlalchemy.api.offer_verify_availability')

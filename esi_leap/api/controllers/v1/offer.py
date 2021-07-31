@@ -208,11 +208,7 @@ class OffersController(rest.RestController):
                                  end_time=str(offer_dict['end_time']))
 
         try:
-            utils.check_resource_admin(cdict,
-                                       resource,
-                                       request.project_id,
-                                       offer_dict.get('start_time'),
-                                       offer_dict.get('end_time'))
+            utils.check_resource_admin(cdict, resource, request.project_id)
         except exception.HTTPResourceForbidden:
             parent_lease_uuid = utils.check_resource_lease_admin(
                 cdict,

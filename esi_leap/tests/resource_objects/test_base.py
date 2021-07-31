@@ -12,7 +12,6 @@
 
 import datetime
 from esi_leap.resource_objects import ironic_node
-from esi_leap.resource_objects import test_node
 from esi_leap.tests import base
 import mock
 
@@ -32,18 +31,4 @@ class TestResourceObjectInterface(base.TestCase):
 
         test_node.verify_availability(start, end)
         mock_rva.assert_called_once_with(
-            'ironic_node', '1111', start, end,
-            is_owner_change=False)
-
-    @mock.patch(
-        'esi_leap.db.sqlalchemy.api.resource_check_admin')
-    def test_check_admin(self, mock_cra):
-        node = test_node.TestNode('1111', '123456')
-        start = self.base_time
-        end = self.base_time + datetime.timedelta(days=1)
-
-        node.check_admin('654321', start, end)
-
-        mock_cra.assert_called_once_with('test_node', '1111',
-                                         start, end, '123456',
-                                         '654321')
+            'ironic_node', '1111', start, end)
