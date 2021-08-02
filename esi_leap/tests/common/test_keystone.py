@@ -83,3 +83,10 @@ class KeystoneTestCase(base.TestCase):
         project_name = keystone.get_project_name('uuid2', project_list)
 
         self.assertEqual('', project_name)
+
+    @mock.patch.object(keystone, 'get_keystone_client', autospec=True)
+    def test_get_project_name_none(self, mock_keystone):
+        project_list = [FakeProject()]
+        project_name = keystone.get_project_name(None, project_list)
+
+        self.assertEqual('', project_name)

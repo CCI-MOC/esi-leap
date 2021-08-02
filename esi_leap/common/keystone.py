@@ -63,12 +63,16 @@ def get_project_list():
 
 def get_project_name(project_id, project_list=None):
     project_name = ''
-    if project_list is None:
-        project = get_keystone_client().projects.get(project_id)
-    else:
-        project = next((p for p in project_list
-                        if getattr(p, 'id') == project_id),
-                       None)
-    if project:
-        project_name = project.name
+    project = None
+
+    if project_id:
+        if project_list is None:
+            project = get_keystone_client().projects.get(project_id)
+        else:
+            project = next((p for p in project_list
+                            if getattr(p, 'id') == project_id),
+                           None)
+        if project:
+            project_name = project.name
+
     return project_name
