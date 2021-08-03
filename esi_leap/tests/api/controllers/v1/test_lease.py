@@ -57,12 +57,12 @@ class TestLeasesController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    @mock.patch('esi_leap.api.controllers.v1.lease.'
-                'LeasesController._lease_get_dict_with_names')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
     @mock.patch('esi_leap.objects.lease.Lease.get_all')
-    def test_one(self, mock_ga, mock_lgdwn, mock_gpl, mock_gnl):
+    def test_one(self, mock_ga, mock_lgdwai, mock_gpl, mock_gnl):
         mock_ga.return_value = [self.test_lease]
-        mock_lgdwn.return_value = self.test_lease.to_dict()
+        mock_lgdwai.return_value = self.test_lease.to_dict()
         mock_gpl.return_value = []
         mock_gnl.return_value = []
 
@@ -72,10 +72,10 @@ class TestLeasesController(test_api_base.APITestCase):
                          data['leases'][0]["uuid"])
         mock_gpl.assert_called_once()
         mock_gnl.assert_called_once()
-        mock_lgdwn.assert_called_once()
+        mock_lgdwai.assert_called_once()
 
-    @mock.patch('esi_leap.api.controllers.v1.lease.'
-                'LeasesController._lease_get_dict_with_names')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
     @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
@@ -83,7 +83,7 @@ class TestLeasesController(test_api_base.APITestCase):
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.lease.Lease.create')
     def test_post(self, mock_create, mock_cra, mock_generate_uuid,
-                  mock_gpufi, mock_gro, mock_lgdwn):
+                  mock_gpufi, mock_gro, mock_lgdwai):
         resource = TestNode('1234567890')
         data = {
             "project_id": "lesseeid",
@@ -95,16 +95,16 @@ class TestLeasesController(test_api_base.APITestCase):
         return_data = data.copy()
         return_data['owner_id'] = self.context.project_id
         return_data['uuid'] = self.test_lease.uuid
-        lgdwn_return_data = return_data.copy()
-        lgdwn_return_data["start_time"] = datetime.datetime(
+        lgdwai_return_data = return_data.copy()
+        lgdwai_return_data["start_time"] = datetime.datetime(
             2016, 7, 16, 19, 20, 30)
-        lgdwn_return_data["end_time"] = datetime.datetime(
+        lgdwai_return_data["end_time"] = datetime.datetime(
             2016, 8, 16, 19, 20, 30)
 
         mock_gro.return_value = resource
         mock_gpufi.return_value = 'lesseeid'
         mock_generate_uuid.return_value = self.test_lease.uuid
-        mock_lgdwn.return_value = lgdwn_return_data
+        mock_lgdwai.return_value = lgdwai_return_data
 
         request = self.post_json('/leases', data)
 
@@ -115,12 +115,12 @@ class TestLeasesController(test_api_base.APITestCase):
             resource,
             self.context.project_id)
         mock_create.assert_called_once()
-        mock_lgdwn.assert_called_once()
+        mock_lgdwai.assert_called_once()
         self.assertEqual(return_data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
 
-    @mock.patch('esi_leap.api.controllers.v1.lease.'
-                'LeasesController._lease_get_dict_with_names')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
     @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
@@ -129,7 +129,7 @@ class TestLeasesController(test_api_base.APITestCase):
     @mock.patch('esi_leap.objects.lease.Lease.create')
     def test_post_default_resource_type(self, mock_create, mock_cra,
                                         mock_generate_uuid, mock_gpufi,
-                                        mock_gro, mock_lgdwn):
+                                        mock_gro, mock_lgdwai):
         resource = IronicNode('1234567890')
         data = {
             "project_id": "lesseeid",
@@ -141,16 +141,16 @@ class TestLeasesController(test_api_base.APITestCase):
         return_data["resource_type"] = "ironic_node"
         return_data["owner_id"] = self.context.project_id
         return_data["uuid"] = self.test_lease.uuid
-        lgdwn_return_data = return_data.copy()
-        lgdwn_return_data["start_time"] = datetime.datetime(
+        lgdwai_return_data = return_data.copy()
+        lgdwai_return_data["start_time"] = datetime.datetime(
             2016, 7, 16, 19, 20, 30)
-        lgdwn_return_data["end_time"] = datetime.datetime(
+        lgdwai_return_data["end_time"] = datetime.datetime(
             2016, 8, 16, 19, 20, 30)
 
         mock_gro.return_value = resource
         mock_gpufi.return_value = 'lesseeid'
         mock_generate_uuid.return_value = self.test_lease.uuid
-        mock_lgdwn.return_value = lgdwn_return_data
+        mock_lgdwai.return_value = lgdwai_return_data
 
         request = self.post_json('/leases', data)
 
@@ -161,12 +161,12 @@ class TestLeasesController(test_api_base.APITestCase):
             resource,
             self.context.project_id)
         mock_create.assert_called_once()
-        mock_lgdwn.assert_called_once()
+        mock_lgdwai.assert_called_once()
         self.assertEqual(return_data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
 
-    @mock.patch('esi_leap.api.controllers.v1.lease.'
-                'LeasesController._lease_get_dict_with_names')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
     @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'check_resource_lease_admin')
     @mock.patch('esi_leap.resource_objects.resource_object_factory.'
@@ -177,7 +177,7 @@ class TestLeasesController(test_api_base.APITestCase):
     @mock.patch('esi_leap.objects.lease.Lease.create')
     def test_post_non_admin_parent_lease(self, mock_create, mock_cra,
                                          mock_generate_uuid, mock_gpufi,
-                                         mock_gro, mock_crla, mock_lgdwn):
+                                         mock_gro, mock_crla, mock_lgdwai):
         resource = IronicNode('1234567890')
         data = {
             "project_id": "lesseeid",
@@ -191,10 +191,10 @@ class TestLeasesController(test_api_base.APITestCase):
         return_data['resource_type'] = 'ironic_node'
         return_data['parent_lease_uuid'] = \
             self.test_lease_with_parent.parent_lease_uuid
-        lgdwn_return_data = return_data.copy()
-        lgdwn_return_data["start_time"] = datetime.datetime(
+        lgdwai_return_data = return_data.copy()
+        lgdwai_return_data["start_time"] = datetime.datetime(
             2016, 7, 17, 19, 20, 30)
-        lgdwn_return_data["end_time"] = datetime.datetime(
+        lgdwai_return_data["end_time"] = datetime.datetime(
             2016, 8, 14, 19, 20, 30)
 
         mock_gro.return_value = resource
@@ -203,7 +203,7 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_cra.side_effect = exception.HTTPResourceForbidden(
             resource_type='ironic_node', resource='1234567890')
         mock_crla.return_value = self.test_lease_with_parent.parent_lease_uuid
-        mock_lgdwn.return_value = lgdwn_return_data
+        mock_lgdwai.return_value = lgdwai_return_data
 
         request = self.post_json('/leases', data)
 
@@ -220,7 +220,7 @@ class TestLeasesController(test_api_base.APITestCase):
             datetime.datetime(2016, 7, 17, 19, 20, 30),
             datetime.datetime(2016, 8, 14, 19, 20, 30))
         mock_create.assert_called_once()
-        mock_lgdwn.assert_called_once()
+        mock_lgdwai.assert_called_once()
         self.assertEqual(return_data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
 
@@ -268,12 +268,12 @@ class TestLeasesController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
-                '_lease_get_dict_with_names')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
     @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
                 '_lease_get_all_authorize_filters')
     @mock.patch('esi_leap.objects.lease.Lease.get_all')
-    def test_get_nofilters(self, mock_get_all, mock_lgaaf, mock_lgdwn,
+    def test_get_nofilters(self, mock_get_all, mock_lgaaf, mock_lgdwai,
                            mock_gpl, mock_gnl):
         mock_get_all.return_value = [self.test_lease, self.test_lease]
         mock_gpl.return_value = []
@@ -294,18 +294,18 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_get_all.assert_called_once()
         mock_gpl.assert_called_once()
         mock_gnl.assert_called_once()
-        self.assertEqual(2, mock_lgdwn.call_count)
+        self.assertEqual(2, mock_lgdwai.call_count)
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
-                '_lease_get_dict_with_names')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
                 '_lease_get_all_authorize_filters')
     @mock.patch('esi_leap.objects.lease.Lease.get_all')
     def test_get_project_filter(self, mock_get_all, mock_lgaaf,
-                                mock_gpufi, mock_lgdwn, mock_gpl,
+                                mock_gpufi, mock_lgdwai, mock_gpl,
                                 mock_gnl):
         mock_gpufi.return_value = '12345'
         mock_get_all.return_value = [self.test_lease, self.test_lease]
@@ -327,18 +327,18 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_get_all.assert_called_once()
         mock_gpl.assert_called_once()
         mock_gnl.assert_called_once()
-        self.assertEqual(2, mock_lgdwn.call_count)
+        self.assertEqual(2, mock_lgdwai.call_count)
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
-                '_lease_get_dict_with_names')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
                 '_lease_get_all_authorize_filters')
     @mock.patch('esi_leap.objects.lease.Lease.get_all')
     def test_get_owner_filter(self, mock_get_all, mock_lgaaf,
-                              mock_gpufi, mock_lgdwn, mock_gpl,
+                              mock_gpufi, mock_lgdwai, mock_gpl,
                               mock_gnl):
         mock_gpufi.return_value = '54321'
         mock_get_all.return_value = [self.test_lease, self.test_lease]
@@ -362,19 +362,19 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_get_all.assert_called_once()
         mock_gpl.assert_called_once()
         mock_gnl.assert_called_once()
-        self.assertEqual(2, mock_lgdwn.call_count)
+        self.assertEqual(2, mock_lgdwai.call_count)
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
-                '_lease_get_dict_with_names')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
     @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
                 '_lease_get_all_authorize_filters')
     @mock.patch('esi_leap.objects.lease.Lease.get_all')
     def test_get_resource_filter(self, mock_get_all, mock_lgaaf,
-                                 mock_gro, mock_lgdwn, mock_gpl,
+                                 mock_gro, mock_lgdwai, mock_gpl,
                                  mock_gnl):
         mock_gro.return_value = TestNode('54321')
         mock_get_all.return_value = [self.test_lease, self.test_lease]
@@ -398,12 +398,12 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_get_all.assert_called_once()
         mock_gpl.assert_called_once()
         mock_gnl.assert_called_once()
-        self.assertEqual(2, mock_lgdwn.call_count)
+        self.assertEqual(2, mock_lgdwai.call_count)
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
-                '_lease_get_dict_with_names')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
     @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
@@ -411,7 +411,7 @@ class TestLeasesController(test_api_base.APITestCase):
     @mock.patch('esi_leap.objects.lease.Lease.get_all')
     def test_get_resource_filter_default_resource_type(self, mock_get_all,
                                                        mock_lgaaf, mock_gro,
-                                                       mock_lgdwn, mock_gpl,
+                                                       mock_lgdwai, mock_gpl,
                                                        mock_gnl):
         mock_gro.return_value = IronicNode('54321')
         mock_get_all.return_value = [self.test_lease, self.test_lease]
@@ -435,7 +435,7 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_get_all.assert_called_once()
         mock_gpl.assert_called_once()
         mock_gnl.assert_called_once()
-        self.assertEqual(2, mock_lgdwn.call_count)
+        self.assertEqual(2, mock_lgdwai.call_count)
 
 
 class TestLeaseControllersGetAllFilters(testtools.TestCase):
@@ -669,43 +669,3 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         filters = LeasesController._lease_get_all_authorize_filters(
             self.admin_ctx.to_policy_values(), status='any')
         self.assertEqual(expected_filters, filters)
-
-
-class TestLeaseControllerStaticMethods(testtools.TestCase):
-
-    def setUp(self):
-        super(TestLeaseControllerStaticMethods, self).setUp()
-
-        self.test_lease = lease_obj.Lease(
-            start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
-            end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
-            uuid=uuidutils.generate_uuid(),
-            resource_type='test_node',
-            resource_uuid='111',
-            project_id='lesseeid',
-            owner_id='ownerid',
-            parent_lease_uuid=None
-        )
-
-    @mock.patch('esi_leap.resource_objects.test_node.TestNode.'
-                'get_resource_name')
-    @mock.patch('esi_leap.common.keystone.get_project_name')
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
-    def test_lease_get_dict_with_names(self, mock_gro, mock_gpn, mock_grn):
-        mock_gro.return_value = TestNode('111')
-        mock_gpn.return_value = 'project-name'
-        mock_grn.return_value = 'resource-name'
-
-        output_dict = LeasesController._lease_get_dict_with_names(
-            self.test_lease)
-
-        expected_output_dict = self.test_lease.to_dict()
-        expected_output_dict['resource'] = 'resource-name'
-        expected_output_dict['project'] = 'project-name'
-        expected_output_dict['owner'] = 'project-name'
-
-        mock_gro.assert_called_once()
-        self.assertEqual(2, mock_gpn.call_count)
-        mock_grn.assert_called_once()
-        self.assertEqual(expected_output_dict, output_dict)

@@ -85,7 +85,7 @@ class OffersController(rest.RestController):
             request, 'esi_leap:offer:get', offer_id)
         utils.check_offer_lessee(cdict, offer)
 
-        o = OffersController._add_offer_availabilities_and_names(offer)
+        o = utils.offer_get_dict_with_added_info(offer)
 
         return Offer(**o)
 
@@ -170,7 +170,7 @@ class OffersController(rest.RestController):
             project_list = keystone.get_project_list()
             node_list = ironic.get_node_list()
             offer_collection.offers = [
-                Offer(**OffersController._add_offer_availabilities_and_names(
+                Offer(**utils.offer_get_dict_with_added_info(
                     o, project_list, node_list))
                 for o in offers]
 
@@ -222,7 +222,7 @@ class OffersController(rest.RestController):
 
         o = offer_obj.Offer(**offer_dict)
         o.create()
-        return Offer(**OffersController._add_offer_availabilities_and_names(o))
+        return Offer(**utils.offer_get_dict_with_added_info(o))
 
     @wsme_pecan.wsexpose(Offer, wtypes.text)
     def delete(self, offer_id):
@@ -266,19 +266,4 @@ class OffersController(rest.RestController):
 
         new_lease = lease_obj.Lease(**lease_dict)
         new_lease.create(request)
-        return lease.Lease(**new_lease.to_dict())
-
-    @staticmethod
-    def _add_offer_availabilities_and_names(offer, project_list=None,
-                                            node_list=None):
-        availabilities = offer.get_availabilities()
-        resource = offer.resource_object()
-
-        o = offer.to_dict()
-        o['availabilities'] = availabilities
-        o['project'] = keystone.get_project_name(offer.project_id,
-                                                 project_list)
-        o['lessee'] = keystone.get_project_name(offer.lessee_id,
-                                                project_list)
-        o['resource'] = resource.get_resource_name(node_list)
-        return o
+        return lease.Lease(**utils.lease_get_dict_with_added_info(new_lease))
