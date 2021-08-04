@@ -21,7 +21,9 @@ from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
 from esi_leap.common import ironic
 from esi_leap.common import keystone
+from esi_leap.common import statuses
 import esi_leap.conf
+from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
 
 CONF = esi_leap.conf.CONF
@@ -35,10 +37,12 @@ class Node(base.ESILEAPBase):
     offer_uuid = wsme.wsattr(wtypes.text)
     lease_uuid = wsme.wsattr(wtypes.text)
     lessee = wsme.wsattr(wtypes.text)
+    future_offers = wsme.wsattr(wtypes.text)
+    future_leases = wsme.wsattr(wtypes.text)
 
     def __init__(self, **kwargs):
         self.fields = ["name", "owner", "uuid", "offer_uuid", "lease_uuid",
-                       "lessee"]
+                       "lessee", "future_offers", "future_leases"]
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
@@ -64,14 +68,28 @@ class NodesController(rest.RestController):
         now = datetime.now()
         for node in nodes:
             offers = offer_obj.Offer.get_all({"resource_uuid": node.uuid,
-                                              "status": "available",
-                                              "start_time": now,
-                                              "end_time": now},
+                                              "status": "available"},
                                              context)
+            future_offers = []
+            current_offer = None
+            for offer in offers:
+                if offer.start_time > now:
+                    future_offers.append(offer.uuid)
+                elif offer.end_time >= now:
+                    current_offer = offer
+            future_offers = ' '.join(future_offers)
+
+            f_leases = lease_obj.Lease.get_all({"resource_uuid": node.uuid,
+                                                "status": [statuses.CREATED]},
+                                               context)
+            f_lease_uuids = ' '.join([o.uuid for o in f_leases])
+
             n = Node(name=node.name, uuid=node.uuid,
-                     owner=keystone.get_project_name(node.owner, project_list))
-            if offers:
-                n.offer_uuid = offers[0].uuid
+                     owner=keystone.get_project_name(node.owner, project_list),
+                     future_offers=future_offers,
+                     future_leases=f_lease_uuids)
+            if current_offer:
+                n.offer_uuid = current_offer.uuid
             if "lease_uuid" in node.properties:
                 n.lease_uuid = node.properties["lease_uuid"]
                 n.lessee = keystone.get_project_name(node.lessee, project_list)
