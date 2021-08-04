@@ -78,7 +78,7 @@ class LeasesController(rest.RestController):
         lease = utils.check_lease_policy_and_retrieve(
             request, 'esi_leap:lease:get', lease_id)
 
-        return Lease(**LeasesController._lease_get_dict_with_names(lease))
+        return Lease(**utils.lease_get_dict_with_added_info(lease))
 
     @wsme_pecan.wsexpose(LeaseCollection, wtypes.text,
                          datetime.datetime, datetime.datetime, wtypes.text,
@@ -119,7 +119,7 @@ class LeasesController(rest.RestController):
             node_list = ironic.get_node_list()
             for lease in leases:
                 lease_collection.leases.append(
-                    Lease(**LeasesController._lease_get_dict_with_names(
+                    Lease(**utils.lease_get_dict_with_added_info(
                         lease, project_list, node_list)))
         return lease_collection
 
@@ -164,7 +164,7 @@ class LeasesController(rest.RestController):
 
         lease = lease_obj.Lease(**lease_dict)
         lease.create(request)
-        return Lease(**LeasesController._lease_get_dict_with_names(lease))
+        return Lease(**utils.lease_get_dict_with_added_info(lease))
 
     @wsme_pecan.wsexpose(Lease, wtypes.text)
     def delete(self, lease_id):
@@ -242,15 +242,3 @@ class LeasesController(rest.RestController):
                 filters[k] = v
 
         return filters
-
-    @staticmethod
-    def _lease_get_dict_with_names(lease, project_list=None, node_list=None):
-        resource = lease.resource_object()
-
-        lease_dict = lease.to_dict()
-        lease_dict['project'] = keystone.get_project_name(lease.project_id,
-                                                          project_list)
-        lease_dict['owner'] = keystone.get_project_name(lease.owner_id,
-                                                        project_list)
-        lease_dict['resource'] = resource.get_resource_name(node_list)
-        return lease_dict

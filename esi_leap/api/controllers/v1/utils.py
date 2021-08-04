@@ -139,3 +139,31 @@ def check_offer_lessee(cdict, offer):
         resource_policy_authorize(
             'esi_leap:offer:offer_admin',
             cdict, cdict, 'offer', offer.uuid)
+
+
+def offer_get_dict_with_added_info(offer,
+                                   project_list=None,
+                                   node_list=None):
+    availabilities = offer.get_availabilities()
+    resource = offer.resource_object()
+
+    o = offer.to_dict()
+    o['availabilities'] = availabilities
+    o['project'] = keystone.get_project_name(offer.project_id,
+                                             project_list)
+    o['lessee'] = keystone.get_project_name(offer.lessee_id,
+                                            project_list)
+    o['resource'] = resource.get_resource_name(node_list)
+    return o
+
+
+def lease_get_dict_with_added_info(lease, project_list=None, node_list=None):
+    resource = lease.resource_object()
+
+    lease_dict = lease.to_dict()
+    lease_dict['project'] = keystone.get_project_name(lease.project_id,
+                                                      project_list)
+    lease_dict['owner'] = keystone.get_project_name(lease.owner_id,
+                                                    project_list)
+    lease_dict['resource'] = resource.get_resource_name(node_list)
+    return lease_dict

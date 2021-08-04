@@ -640,3 +640,87 @@ class TestPolicyAuthorizeUtils(testtools.TestCase):
         mock_authorize.assert_called_once_with('test_policy:test',
                                                lessee_ctx.to_policy_values(),
                                                lessee_ctx.to_policy_values())
+
+
+class TestOfferGetDictWithAddedInfoUtils(testtools.TestCase):
+
+    @mock.patch('esi_leap.common.keystone.get_project_name')
+    @mock.patch('esi_leap.objects.offer.Offer.get_availabilities')
+    def test_offer_get_dict_with_added_info(self,
+                                            mock_get_availabilities,
+                                            mock_gpn):
+        mock_get_availabilities.return_value = []
+        mock_gpn.return_value = 'project-name'
+
+        start = datetime.datetime(2016, 7, 16)
+        o = offer.Offer(
+            resource_type='test_node',
+            resource_uuid='1234567890',
+            name="o",
+            status=statuses.AVAILABLE,
+            start_time=start,
+            end_time=start + datetime.timedelta(days=100),
+            project_id=uuidutils.generate_uuid(),
+            lessee_id=None
+        )
+
+        o_dict = utils.offer_get_dict_with_added_info(o)
+
+        expected_offer_dict = {
+            'resource_type': o.resource_type,
+            'resource_uuid': o.resource_uuid,
+            'resource': 'test-node-1234567890',
+            'name': o.name,
+            'project_id': o.project_id,
+            'project': 'project-name',
+            'lessee_id': None,
+            'lessee': 'project-name',
+            'start_time': o.start_time,
+            'end_time': o.end_time,
+            'status': o.status,
+            'availabilities': [],
+        }
+
+        self.assertEqual(expected_offer_dict, o_dict)
+        self.assertEqual(2, mock_gpn.call_count)
+
+
+class TestLeaseGetDictWithAddedInfoUtils(testtools.TestCase):
+
+    def setUp(self):
+        super(TestLeaseGetDictWithAddedInfoUtils, self).setUp()
+
+        self.test_lease = lease.Lease(
+            start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
+            end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
+            uuid=uuidutils.generate_uuid(),
+            resource_type='test_node',
+            resource_uuid='111',
+            project_id='lesseeid',
+            owner_id='ownerid',
+            parent_lease_uuid=None
+        )
+
+    @mock.patch('esi_leap.resource_objects.test_node.TestNode.'
+                'get_resource_name')
+    @mock.patch('esi_leap.common.keystone.get_project_name')
+    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
+                'ResourceObjectFactory.get_resource_object')
+    def test_lease_get_dict_with_added_info(self, mock_gro, mock_gpn,
+                                            mock_grn):
+        mock_gro.return_value = TestNode('111')
+        mock_gpn.return_value = 'project-name'
+        mock_grn.return_value = 'resource-name'
+
+        output_dict = utils.lease_get_dict_with_added_info(
+            self.test_lease)
+
+        expected_output_dict = self.test_lease.to_dict()
+        expected_output_dict['resource'] = 'resource-name'
+        expected_output_dict['project'] = 'project-name'
+        expected_output_dict['owner'] = 'project-name'
+
+        mock_gro.assert_called_once()
+        self.assertEqual(2, mock_gpn.call_count)
+        mock_grn.assert_called_once()
+        self.assertEqual(expected_output_dict, output_dict)
