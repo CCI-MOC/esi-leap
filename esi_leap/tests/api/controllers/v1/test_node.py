@@ -37,18 +37,21 @@ class TestNodesController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    def test_get_all(self, mock_gpl, mock_oga, mock_gnl):
+    def test_get_all(self, mock_gpl, mock_lga, mock_oga, mock_gnl):
         fake_node = FakeIronicNode()
         fake_project = FakeProject()
         mock_gnl.return_value = [fake_node]
         mock_oga.return_value = []
+        mock_lga.return_value = []
         mock_gpl.return_value = [fake_project]
 
         data = self.get_json("/nodes")
 
         mock_gnl.assert_called_once_with(self.context)
         mock_oga.assert_called_once()
+        mock_lga.assert_called_once()
         mock_gpl.assert_called_once()
 
         self.assertEqual(data["nodes"][0]["name"], "fake-node")
