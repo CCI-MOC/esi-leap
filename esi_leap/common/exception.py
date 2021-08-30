@@ -115,6 +115,12 @@ class ResourceNoPermission(ESILeapException):
                 "%(resource_type)s %(resource_uuid)s.")
 
 
+class ResourceNoPermissionTime(ESILeapException):
+    msg_fmt = _("You do not have permissions on "
+                "%(resource_type)s %(resource_uuid)s for the time range "
+                "%(start_time)s - %(end_time)s.")
+
+
 class ResourceTypeUnknown(ESILeapException):
     msg_fmt = _("%(resource_type)s resource type unknown.")
 
