@@ -42,6 +42,13 @@ def check_resource_lease_admin(cdict, resource, project_id,
                 if start_time >= parent_lease.start_time and \
                    end_time <= parent_lease.end_time:
                     return parent_lease_uuid
+                else:
+                    raise exception.ResourceNoPermissionTime(
+                        resource_type=resource.resource_type,
+                        resource_uuid=resource.get_resource_uuid(),
+                        start_time=start_time,
+                        end_time=end_time)
+
     return
 
 

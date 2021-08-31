@@ -457,17 +457,17 @@ class TestCheckResourceLeaseAdminUtils(testtools.TestCase):
                                                  mock_glu,
                                                  mock_lease_get):
         mock_lease_get.return_value = self.test_lease
-        parent_lease_uuid = utils.check_resource_lease_admin(
-            owner_ctx.to_policy_values(),
-            test_node_1,
-            test_offer.project_id,
-            datetime.datetime(2016, 7, 15, 19, 20, 30),
-            datetime.datetime(2016, 8, 16, 19, 20, 30))
+        self.assertRaises(exception.ResourceNoPermissionTime,
+                          utils.check_resource_lease_admin,
+                          owner_ctx.to_policy_values(),
+                          test_node_1,
+                          test_offer.project_id,
+                          datetime.datetime(2016, 7, 15, 19, 20, 30),
+                          datetime.datetime(2016, 8, 16, 19, 20, 30))
 
         mock_gpi.assert_called_once()
         mock_glu.assert_called_once()
         mock_lease_get.assert_called_once_with('a-lease-uuid')
-        self.assertIsNone(parent_lease_uuid)
 
 
 class TestOfferPolicyAndRetrieveUtils(testtools.TestCase):
