@@ -62,6 +62,35 @@ class TestService(base.TestCase):
             'status': [statuses.CREATED]
         }, s._context)
 
+    @mock.patch('esi_leap.objects.lease.Lease.save')
+    @mock.patch('esi_leap.objects.lease.Lease.fulfill')
+    @mock.patch('oslo_utils.timeutils.utcnow')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    def test__fulfill_leases_error(self, mock_ga, mock_utcnow, mock_fulfill,
+                                   mock_save):
+        error_lease = lease.Lease(
+            offer_uuid=self.test_offer.uuid,
+            name='c',
+            uuid=uuidutils.generate_uuid(),
+            project_id='lesseeid',
+            status=statuses.CREATED,
+            start_time=datetime.datetime(3000, 7, 16),
+            end_time=datetime.datetime(4000, 7, 16),
+        )
+        mock_ga.return_value = [error_lease]
+        mock_utcnow.return_value = datetime.datetime(3500, 7, 16)
+        mock_fulfill.side_effect = Exception('whoops')
+
+        s = ManagerService()
+        s._fulfill_leases()
+
+        mock_fulfill.assert_called_once()
+        mock_ga.assert_called_once_with({
+            'status': [statuses.CREATED]
+        }, s._context)
+        self.assertEqual(statuses.ERROR, error_lease.status)
+        mock_save.assert_called_once()
+
     @mock.patch('esi_leap.objects.lease.Lease.expire')
     @mock.patch('oslo_utils.timeutils.utcnow')
     @mock.patch('esi_leap.objects.lease.Lease.get_all')
@@ -77,6 +106,35 @@ class TestService(base.TestCase):
             'status': [statuses.ACTIVE, statuses.CREATED]
         }, s._context)
 
+    @mock.patch('esi_leap.objects.lease.Lease.save')
+    @mock.patch('esi_leap.objects.lease.Lease.expire')
+    @mock.patch('oslo_utils.timeutils.utcnow')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    def test__expire_leases_error(self, mock_ga, mock_utcnow, mock_expire,
+                                  mock_save):
+        error_lease = lease.Lease(
+            offer_uuid=self.test_offer.uuid,
+            name='c',
+            uuid=uuidutils.generate_uuid(),
+            project_id='lesseeid',
+            status=statuses.CREATED,
+            start_time=datetime.datetime(3000, 7, 16),
+            end_time=datetime.datetime(4000, 7, 16),
+        )
+        mock_ga.return_value = [error_lease]
+        mock_utcnow.return_value = datetime.datetime(5000, 7, 16)
+        mock_expire.side_effect = Exception('whoops')
+
+        s = ManagerService()
+        s._expire_leases()
+
+        mock_expire.assert_called_once()
+        mock_ga.assert_called_once_with({
+            'status': [statuses.ACTIVE, statuses.CREATED]
+        }, s._context)
+        self.assertEqual(statuses.ERROR, error_lease.status)
+        mock_save.assert_called_once()
+
     @mock.patch('esi_leap.objects.offer.Offer.expire')
     @mock.patch('oslo_utils.timeutils.utcnow')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
@@ -91,3 +149,33 @@ class TestService(base.TestCase):
         mock_ga.assert_called_once_with({
             'status': statuses.AVAILABLE
         }, s._context)
+
+    @mock.patch('esi_leap.objects.offer.Offer.save')
+    @mock.patch('esi_leap.objects.offer.Offer.expire')
+    @mock.patch('oslo_utils.timeutils.utcnow')
+    @mock.patch('esi_leap.objects.offer.Offer.get_all')
+    def test__expire_offers_error(self, mock_ga, mock_utcnow, mock_expire,
+                                  mock_save):
+        error_offer = offer.Offer(
+            resource_type='test_node',
+            resource_uuid='abc',
+            name="o",
+            uuid=uuidutils.generate_uuid(),
+            status=statuses.AVAILABLE,
+            start_time=datetime.datetime(3000, 7, 16),
+            end_time=datetime.datetime(4000, 7, 16),
+            project_id='ownerid'
+        )
+        mock_ga.return_value = [error_offer]
+        mock_utcnow.return_value = datetime.datetime(5000, 7, 16)
+        mock_expire.side_effect = Exception('whoops')
+
+        s = ManagerService()
+        s._expire_offers()
+
+        mock_expire.assert_called_once()
+        mock_ga.assert_called_once_with({
+            'status': statuses.AVAILABLE
+        }, s._context)
+        self.assertEqual(statuses.ERROR, error_offer.status)
+        mock_save.assert_called_once()

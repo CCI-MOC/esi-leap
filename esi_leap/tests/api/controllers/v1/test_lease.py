@@ -657,7 +657,7 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
 
         expected_filters = {
             'project_or_owner_id': 'adminid',
-            'status': ['created', 'active']
+            'status': ['created', 'active', 'error']
         }
 
         # admin

@@ -65,8 +65,13 @@ class ManagerService(service.Service):
         now = timeutils.utcnow()
         for lease in leases:
             if lease.start_time <= now and now <= lease.end_time:
-                LOG.info("Fulfilling lease %s", lease.uuid)
-                lease.fulfill(self._context)
+                try:
+                    LOG.info("Fulfilling lease %s", lease.uuid)
+                    lease.fulfill(self._context)
+                except Exception as e:
+                    LOG.info("Error fulfilling lease: %s", e)
+                    lease.status = statuses.ERROR
+                    lease.save()
 
     def _expire_leases(self):
         LOG.info("Checking for expiring leases")
@@ -75,8 +80,13 @@ class ManagerService(service.Service):
         now = timeutils.utcnow()
         for lease in leases:
             if lease.end_time <= now:
-                LOG.info("Expiring lease %s", lease.uuid)
-                lease.expire(self._context)
+                try:
+                    LOG.info("Expiring lease %s", lease.uuid)
+                    lease.expire(self._context)
+                except Exception as e:
+                    LOG.info("Error expiring lease: %s", e)
+                    lease.status = statuses.ERROR
+                    lease.save()
 
     def _expire_offers(self):
         LOG.info("Checking for expiring offers")
@@ -86,9 +96,15 @@ class ManagerService(service.Service):
         for offer in offers:
             if offer.end_time and \
                offer.end_time <= timeutils.utcnow():
-                LOG.info("Expiring offer %s for %s %s",
-                         offer.uuid, offer.resource_type, offer.resource_uuid)
-                offer.expire(self._context)
+                try:
+                    LOG.info("Expiring offer %s for %s %s",
+                             offer.uuid, offer.resource_type,
+                             offer.resource_uuid)
+                    offer.expire(self._context)
+                except Exception as e:
+                    LOG.info("Error expiring offer: %s", e)
+                    offer.status = statuses.ERROR
+                    offer.save()
 
 
 class ManagerEndpoint(object):
