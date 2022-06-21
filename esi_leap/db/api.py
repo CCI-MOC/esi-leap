@@ -157,6 +157,5 @@ def resource_check_admin(resource_type, resource_uuid,
                          start_time, end_time,
                          default_admin_project_id, project_id):
     return IMPL.resource_check_admin(
-        resource_type, resource_uuid,
-        start_time, end_time,
+        resource_type, resource_uuid, start_time, end_time,
         default_admin_project_id, project_id)

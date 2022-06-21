@@ -27,6 +27,7 @@ class FakeIronicNode(object):
         self.properties = {"lease_uuid": "001"}
         self.provision_state = "available"
         self.uuid = "1111"
+        self.resource_class = "baremetal"
 
 
 class FakeLease(object):
@@ -106,6 +107,18 @@ class TestIronicNode(base.TestCase):
         expected_config = fake_get_node.properties
         expected_config.pop('lease_uuid', None)
         self.assertEqual(config, expected_config)
+        client_mock.assert_called_once()
+        client_mock.return_value.node.get.assert_called_once_with(
+            test_ironic_node._uuid)
+
+    @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
+    def test_get_resource_class(self, client_mock):
+        fake_get_node = FakeIronicNode()
+        client_mock.return_value.node.get.return_value = fake_get_node
+        test_ironic_node = ironic_node.IronicNode("1111")
+        resource_class = test_ironic_node.get_resource_class()
+        expected_resource_class = fake_get_node.resource_class
+        self.assertEqual(resource_class, expected_resource_class)
         client_mock.assert_called_once()
         client_mock.return_value.node.get.assert_called_once_with(
             test_ironic_node._uuid)

@@ -58,6 +58,10 @@ class IronicNode(base.ResourceObjectInterface):
         config.pop('lease_uuid', None)
         return config
 
+    def get_resource_class(self):
+        node = get_ironic_client().node.get(self._uuid)
+        return node.resource_class
+
     def set_lease(self, lease):
         patches = []
         patches.append({

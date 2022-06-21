@@ -46,6 +46,7 @@ class Offer(base.ESILEAPBase):
     resource_type = wsme.wsattr(wtypes.text)
     resource_uuid = wsme.wsattr(wtypes.text, mandatory=True)
     resource = wsme.wsattr(wtypes.text, readonly=True)
+    resource_class = wsme.wsattr(wtypes.text)
     start_time = wsme.wsattr(datetime.datetime)
     end_time = wsme.wsattr(datetime.datetime)
     status = wsme.wsattr(wtypes.text, readonly=True)
@@ -59,7 +60,8 @@ class Offer(base.ESILEAPBase):
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
-        for attr in ['availabilities', 'project', 'lessee', 'resource']:
+        for attr in ['availabilities', 'project', 'lessee',
+                     'resource', 'resource_class']:
             setattr(self, attr, kwargs.get(attr, wtypes.Unset))
 
 
@@ -90,11 +92,12 @@ class OffersController(rest.RestController):
         return Offer(**o)
 
     @wsme_pecan.wsexpose(OfferCollection, wtypes.text, wtypes.text,
-                         wtypes.text, datetime.datetime, datetime.datetime,
+                         wtypes.text, wtypes.text, datetime.datetime,
                          datetime.datetime, datetime.datetime,
-                         wtypes.text)
+                         datetime.datetime, wtypes.text)
     def get_all(self, project_id=None, resource_type=None,
-                resource_uuid=None, start_time=None, end_time=None,
+                resource_class=None, resource_uuid=None,
+                start_time=None, end_time=None,
                 available_start_time=None, available_end_time=None,
                 status=None):
         request = pecan.request.context
@@ -165,14 +168,21 @@ class OffersController(rest.RestController):
 
         offer_collection = OfferCollection()
         offers = offer_obj.Offer.get_all(filters, request)
+
         offer_collection.offers = []
         if len(offers) > 0:
             project_list = keystone.get_project_list()
             node_list = ironic.get_node_list()
-            offer_collection.offers = [
-                Offer(**utils.offer_get_dict_with_added_info(
-                    o, project_list, node_list))
-                for o in offers]
+            offers_with_added_info = [Offer(**utils.
+                                            offer_get_dict_with_added_info(
+                                                o, project_list, node_list))
+                                      for o in offers]
+            if resource_class:
+                offer_collection.offers = [o for o in offers_with_added_info
+                                           if o.resource_class ==
+                                           resource_class]
+            else:
+                offer_collection.offers = offers_with_added_info
 
         return offer_collection
 
@@ -187,7 +197,6 @@ class OffersController(rest.RestController):
         offer_dict['uuid'] = uuidutils.generate_uuid()
         if 'resource_type' not in offer_dict:
             offer_dict['resource_type'] = CONF.api.default_resource_type
-
         resource = ro_factory.ResourceObjectFactory.get_resource_object(
             offer_dict['resource_type'], offer_dict['resource_uuid'])
         offer_dict['resource_uuid'] = resource.get_resource_uuid()

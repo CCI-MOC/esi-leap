@@ -30,10 +30,15 @@ def _get_offer_response(o, use_datetime=False):
     else:
         start = '2016-07-16T00:00:00'
         end = '2016-10-24T00:00:00'
+    if o.resource_type in ['test_node', 'dummy_node']:
+        resource_class = 'fake'
+    elif o.resource_type == 'ironic_node':
+        resource_class = 'baremetal'
 
     return {
         'resource_type': o.resource_type,
         'resource_uuid': o.resource_uuid,
+        'resource_class': resource_class,
         'name': o.name,
         'project_id': o.project_id,
         'start_time': start,
@@ -462,6 +467,33 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
+    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+                'offer_get_dict_with_added_info')
+    @mock.patch('esi_leap.objects.offer.Offer.get_all')
+    def test_get_resource_class_filter(self, mock_get_all, mock_ogdwai,
+                                       mock_gpl, mock_gnl):
+        mock_get_all.return_value = [self.test_offer,
+                                     self.test_offer_2, self.test_offer_drt]
+        mock_ogdwai.side_effect = [
+            _get_offer_response(self.test_offer, use_datetime=True),
+            _get_offer_response(self.test_offer_2, use_datetime=True),
+            _get_offer_response(self.test_offer_drt, use_datetime=True)]
+        mock_gpl.return_value = []
+        mock_gnl.return_value = []
+        expected_filters = {'status': 'available'}
+        expected_resp = {'offers': [_get_offer_response(self.test_offer),
+                                    _get_offer_response(self.test_offer_2)]}
+        request = self.get_json(
+            '/offers/?resource_class=fake')
+
+        mock_get_all.assert_called_once_with(expected_filters, self.context)
+        mock_gpl.assert_called_once()
+        mock_gnl.assert_called_once()
+        assert mock_ogdwai.call_count == 3
+        self.assertEqual(request, expected_resp)
+
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.api.controllers.v1.utils.' +
@@ -488,7 +520,6 @@ class TestOffersController(test_api_base.APITestCase):
 
         request = self.get_json(
             '/offers/?resource_uuid=54321')
-
         mock_gro.assert_called_once_with('ironic_node', '54321')
         mock_get_all.assert_called_once_with(expected_filters, self.context)
         mock_gpl.assert_called_once()

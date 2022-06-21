@@ -51,6 +51,12 @@ class ResourceObjectInterface(object, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
+    def get_resource_class(self):
+        """Returns resource's associated class, if any
+
+        """
+
+    @abc.abstractmethod
     def set_lease(self, lease):
         """Set the lease on the node
 

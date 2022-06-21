@@ -36,6 +36,9 @@ class TestNode(base.ResourceObjectInterface):
     def get_node_config(self):
         return {}
 
+    def get_resource_class(self):
+        return "fake"
+
     def set_lease(self, lease):
         return
 
