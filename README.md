@@ -9,7 +9,7 @@ install that simulates Ironic multi-tenancy through the use of `project_owner_id
 
 ### Installation
 
-To  install the python code:
+To  install the python code without PyPI:
 
 ```
     $ git clone https://github.com/CCI-MOC/esi-leap
@@ -17,6 +17,8 @@ To  install the python code:
     $ sudo python setup.py install
 ```
 
+To install the package using PyPI:
+ - `pip install esi-leap`
 
 ### Client
 
