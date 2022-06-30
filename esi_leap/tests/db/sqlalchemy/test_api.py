@@ -723,8 +723,7 @@ class TestResourceVerifyAvailabilityAPI(base.DBTestCase):
 
         start = test_lease_1['end_time'] + datetime.timedelta(days=1)
         end = test_lease_1['end_time'] + datetime.timedelta(days=5)
-        api.resource_verify_availability(r_type, r_uuid,
-                                         start, end)
+        api.resource_verify_availability(r_type, r_uuid, start, end)
 
         start = test_lease_1['start_time'] + datetime.timedelta(days=1)
         end = test_lease_1['end_time'] + datetime.timedelta(days=-1)
