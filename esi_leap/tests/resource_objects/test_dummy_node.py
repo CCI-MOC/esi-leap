@@ -25,6 +25,7 @@ def get_test_dummy_node_1():
         "project_owner_id": "123456",
         "project_id": "654321",
         "lease_uuid": "001",
+        "resource_class": "fake",
         "server_config": {
             "new attribute XYZ": "new attribute XYZ",
             "cpu_type": "Intel Xeon",
@@ -39,6 +40,7 @@ def get_test_dummy_node_1():
 def get_test_dummy_node_2():
     return {
         "project_owner_id": "123456",
+        "resource_class": "fake",
         "server_config": {
             "new attribute XYZ": "new attribute XYZ",
             "cpu_type": "Intel Xeon",
@@ -99,6 +101,14 @@ class TestDummyNode(base.TestCase):
         with mock.patch('builtins.open', mock_open) as mock_file_open:
             config = self.fake_dummy_node.get_node_config()
             self.assertEqual(config, get_test_dummy_node_1()['server_config'])
+            mock_file_open.assert_called_once()
+
+    def test_get_resource_class(self):
+        mock_open = mock.mock_open(read_data=self.fake_read_data_1)
+        with mock.patch('builtins.open', mock_open) as mock_file_open:
+            resource_class = self.fake_dummy_node.get_resource_class()
+            self.assertEqual(resource_class,
+                             get_test_dummy_node_1()['resource_class'])
             mock_file_open.assert_called_once()
 
     def test_set_lease(self):

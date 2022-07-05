@@ -68,6 +68,10 @@ class TestTestNode(base.TestCase):
         config = self.fake_test_node.get_node_config()
         self.assertEqual(config, {})
 
+    def test_get_resource_class(self):
+        resource_class = self.fake_test_node.get_resource_class()
+        self.assertEqual(resource_class, 'fake')
+
     def test_set_lease(self):
         fake_lease = get_test_lease()
         self.assertEqual(

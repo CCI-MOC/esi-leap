@@ -19,6 +19,7 @@ import testtools
 
 from esi_leap.api.controllers.v1.lease import LeasesController
 from esi_leap.common import exception
+from esi_leap.common import statuses
 from esi_leap.objects import lease as lease_obj
 from esi_leap.resource_objects.ironic_node import IronicNode
 from esi_leap.resource_objects.test_node import TestNode
@@ -40,6 +41,16 @@ class TestLeasesController(test_api_base.APITestCase):
             owner_id='ownerid',
             parent_lease_uuid=None
         )
+        self.test_lease_1 = lease_obj.Lease(
+            start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
+            end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
+            uuid=uuidutils.generate_uuid(),
+            resource_type='ironic_node',
+            resource_uuid='222',
+            project_id='lesseeid',
+            owner_id='ownerid',
+            parent_lease_uuid=None
+        )
         self.test_lease_with_parent = lease_obj.Lease(
             start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
             end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
@@ -49,6 +60,17 @@ class TestLeasesController(test_api_base.APITestCase):
             project_id='lesseeid',
             owner_id='ownerid',
             parent_lease_uuid='parent-lease-uuid'
+        )
+        self.test_lease_2 = lease_obj.Lease(
+            start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
+            end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
+            uuid=uuidutils.generate_uuid(),
+            resource_type='test_node',
+            resource_uuid='111',
+            project_id='lesseeid',
+            owner_id='ownerid',
+            status=statuses.DELETED,
+            parent_lease_uuid=None
         )
 
     def test_empty(self):
@@ -404,6 +426,68 @@ class TestLeasesController(test_api_base.APITestCase):
     @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'lease_get_dict_with_added_info')
+    @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
+                '_lease_get_all_authorize_filters')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    def test_get_resource_class_filter(self, mock_get_all, mock_lgaaf,
+                                       mock_lgdwai, mock_gpl, mock_gnl):
+        def _get_lease_response(l, use_datetime=False):
+            if use_datetime:
+                start = datetime.datetime(2016, 7, 16, 19, 20, 30)
+                end = datetime.datetime(2016, 8, 16, 19, 20, 30)
+            else:
+                start = '2016-07-16T19:20:30'
+                end = '2016-08-16T19:20:30'
+
+            if l.resource_type in ['test_node', 'dummy_node']:
+                resource_class = 'fake'
+            elif l.resource_type == 'ironic_node':
+                resource_class = 'baremetal'
+
+            return {
+                'resource_type': l.resource_type,
+                'resource_uuid': l.resource_uuid,
+                'resource_class': resource_class,
+                'project_id': l.project_id,
+                'start_time': start,
+                'end_time': end,
+                'uuid': l.uuid,
+                'owner_id': l.owner_id,
+                'parent_lease_uuid': None
+            }
+
+        mock_get_all.return_value = [self.test_lease, self.test_lease]
+        mock_gpl.return_value = []
+        mock_gnl.return_value = []
+        mock_lgdwai.side_effect = [_get_lease_response(self.test_lease,
+                                                       use_datetime=True),
+                                   _get_lease_response(self.test_lease_1,
+                                                       use_datetime=True)]
+        response = self.get_json('/leases?resource_class=fake')
+
+        expected_resp = {'leases': [_get_lease_response(self.test_lease)]}
+
+        mock_lgaaf.assert_called_once_with(self.context.to_policy_values(),
+                                           project_id=None,
+                                           start_time=None,
+                                           end_time=None,
+                                           status=None,
+                                           offer_uuid=None,
+                                           view=None,
+                                           owner_id=None,
+                                           resource_type=None,
+                                           resource_uuid=None)
+
+        mock_get_all.assert_called_once()
+        mock_gpl.assert_called_once()
+        mock_gnl.assert_called_once()
+        self.assertEqual(2, mock_lgdwai.call_count)
+        self.assertEqual(response, expected_resp)
+
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
     @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
     @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
@@ -436,6 +520,20 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_gpl.assert_called_once()
         mock_gnl.assert_called_once()
         self.assertEqual(2, mock_lgdwai.call_count)
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_lease_policy_and_retrieve')
+    @mock.patch('esi_leap.objects.lease.Lease.cancel')
+    def test_lease_delete(self, mock_cancel, mock_clpar):
+        mock_clpar.return_value = self.test_lease
+
+        self.delete_json('/leases/' + self.test_lease.uuid)
+
+        mock_clpar.assert_called_once_with(self.context,
+                                           'esi_leap:lease:get',
+                                           self.test_lease.uuid,
+                                           statuses.LEASE_CAN_DELETE)
+        mock_cancel.assert_called_once()
 
 
 class TestLeaseControllersGetAllFilters(testtools.TestCase):

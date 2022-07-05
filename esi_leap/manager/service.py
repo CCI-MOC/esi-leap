@@ -90,7 +90,7 @@ class ManagerService(service.Service):
 
     def _expire_offers(self):
         LOG.info("Checking for expiring offers")
-        offers = offer_obj.Offer.get_all({'status': statuses.AVAILABLE},
+        offers = offer_obj.Offer.get_all({'status': statuses.OFFER_CAN_DELETE},
                                          self._context)
 
         for offer in offers:

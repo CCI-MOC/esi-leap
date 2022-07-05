@@ -43,6 +43,7 @@ class Lease(base.ESILEAPBase):
     owner = wsme.wsattr(wtypes.text, readonly=True)
     resource_type = wsme.wsattr(wtypes.text)
     resource_uuid = wsme.wsattr(wtypes.text)
+    resource_class = wsme.wsattr(wtypes.text)
     resource = wsme.wsattr(wtypes.text, readonly=True)
     start_time = wsme.wsattr(datetime.datetime)
     fulfill_time = wsme.wsattr(datetime.datetime, readonly=True)
@@ -58,7 +59,7 @@ class Lease(base.ESILEAPBase):
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
-        for attr in ['project', 'owner', 'resource']:
+        for attr in ['project', 'owner', 'resource', 'resource_class']:
             setattr(self, attr, kwargs.get(attr, wtypes.Unset))
 
 
@@ -83,10 +84,10 @@ class LeasesController(rest.RestController):
     @wsme_pecan.wsexpose(LeaseCollection, wtypes.text,
                          datetime.datetime, datetime.datetime, wtypes.text,
                          wtypes.text, wtypes.text, wtypes.text,
-                         wtypes.text, wtypes.text)
+                         wtypes.text, wtypes.text, wtypes.text)
     def get_all(self, project_id=None, start_time=None, end_time=None,
                 status=None, offer_uuid=None, view=None, owner_id=None,
-                resource_type=None, resource_uuid=None):
+                resource_type=None, resource_uuid=None, resource_class=None):
         request = pecan.request.context
         cdict = request.to_policy_values()
 
@@ -99,6 +100,7 @@ class LeasesController(rest.RestController):
         if resource_uuid is not None:
             if resource_type is None:
                 resource_type = CONF.api.default_resource_type
+
             resource = ro_factory.ResourceObjectFactory.get_resource_object(
                 resource_type, resource_uuid)
             resource_uuid = resource.get_resource_uuid()
@@ -117,10 +119,17 @@ class LeasesController(rest.RestController):
         if len(leases) > 0:
             project_list = keystone.get_project_list()
             node_list = ironic.get_node_list()
-            for lease in leases:
-                lease_collection.leases.append(
-                    Lease(**utils.lease_get_dict_with_added_info(
-                        lease, project_list, node_list)))
+            leases_with_added_info = [Lease(**utils.
+                                            lease_get_dict_with_added_info(
+                                                l, project_list, node_list))
+                                      for l in leases]
+            if resource_class:
+                lease_collection.leases = [l for l in leases_with_added_info
+                                           if l.resource_class ==
+                                           resource_class]
+            else:
+                lease_collection.leases = leases_with_added_info
+
         return lease_collection
 
     @wsme_pecan.wsexpose(Lease, body=Lease, status_code=http_client.CREATED)
@@ -134,7 +143,6 @@ class LeasesController(rest.RestController):
         lease_dict['uuid'] = uuidutils.generate_uuid()
         if 'resource_type' not in lease_dict:
             lease_dict['resource_type'] = CONF.api.default_resource_type
-
         resource = ro_factory.ResourceObjectFactory.get_resource_object(
             lease_dict['resource_type'], lease_dict['resource_uuid'])
         lease_dict['resource_uuid'] = resource.get_resource_uuid()
@@ -172,7 +180,7 @@ class LeasesController(rest.RestController):
 
         lease = utils.check_lease_policy_and_retrieve(
             request, 'esi_leap:lease:get', lease_id,
-            [statuses.CREATED, statuses.ACTIVE])
+            statuses.LEASE_CAN_DELETE)
 
         lease.cancel()
 

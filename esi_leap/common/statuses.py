@@ -16,3 +16,5 @@ DELETED = 'deleted'
 CREATED = 'created'
 ERROR = 'error'
 EXPIRED = 'expired'
+OFFER_CAN_DELETE = ['available', 'error']
+LEASE_CAN_DELETE = ['active', 'created', 'error']
