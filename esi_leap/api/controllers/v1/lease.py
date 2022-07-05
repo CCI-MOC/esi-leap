@@ -193,7 +193,9 @@ class LeasesController(rest.RestController):
                                          resource_uuid=None):
 
         if status is None:
-            status = [statuses.CREATED, statuses.ACTIVE, statuses.ERROR]
+            status = [statuses.CREATED, statuses.ACTIVE, statuses.ERROR,
+                      statuses.WAIT_CANCEL, statuses.WAIT_EXPIRE,
+                      statuses.WAIT_FULFILL]
         elif status == 'any':
             status = None
         else:

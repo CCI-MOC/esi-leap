@@ -19,6 +19,7 @@ import testtools
 
 from esi_leap.api.controllers.v1.lease import LeasesController
 from esi_leap.common import exception
+from esi_leap.common import statuses
 from esi_leap.objects import lease as lease_obj
 from esi_leap.resource_objects.ironic_node import IronicNode
 from esi_leap.resource_objects.test_node import TestNode
@@ -729,7 +730,9 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
 
         expected_filters = {
             'project_or_owner_id': 'adminid',
-            'status': ['created', 'active', 'error']
+            'status': [statuses.CREATED, statuses.ACTIVE, statuses.ERROR,
+                       statuses.WAIT_CANCEL, statuses.WAIT_EXPIRE,
+                       statuses.WAIT_FULFILL]
         }
 
         # admin

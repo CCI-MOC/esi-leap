@@ -59,7 +59,7 @@ class TestService(base.TestCase):
 
         assert mock_fulfill.call_count == 2
         mock_ga.assert_called_once_with({
-            'status': [statuses.CREATED]
+            'status': [statuses.CREATED, statuses.WAIT_FULFILL]
         }, s._context)
 
     @mock.patch('esi_leap.objects.lease.Lease.save')
@@ -86,7 +86,7 @@ class TestService(base.TestCase):
 
         mock_fulfill.assert_called_once()
         mock_ga.assert_called_once_with({
-            'status': [statuses.CREATED]
+            'status': [statuses.CREATED, statuses.WAIT_FULFILL]
         }, s._context)
         self.assertEqual(statuses.ERROR, error_lease.status)
         mock_save.assert_called_once()
@@ -103,7 +103,8 @@ class TestService(base.TestCase):
 
         assert mock_expire.call_count == 2
         mock_ga.assert_called_once_with({
-            'status': [statuses.ACTIVE, statuses.CREATED]
+            'status': [statuses.ACTIVE, statuses.CREATED,
+                       statuses.WAIT_EXPIRE, statuses.WAIT_FULFILL]
         }, s._context)
 
     @mock.patch('esi_leap.objects.lease.Lease.save')
@@ -130,7 +131,51 @@ class TestService(base.TestCase):
 
         mock_expire.assert_called_once()
         mock_ga.assert_called_once_with({
-            'status': [statuses.ACTIVE, statuses.CREATED]
+            'status': [statuses.ACTIVE, statuses.CREATED,
+                       statuses.WAIT_EXPIRE, statuses.WAIT_FULFILL]
+        }, s._context)
+        self.assertEqual(statuses.ERROR, error_lease.status)
+        mock_save.assert_called_once()
+
+    @mock.patch('esi_leap.objects.lease.Lease.cancel')
+    @mock.patch('oslo_utils.timeutils.utcnow')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    def test__cancel_leases(self, mock_ga, mock_utcnow, mock_cancel):
+        mock_ga.return_value = [self.test_lease, self.test_lease]
+
+        s = ManagerService()
+        s._cancel_leases()
+
+        assert mock_cancel.call_count == 2
+        mock_ga.assert_called_once_with({
+            'status': [statuses.WAIT_CANCEL]
+        }, s._context)
+
+    @mock.patch('esi_leap.objects.lease.Lease.save')
+    @mock.patch('esi_leap.objects.lease.Lease.cancel')
+    @mock.patch('oslo_utils.timeutils.utcnow')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    def test__cancel_leases_error(self, mock_ga, mock_utcnow, mock_cancel,
+                                  mock_save):
+        error_lease = lease.Lease(
+            offer_uuid=self.test_offer.uuid,
+            name='c',
+            uuid=uuidutils.generate_uuid(),
+            project_id='lesseeid',
+            status=statuses.WAIT_CANCEL,
+            start_time=datetime.datetime(3000, 7, 16),
+            end_time=datetime.datetime(4000, 7, 16),
+        )
+        mock_ga.return_value = [error_lease]
+        mock_utcnow.return_value = datetime.datetime(5000, 7, 16)
+        mock_cancel.side_effect = Exception('whoops')
+
+        s = ManagerService()
+        s._cancel_leases()
+
+        mock_cancel.assert_called_once()
+        mock_ga.assert_called_once_with({
+            'status': [statuses.WAIT_CANCEL]
         }, s._context)
         self.assertEqual(statuses.ERROR, error_lease.status)
         mock_save.assert_called_once()

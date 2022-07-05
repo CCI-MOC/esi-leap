@@ -132,7 +132,7 @@ class Offer(base.ESILEAPObject):
         LOG.info("Deleting offer %s", self.uuid)
         leases = lease_obj.Lease.get_all(
             {'offer_uuid': self.uuid,
-             'status': [statuses.CREATED, statuses.ACTIVE]},
+             'status': statuses.CANCELLABLE_LEASE_STATUSES},
             None)
         for lease in leases:
             lease.cancel()
@@ -149,7 +149,7 @@ class Offer(base.ESILEAPObject):
         LOG.info("Expiring offer %s", self.uuid)
         leases = lease_obj.Lease.get_all(
             {'offer_uuid': self.uuid,
-             'status': [statuses.CREATED, statuses.ACTIVE]},
+             'status': statuses.CANCELLABLE_LEASE_STATUSES},
             None)
         for lease in leases:
             lease.expire(context)
