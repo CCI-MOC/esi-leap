@@ -11,9 +11,12 @@
 #    under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 from stevedore import driver
 
 _IMPL = None
+
+LOG = logging.getLogger(__name__)
 
 
 def get_backend():
@@ -31,3 +34,19 @@ def version():
 
 def create_schema():
     return get_backend().create_schema()
+
+
+def upgrade(revision=None):
+    return get_backend().upgrade(revision)
+
+
+def downgrade(revision=None):
+    return get_backend().downgrade(revision)
+
+
+def stamp(revision):
+    return get_backend().stamp(revision)
+
+
+def revision(message, autogenerate):
+    return get_backend().revision(message, autogenerate)
