@@ -52,16 +52,16 @@ def check_resource_lease_admin(cdict, resource, project_id,
     return
 
 
-def get_offer(uuid_or_name, status_filter=None):
+def get_offer(uuid_or_name, status_filters=[]):
     if uuidutils.is_uuid_like(uuid_or_name):
         o = offer_obj.Offer.get(uuid_or_name)
-        if not status_filter or o.status == status_filter:
+        if not status_filters or o.status in status_filters:
             return o
         else:
             raise exception.OfferNotFound(offer_uuid=uuid_or_name)
     else:
         offer_objs = offer_obj.Offer.get_all({'name': uuid_or_name,
-                                              'status': status_filter})
+                                              'status': status_filters})
 
         if len(offer_objs) > 1:
             raise exception.OfferDuplicateName(
@@ -122,8 +122,8 @@ def check_lease_policy_and_retrieve(request, policy_name, lease_ident,
 
 
 def check_offer_policy_and_retrieve(request, policy_name, offer_ident,
-                                    status_filter=None):
-    offer = get_offer(offer_ident, status_filter)
+                                    status_filters=[]):
+    offer = get_offer(offer_ident, status_filters)
 
     cdict = request.to_policy_values()
     target = dict(cdict)

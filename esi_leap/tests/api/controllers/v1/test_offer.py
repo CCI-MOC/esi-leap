@@ -363,7 +363,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_gpl.return_value = []
         mock_gnl.return_value = []
 
-        expected_filters = {'status': 'available'}
+        expected_filters = {'status': statuses.OFFER_CAN_DELETE}
         expected_resp = {'offers': [_get_offer_response(self.test_offer),
                                     _get_offer_response(self.test_offer_2)]}
 
@@ -418,7 +418,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_gnl.return_value = []
 
         expected_filters = {'project_id': self.context.project_id,
-                            'status': 'available'}
+                            'status': statuses.OFFER_CAN_DELETE}
         expected_resp = {'offers': [_get_offer_response(self.test_offer),
                                     _get_offer_response(self.test_offer_2)]}
 
@@ -449,7 +449,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_gpl.return_value = []
         mock_gnl.return_value = []
 
-        expected_filters = {'status': 'available',
+        expected_filters = {'status': statuses.OFFER_CAN_DELETE,
                             'resource_uuid': '54321',
                             'resource_type': 'test_node'}
         expected_resp = {'offers': [_get_offer_response(self.test_offer),
@@ -480,7 +480,7 @@ class TestOffersController(test_api_base.APITestCase):
             _get_offer_response(self.test_offer_drt, use_datetime=True)]
         mock_gpl.return_value = []
         mock_gnl.return_value = []
-        expected_filters = {'status': 'available'}
+        expected_filters = {'status': statuses.OFFER_CAN_DELETE}
         expected_resp = {'offers': [_get_offer_response(self.test_offer),
                                     _get_offer_response(self.test_offer_2)]}
         request = self.get_json(
@@ -512,7 +512,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_gpl.return_value = []
         mock_gnl.return_value = []
 
-        expected_filters = {'status': 'available',
+        expected_filters = {'status': statuses.OFFER_CAN_DELETE,
                             'resource_uuid': '54321',
                             'resource_type': 'ironic_node'}
         expected_resp = {'offers': [_get_offer_response(self.test_offer),
@@ -546,7 +546,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_gpl.return_value = []
         mock_gnl.return_value = []
 
-        expected_filters = {'status': 'available',
+        expected_filters = {'status': statuses.OFFER_CAN_DELETE,
                             'lessee_id': self.context.project_id}
         expected_resp = {'offers': [_get_offer_response(self.test_offer),
                                     _get_offer_response(self.test_offer_2)]}
@@ -639,3 +639,17 @@ class TestOffersController(test_api_base.APITestCase):
         mock_lease_create.assert_called_once()
         mock_lgdwai.assert_called_once()
         self.assertEqual(http_client.CREATED, request.status_int)
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_offer_policy_and_retrieve')
+    @mock.patch('esi_leap.objects.offer.Offer.cancel')
+    def test_delete(self, mock_cancel, mock_copar):
+        mock_copar.return_value = self.test_offer
+
+        self.delete_json('/offers/' + self.test_offer.uuid)
+
+        mock_copar.assert_called_once_with(self.context,
+                                           'esi_leap:offer:delete',
+                                           self.test_offer.uuid,
+                                           statuses.OFFER_CAN_DELETE)
+        mock_cancel.assert_called_once()

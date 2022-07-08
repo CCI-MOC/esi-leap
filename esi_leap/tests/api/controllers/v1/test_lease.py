@@ -19,6 +19,7 @@ import testtools
 
 from esi_leap.api.controllers.v1.lease import LeasesController
 from esi_leap.common import exception
+from esi_leap.common import statuses
 from esi_leap.objects import lease as lease_obj
 from esi_leap.resource_objects.ironic_node import IronicNode
 from esi_leap.resource_objects.test_node import TestNode
@@ -59,6 +60,17 @@ class TestLeasesController(test_api_base.APITestCase):
             project_id='lesseeid',
             owner_id='ownerid',
             parent_lease_uuid='parent-lease-uuid'
+        )
+        self.test_lease_2 = lease_obj.Lease(
+            start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
+            end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
+            uuid=uuidutils.generate_uuid(),
+            resource_type='test_node',
+            resource_uuid='111',
+            project_id='lesseeid',
+            owner_id='ownerid',
+            status=statuses.DELETED,
+            parent_lease_uuid=None
         )
 
     def test_empty(self):
@@ -508,6 +520,20 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_gpl.assert_called_once()
         mock_gnl.assert_called_once()
         self.assertEqual(2, mock_lgdwai.call_count)
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_lease_policy_and_retrieve')
+    @mock.patch('esi_leap.objects.lease.Lease.cancel')
+    def test_lease_delete(self, mock_cancel, mock_clpar):
+        mock_clpar.return_value = self.test_lease
+
+        self.delete_json('/leases/' + self.test_lease.uuid)
+
+        mock_clpar.assert_called_once_with(self.context,
+                                           'esi_leap:lease:get',
+                                           self.test_lease.uuid,
+                                           statuses.LEASE_CAN_DELETE)
+        mock_cancel.assert_called_once()
 
 
 class TestLeaseControllersGetAllFilters(testtools.TestCase):
