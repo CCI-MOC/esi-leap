@@ -12,7 +12,12 @@
 
 ACTIVE = 'active'
 AVAILABLE = 'available'
-DELETED = 'deleted'
 CREATED = 'created'
+DELETED = 'deleted'
 ERROR = 'error'
 EXPIRED = 'expired'
+WAIT_CANCEL = 'wait cancel'
+WAIT_EXPIRE = 'wait expire'
+WAIT_FULFILL = 'wait fulfill'
+
+CANCELLABLE_LEASE_STATUSES = [ACTIVE, CREATED, WAIT_FULFILL]

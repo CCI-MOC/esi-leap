@@ -114,7 +114,7 @@ class Lease(base.ESILEAPObject):
     def cancel(self):
         leases = Lease.get_all(
             {'parent_lease_uuid': self.uuid,
-             'status': [statuses.CREATED, statuses.ACTIVE]},
+             'status': statuses.CANCELLABLE_LEASE_STATUSES},
             None)
         for lease in leases:
             lease.cancel()
@@ -130,15 +130,19 @@ class Lease(base.ESILEAPObject):
                             external=True)
         def _cancel_lease():
             LOG.info("Deleting lease %s", self.uuid)
-            resource = self.resource_object()
-            if resource.get_lease_uuid() == self.uuid:
-                resource.expire_lease(self)
-                if self.parent_lease_uuid is not None:
-                    parent_lease = Lease.get(self.parent_lease_uuid)
-                    resource.set_lease(parent_lease)
+            try:
+                resource = self.resource_object()
+                if resource.get_lease_uuid() == self.uuid:
+                    resource.expire_lease(self)
+                    if self.parent_lease_uuid is not None:
+                        parent_lease = Lease.get(self.parent_lease_uuid)
+                        resource.set_lease(parent_lease)
 
-            self.status = statuses.DELETED
-            self.expire_time = datetime.datetime.now()
+                self.status = statuses.DELETED
+                self.expire_time = datetime.datetime.now()
+            except Exception as e:
+                LOG.info("Error canceling lease; setting to WAIT: %s", e)
+                self.status = statuses.WAIT_CANCEL
             self.save(None)
 
         _cancel_lease()
@@ -159,12 +163,16 @@ class Lease(base.ESILEAPObject):
                             external=True)
         def _fulfill_lease():
             LOG.info("Fulfilling lease %s", self.uuid)
-            resource = self.resource_object()
-            resource.set_lease(self)
+            try:
+                resource = self.resource_object()
+                resource.set_lease(self)
 
-            # activate lease
-            self.status = statuses.ACTIVE
-            self.fulfill_time = datetime.datetime.now()
+                # activate lease
+                self.status = statuses.ACTIVE
+                self.fulfill_time = datetime.datetime.now()
+            except Exception as e:
+                LOG.info("Error fulfilling lease; setting to WAIT: %s", e)
+                self.status = statuses.WAIT_FULFILL
             self.save(context)
 
         _fulfill_lease()
@@ -172,7 +180,7 @@ class Lease(base.ESILEAPObject):
     def expire(self, context=None):
         leases = Lease.get_all(
             {'parent_lease_uuid': self.uuid,
-             'status': [statuses.CREATED, statuses.ACTIVE]},
+             'status': statuses.CANCELLABLE_LEASE_STATUSES},
             None)
         for lease in leases:
             lease.expire(context)
@@ -188,15 +196,19 @@ class Lease(base.ESILEAPObject):
                             external=True)
         def _expire_lease():
             LOG.info("Expiring lease %s", self.uuid)
-            resource = self.resource_object()
-            if resource.get_lease_uuid() == self.uuid:
-                resource.expire_lease(self)
-                if self.parent_lease_uuid is not None:
-                    parent_lease = Lease.get(self.parent_lease_uuid)
-                    resource.set_lease(parent_lease)
-            # expire lease
-            self.status = statuses.EXPIRED
-            self.expire_time = datetime.datetime.now()
+            try:
+                resource = self.resource_object()
+                if resource.get_lease_uuid() == self.uuid:
+                    resource.expire_lease(self)
+                    if self.parent_lease_uuid is not None:
+                        parent_lease = Lease.get(self.parent_lease_uuid)
+                        resource.set_lease(parent_lease)
+                # expire lease
+                self.status = statuses.EXPIRED
+                self.expire_time = datetime.datetime.now()
+            except Exception as e:
+                LOG.info("Error expiring lease; setting to WAIT: %s", e)
+                self.status = statuses.WAIT_EXPIRE
             self.save(context)
 
         _expire_lease()
