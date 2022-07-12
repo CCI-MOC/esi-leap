@@ -20,4 +20,7 @@ WAIT_CANCEL = 'wait cancel'
 WAIT_EXPIRE = 'wait expire'
 WAIT_FULFILL = 'wait fulfill'
 
+OFFER_CAN_DELETE = ('available', 'error')
+LEASE_CAN_DELETE = ['active', 'created', 'error']
+
 CANCELLABLE_LEASE_STATUSES = [ACTIVE, CREATED, WAIT_FULFILL]

@@ -180,7 +180,7 @@ class LeasesController(rest.RestController):
 
         lease = utils.check_lease_policy_and_retrieve(
             request, 'esi_leap:lease:get', lease_id,
-            [statuses.CREATED, statuses.ACTIVE])
+            statuses.LEASE_CAN_DELETE)
 
         lease.cancel()
 

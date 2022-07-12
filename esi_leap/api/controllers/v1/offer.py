@@ -139,7 +139,7 @@ class OffersController(rest.RestController):
                 a_end=available_end_time)
 
         if status is None:
-            status = statuses.AVAILABLE
+            status = statuses.OFFER_CAN_DELETE
         elif status == 'any':
             status = None
 
@@ -238,7 +238,8 @@ class OffersController(rest.RestController):
         request = pecan.request.context
 
         offer = utils.check_offer_policy_and_retrieve(
-            request, 'esi_leap:offer:delete', offer_id, statuses.AVAILABLE)
+            request, 'esi_leap:offer:delete', offer_id,
+            statuses.OFFER_CAN_DELETE)
         offer.cancel()
 
     @wsme_pecan.wsexpose(lease.Lease, wtypes.text, body=lease.Lease,

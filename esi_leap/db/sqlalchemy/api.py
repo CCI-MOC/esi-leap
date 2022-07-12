@@ -118,10 +118,14 @@ def offer_get_all(filters):
     start = filters.pop('start_time', None)
     end = filters.pop('end_time', None)
     time_filter_type = filters.pop('time_filter_type', None)
+    status = filters.pop('status', None)
     a_start = filters.pop('available_start_time', None)
     a_end = filters.pop('available_end_time', None)
 
     query = query.filter_by(**filters)
+
+    if status:
+        query = query.filter((models.Offer.status.in_(status)))
 
     if lessee_id:
         lessee_id_list = keystone.get_parent_project_id_tree(lessee_id)
