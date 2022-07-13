@@ -159,8 +159,8 @@ def offer_get_conflict_times(offer_ref):
         join(models.Offer, models.Offer.uuid == models.Lease.offer_uuid).\
         order_by(models.Lease.start_time).\
         filter(models.Lease.offer_uuid == offer_ref.uuid,
-               (models.Lease.status == statuses.CREATED) |
-               (models.Lease.status == statuses.ACTIVE)
+               (models.Lease.status != statuses.EXPIRED) &
+               (models.Lease.status != statuses.DELETED)
                ).all()
 
 

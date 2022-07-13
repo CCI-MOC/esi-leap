@@ -92,10 +92,15 @@ class TestOfferObject(base.DBTestCase):
         self.assertEqual(self.context, offers[0]._context)
 
     @mock.patch('esi_leap.db.sqlalchemy.api.offer_get_conflict_times')
-    def test_get_availabilities(self, mock_offer_get_conflict_times):
+    @mock.patch('esi_leap.objects.offer.datetime')
+    def test_get_availabilities_offer_in_future(self, mock_datetime,
+                                                mock_ogct):
         o = offer.Offer(
             self.context, **self.test_offer_data)
-        mock_offer_get_conflict_times.return_value = [
+        # test offer start_time > now
+        mock_datetime.datetime.now = mock.Mock(
+            return_value=o.start_time + datetime.timedelta(days=-5))
+        mock_ogct.return_value = [
             [
                 o.start_time + datetime.timedelta(days=10),
                 o.start_time + datetime.timedelta(days=20)
@@ -127,7 +132,7 @@ class TestOfferObject(base.DBTestCase):
         a = o.get_availabilities()
         self.assertEqual(a, expect)
 
-        mock_offer_get_conflict_times.return_value = [
+        mock_ogct.return_value = [
             [
                 o.start_time,
                 o.end_time
@@ -138,13 +143,133 @@ class TestOfferObject(base.DBTestCase):
         a = o.get_availabilities()
         self.assertEqual(a, expect)
 
-        mock_offer_get_conflict_times.return_value = []
+        mock_ogct.return_value = []
 
         expect = [
             [
                 o.start_time,
                 o.end_time
             ],
+        ]
+        a = o.get_availabilities()
+        self.assertEqual(a, expect)
+
+    @mock.patch('esi_leap.db.sqlalchemy.api.offer_get_conflict_times')
+    @mock.patch('esi_leap.objects.offer.datetime')
+    def test_get_availabilities_conflicts_in_future(self, mock_datetime,
+                                                    mock_ogct):
+        o = offer.Offer(
+            self.context, **self.test_offer_data)
+        # test offer start_time <= now < first conflict start_time
+        now = o.start_time + datetime.timedelta(days=10)
+        mock_datetime.datetime.now = mock.Mock(return_value=now)
+        mock_ogct.return_value = []
+        expect = [
+            [
+                now,
+                o.end_time
+            ],
+        ]
+
+        a = o.get_availabilities()
+        self.assertEqual(a, expect)
+
+        mock_ogct.return_value = [
+            [
+                o.start_time + datetime.timedelta(days=10),
+                o.start_time + datetime.timedelta(days=20)
+            ],
+            [
+                o.start_time + datetime.timedelta(days=20),
+                o.start_time + datetime.timedelta(days=30)
+            ],
+            [
+                o.start_time + datetime.timedelta(days=50),
+                o.start_time + datetime.timedelta(days=60)
+            ]
+        ]
+
+        expect = [
+            [
+                o.start_time + datetime.timedelta(days=30),
+                o.start_time + datetime.timedelta(days=50)
+            ],
+            [
+                o.start_time + datetime.timedelta(days=60),
+                o.end_time
+            ],
+        ]
+        a = o.get_availabilities()
+        self.assertEqual(a, expect)
+
+    @mock.patch('esi_leap.db.sqlalchemy.api.offer_get_conflict_times')
+    @mock.patch('esi_leap.objects.offer.datetime')
+    def test_get_availabilities_conflicts_current(self, mock_datetime,
+                                                  mock_ogct):
+        o = offer.Offer(
+            self.context, **self.test_offer_data)
+        # test a conflict is happening right now
+        now = o.start_time + datetime.timedelta(days=10)
+        mock_datetime.datetime.now = mock.Mock(return_value=now)
+        mock_ogct.return_value = [
+            [
+                o.start_time,
+                o.start_time + datetime.timedelta(days=4)
+            ],
+            [
+                o.start_time + datetime.timedelta(days=5),
+                o.start_time + datetime.timedelta(days=15)
+            ],
+            [
+                o.start_time + datetime.timedelta(days=20),
+                o.start_time + datetime.timedelta(days=30)
+            ],
+            [
+                o.start_time + datetime.timedelta(days=50),
+                o.start_time + datetime.timedelta(days=60)
+            ]
+        ]
+        expect = [
+            [
+                o.start_time + datetime.timedelta(days=15),
+                o.start_time + datetime.timedelta(days=20)
+            ],
+            [
+                o.start_time + datetime.timedelta(days=30),
+                o.start_time + datetime.timedelta(days=50)
+            ],
+            [
+                o.start_time + datetime.timedelta(days=60),
+                o.end_time
+            ],
+        ]
+        a = o.get_availabilities()
+        self.assertEqual(a, expect)
+
+    @mock.patch('esi_leap.db.sqlalchemy.api.offer_get_conflict_times')
+    @mock.patch('esi_leap.objects.offer.datetime')
+    def test_get_availabilities_conflicts_past(self, mock_datetime,
+                                               mock_ogct):
+        o = offer.Offer(
+            self.context, **self.test_offer_data)
+        # test all conflicts happened in the past
+        now = o.start_time + datetime.timedelta(days=10)
+        mock_datetime.datetime.now = mock.Mock(return_value=now)
+        mock_ogct.return_value = [
+            [
+                o.start_time,
+                o.start_time + datetime.timedelta(days=4)
+            ],
+            [
+                o.start_time + datetime.timedelta(days=5),
+                o.start_time + datetime.timedelta(days=10)
+            ]
+        ]
+        expect = [
+            [
+                now,
+                o.end_time
+            ]
         ]
         a = o.get_availabilities()
         self.assertEqual(a, expect)

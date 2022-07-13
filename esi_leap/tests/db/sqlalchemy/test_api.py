@@ -276,7 +276,11 @@ class TestOfferAPI(base.DBTestCase):
         o1 = api.offer_create(test_offer_1)
         self.assertEqual(api.offer_get_conflict_times(o1), [])
         test_lease_3['offer_uuid'] = o1.uuid
+        test_lease_4['offer_uuid'] = o1.uuid
+        test_lease_5['offer_uuid'] = o1.uuid
         api.lease_create(test_lease_3)
+        api.lease_create(test_lease_4)
+        api.lease_create(test_lease_5)
         self.assertEqual(api.offer_get_conflict_times(o1),
                          [(now + datetime.timedelta(days=50),
                           now + datetime.timedelta(days=60))])

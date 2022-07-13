@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
+
 from esi_leap.common import exception
 from esi_leap.common import statuses
 from esi_leap.common import utils
@@ -63,29 +65,53 @@ class Offer(base.ESILEAPObject):
             return []
 
         conflicts = self.dbapi.offer_get_conflict_times(self)
+        now = datetime.datetime.now()
+        start_time = self.start_time if self.start_time >= now else now
 
         if conflicts:
-            a = [self.start_time, conflicts[0][0]]
-            for i in range(len(conflicts) - 1):
-                a.append(conflicts[i][1])
-                a.append(conflicts[i + 1][0])
-            a.append(conflicts[-1][1])
-            a.append(self.end_time)
-
-            i = 0
-            while i < len(a) - 1:
-                if a[i] == a[i + 1]:
-                    a.pop(i)
-                    a.pop(i)
+            # if the conflicts are all in the past:
+            if conflicts[-1][1] <= start_time:
+                avails = [[start_time, self.end_time]]
+            else:
+                # if the offer starts in the future or
+                # the first conflict time is in the future,
+                # add the $start_time and first conflict start_time
+                # in the array
+                if start_time < conflicts[0][0]:
+                    times = [start_time, conflicts[0][0]]
+                    for i in range(len(conflicts) - 1):
+                        times.append(conflicts[i][1])
+                        times.append(conflicts[i + 1][0])
                 else:
-                    i += 1
+                    times = []
+                    for i in range(len(conflicts) - 1):
+                        # Find the conflict timeframe that started
+                        # in the past and will end in the future.
+                        # add all times after this
+                        if (conflicts[i][0] <= start_time and
+                            conflicts[i][1] > start_time) \
+                            or conflicts[i][0] > start_time:
+                            times.append(conflicts[i][1])
+                            times.append(conflicts[i + 1][0])
 
-            a = [[a[j], a[j + 1]] for j in range(0, len(a) - 1, 2)]
+                times.append(conflicts[-1][1])
+                times.append(self.end_time)
+
+                i = 0
+                while i < len(times) - 1:
+                    if times[i] == times[i + 1]:
+                        times.pop(i)
+                        times.pop(i)
+                    else:
+                        i += 1
+
+                avails = [[times[j], times[j + 1]]
+                          for j in range(0, len(times) - 1, 2)]
 
         else:
-            a = [[self.start_time, self.end_time]]
+            avails = [[start_time, self.end_time]]
 
-        return a
+        return avails
 
     def get_first_availability(self, start):
         return self.dbapi.offer_get_first_availability(self.uuid, start)
