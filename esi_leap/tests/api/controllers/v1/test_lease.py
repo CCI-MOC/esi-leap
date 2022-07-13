@@ -510,6 +510,20 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_gnl.assert_called_once()
         self.assertEqual(2, mock_lgdwai.call_count)
 
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_lease_policy_and_retrieve')
+    @mock.patch('esi_leap.objects.lease.Lease.cancel')
+    def test_lease_delete(self, mock_cancel, mock_clpar):
+        mock_clpar.return_value = self.test_lease
+
+        self.delete_json('/leases/' + self.test_lease.uuid)
+
+        mock_clpar.assert_called_once_with(self.context,
+                                           'esi_leap:lease:get',
+                                           self.test_lease.uuid,
+                                           statuses.LEASE_CAN_DELETE)
+        mock_cancel.assert_called_once()
+
 
 class TestLeaseControllersGetAllFilters(testtools.TestCase):
 
