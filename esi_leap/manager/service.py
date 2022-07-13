@@ -80,7 +80,8 @@ class ManagerService(service.Service):
         LOG.info("Checking for expiring leases")
         leases = lease_obj.Lease.get_all(
             {'status': [statuses.ACTIVE, statuses.CREATED,
-                        statuses.WAIT_EXPIRE, statuses.WAIT_FULFILL]},
+                        statuses.WAIT_EXPIRE, statuses.WAIT_FULFILL,
+                        statuses.OFFER_CAN_DELETE]},
             self._context)
         now = timeutils.utcnow()
         for lease in leases:
