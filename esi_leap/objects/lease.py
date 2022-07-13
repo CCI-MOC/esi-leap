@@ -114,13 +114,13 @@ class Lease(base.ESILEAPObject):
     def cancel(self):
         leases = Lease.get_all(
             {'parent_lease_uuid': self.uuid,
-             'status': statuses.CANCELLABLE_LEASE_STATUSES},
+             'status': statuses.LEASE_CAN_DELETE},
             None)
         for lease in leases:
             lease.cancel()
         offers = offer_obj.Offer.get_all(
             {'parent_lease_uuid': self.uuid,
-             'status': statuses.AVAILABLE},
+             'status': statuses.OFFER_CAN_DELETE},
             None)
         for offer in offers:
             offer.cancel()
@@ -180,13 +180,13 @@ class Lease(base.ESILEAPObject):
     def expire(self, context=None):
         leases = Lease.get_all(
             {'parent_lease_uuid': self.uuid,
-             'status': statuses.CANCELLABLE_LEASE_STATUSES},
+             'status': statuses.LEASE_CAN_DELETE},
             None)
         for lease in leases:
             lease.expire(context)
         offers = offer_obj.Offer.get_all(
             {'parent_lease_uuid': self.uuid,
-             'status': statuses.AVAILABLE},
+             'status': statuses.OFFER_CAN_DELETE},
             None)
         for offer in offers:
             offer.expire(context)
