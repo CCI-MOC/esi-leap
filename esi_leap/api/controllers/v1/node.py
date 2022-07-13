@@ -66,33 +66,41 @@ class NodesController(rest.RestController):
 
         project_list = keystone.get_project_list()
         now = datetime.now()
+
+        offers = offer_obj.Offer.get_all({"status": "available"},
+                                         context)
+
+        f_leases = lease_obj.Lease.get_all({"status": [statuses.CREATED]},
+                                           context)
+
+        f_lease_uuids = ' '
+
         for node in nodes:
-            offers = offer_obj.Offer.get_all({"resource_uuid": node.uuid,
-                                              "status": "available"},
-                                             context)
             future_offers = []
             current_offer = None
             for offer in offers:
-                if offer.start_time > now:
-                    future_offers.append(offer.uuid)
-                elif offer.end_time >= now:
-                    current_offer = offer
+                if offer.resource_uuid == node.uuid:
+                    if offer.start_time > now:
+                        future_offers.append(offer.uuid)
+                    elif offer.end_time >= now:
+                        current_offer = offer
             future_offers = ' '.join(future_offers)
 
-            f_leases = lease_obj.Lease.get_all({"resource_uuid": node.uuid,
-                                                "status": [statuses.CREATED]},
-                                               context)
-            f_lease_uuids = ' '.join([o.uuid for o in f_leases])
+            for o in f_leases:
+                if o.resource_uuid == node.uuid:
+                    f_lease_uuids = f_lease_uuids.join([o.uuid])
 
             n = Node(name=node.name, uuid=node.uuid,
                      owner=keystone.get_project_name(node.owner, project_list),
                      future_offers=future_offers,
                      future_leases=f_lease_uuids)
+
+            n.lessee = keystone.get_project_name(node.lessee, project_list)
+
             if current_offer:
                 n.offer_uuid = current_offer.uuid
             if "lease_uuid" in node.properties:
                 n.lease_uuid = node.properties["lease_uuid"]
-                n.lessee = keystone.get_project_name(node.lessee, project_list)
 
             node_collection.nodes.append(n)
 
