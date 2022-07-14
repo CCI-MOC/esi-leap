@@ -192,7 +192,7 @@ class TestService(base.TestCase):
 
         assert mock_expire.call_count == 2
         mock_ga.assert_called_once_with({
-            'status': statuses.AVAILABLE
+            'status': statuses.OFFER_CAN_DELETE
         }, s._context)
 
     @mock.patch('esi_leap.objects.offer.Offer.save')
@@ -220,7 +220,7 @@ class TestService(base.TestCase):
 
         mock_expire.assert_called_once()
         mock_ga.assert_called_once_with({
-            'status': statuses.AVAILABLE
+            'status': statuses.OFFER_CAN_DELETE
         }, s._context)
         self.assertEqual(statuses.ERROR, error_offer.status)
         mock_save.assert_called_once()
