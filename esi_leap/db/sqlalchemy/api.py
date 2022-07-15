@@ -232,7 +232,7 @@ def offer_update(offer_uuid, values):
         if end is None:
             end = offer_ref.end_time
         if start >= end:
-            raise exception.InvalidTimeRange(resource="an offer",
+            raise exception.InvalidTimeRange(resource='an offer',
                                              start_time=str(start),
                                              end_time=str(end))
 
@@ -337,7 +337,7 @@ def lease_update(lease_uuid, values):
         if end is None:
             end = lease_ref.end_time
         if start >= end:
-            raise exception.InvalidTimeRange(resource="a lease",
+            raise exception.InvalidTimeRange(resource='a lease',
                                              start_time=str(start),
                                              end_time=str(end))
 

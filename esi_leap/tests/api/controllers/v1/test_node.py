@@ -17,17 +17,17 @@ from esi_leap.tests.api import base as test_api_base
 
 class FakeIronicNode(object):
     def __init__(self):
-        self.name = "fake-node"
-        self.owner = "fake-project-uuid"
-        self.uuid = "fake-uuid"
-        self.properties = {"lease_uuid": "fake-lease-uuid"}
-        self.lessee = "fake-project-uuid"
+        self.name = 'fake-node'
+        self.owner = 'fake-project-uuid'
+        self.uuid = 'fake-uuid'
+        self.properties = {'lease_uuid': 'fake-lease-uuid'}
+        self.lessee = 'fake-project-uuid'
 
 
 class FakeProject(object):
     def __init__(self):
-        self.name = "fake-project"
-        self.id = "fake-project-uuid"
+        self.name = 'fake-project'
+        self.id = 'fake-project-uuid'
 
 
 class TestNodesController(test_api_base.APITestCase):
@@ -47,15 +47,15 @@ class TestNodesController(test_api_base.APITestCase):
         mock_lga.return_value = []
         mock_gpl.return_value = [fake_project]
 
-        data = self.get_json("/nodes")
+        data = self.get_json('/nodes')
 
         mock_gnl.assert_called_once_with(self.context)
         mock_oga.assert_called_once()
         mock_lga.assert_called_once()
         mock_gpl.assert_called_once()
 
-        self.assertEqual(data["nodes"][0]["name"], "fake-node")
-        self.assertEqual(data["nodes"][0]["uuid"], "fake-uuid")
-        self.assertEqual(data["nodes"][0]["owner"], "fake-project")
-        self.assertEqual(data["nodes"][0]["lease_uuid"], "fake-lease-uuid")
-        self.assertEqual(data["nodes"][0]["lessee"], "fake-project")
+        self.assertEqual(data['nodes'][0]['name'], 'fake-node')
+        self.assertEqual(data['nodes'][0]['uuid'], 'fake-uuid')
+        self.assertEqual(data['nodes'][0]['owner'], 'fake-project')
+        self.assertEqual(data['nodes'][0]['lease_uuid'], 'fake-lease-uuid')
+        self.assertEqual(data['nodes'][0]['lessee'], 'fake-project')

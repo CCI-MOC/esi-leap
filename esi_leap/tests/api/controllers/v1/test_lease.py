@@ -80,7 +80,7 @@ class TestLeasesController(test_api_base.APITestCase):
         data = self.get_json('/leases')
 
         self.assertEqual(self.test_lease.uuid,
-                         data['leases'][0]["uuid"])
+                         data['leases'][0]['uuid'])
         mock_gpl.assert_called_once()
         mock_gnl.assert_called_once()
         mock_lgdwai.assert_called_once()
@@ -97,19 +97,19 @@ class TestLeasesController(test_api_base.APITestCase):
                   mock_gpufi, mock_gro, mock_lgdwai):
         resource = TestNode('1234567890')
         data = {
-            "project_id": "lesseeid",
-            "resource_type": "test_node",
-            "resource_uuid": "1234567890",
-            "start_time": "2016-07-16T19:20:30",
-            "end_time": "2016-08-16T19:20:30"
+            'project_id': 'lesseeid',
+            'resource_type': 'test_node',
+            'resource_uuid': '1234567890',
+            'start_time': '2016-07-16T19:20:30',
+            'end_time': '2016-08-16T19:20:30'
         }
         return_data = data.copy()
         return_data['owner_id'] = self.context.project_id
         return_data['uuid'] = self.test_lease.uuid
         lgdwai_return_data = return_data.copy()
-        lgdwai_return_data["start_time"] = datetime.datetime(
+        lgdwai_return_data['start_time'] = datetime.datetime(
             2016, 7, 16, 19, 20, 30)
-        lgdwai_return_data["end_time"] = datetime.datetime(
+        lgdwai_return_data['end_time'] = datetime.datetime(
             2016, 8, 16, 19, 20, 30)
 
         mock_gro.return_value = resource
@@ -143,19 +143,19 @@ class TestLeasesController(test_api_base.APITestCase):
                                         mock_gro, mock_lgdwai):
         resource = IronicNode('1234567890')
         data = {
-            "project_id": "lesseeid",
-            "resource_uuid": "1234567890",
-            "start_time": "2016-07-16T19:20:30",
-            "end_time": "2016-08-16T19:20:30"
+            'project_id': 'lesseeid',
+            'resource_uuid': '1234567890',
+            'start_time': '2016-07-16T19:20:30',
+            'end_time': '2016-08-16T19:20:30'
         }
         return_data = data.copy()
-        return_data["resource_type"] = "ironic_node"
-        return_data["owner_id"] = self.context.project_id
-        return_data["uuid"] = self.test_lease.uuid
+        return_data['resource_type'] = 'ironic_node'
+        return_data['owner_id'] = self.context.project_id
+        return_data['uuid'] = self.test_lease.uuid
         lgdwai_return_data = return_data.copy()
-        lgdwai_return_data["start_time"] = datetime.datetime(
+        lgdwai_return_data['start_time'] = datetime.datetime(
             2016, 7, 16, 19, 20, 30)
-        lgdwai_return_data["end_time"] = datetime.datetime(
+        lgdwai_return_data['end_time'] = datetime.datetime(
             2016, 8, 16, 19, 20, 30)
 
         mock_gro.return_value = resource
@@ -191,21 +191,21 @@ class TestLeasesController(test_api_base.APITestCase):
                                          mock_gro, mock_crla, mock_lgdwai):
         resource = IronicNode('1234567890')
         data = {
-            "project_id": "lesseeid",
-            "resource_uuid": "1234567890",
-            "start_time": "2016-07-17T19:20:30",
-            "end_time": "2016-08-14T19:20:30"
+            'project_id': 'lesseeid',
+            'resource_uuid': '1234567890',
+            'start_time': '2016-07-17T19:20:30',
+            'end_time': '2016-08-14T19:20:30'
         }
         return_data = data.copy()
         return_data['owner_id'] = self.context.project_id
         return_data['uuid'] = self.test_lease_with_parent.uuid
         return_data['resource_type'] = 'ironic_node'
-        return_data['parent_lease_uuid'] = \
-            self.test_lease_with_parent.parent_lease_uuid
+        return_data['parent_lease_uuid'] = (
+            self.test_lease_with_parent.parent_lease_uuid)
         lgdwai_return_data = return_data.copy()
-        lgdwai_return_data["start_time"] = datetime.datetime(
+        lgdwai_return_data['start_time'] = datetime.datetime(
             2016, 7, 17, 19, 20, 30)
-        lgdwai_return_data["end_time"] = datetime.datetime(
+        lgdwai_return_data['end_time'] = datetime.datetime(
             2016, 8, 14, 19, 20, 30)
 
         mock_gro.return_value = resource
@@ -255,10 +255,10 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_crla.return_value = None
 
         data = {
-            "project_id": "lesseeid",
-            "resource_uuid": "1234567890",
-            "start_time": "2016-07-17T19:20:30",
-            "end_time": "2016-08-14T19:20:30"
+            'project_id': 'lesseeid',
+            'resource_uuid': '1234567890',
+            'start_time': '2016-07-17T19:20:30',
+            'end_time': '2016-08-14T19:20:30'
         }
         request = self.post_json('/leases', data, expect_errors=True)
 
@@ -534,7 +534,7 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
                                             roles=['admin'])
         self.owner_ctx = ctx.RequestContext(project_id='ownerid',
                                             roles=['owner'])
-        self.lessee_ctx = ctx.RequestContext(project_id="lesseeid",
+        self.lessee_ctx = ctx.RequestContext(project_id='lesseeid',
                                              roles=['lessee'])
         self.random_ctx = ctx.RequestContext(project_id='randomid',
                                              roles=['randomrole'])

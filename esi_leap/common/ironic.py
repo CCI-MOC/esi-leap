@@ -24,8 +24,7 @@ _cached_ironic_client = None
 
 
 def get_ironic_client(context=None):
-    session = ks_loading.load_session_from_conf_options(
-        CONF, 'ironic')
+    session = ks_loading.load_session_from_conf_options(CONF, 'ironic')
     service_auth = ks_loading.load_auth_from_conf_options(CONF, 'ironic')
 
     # use user context if provided
@@ -40,8 +39,7 @@ def get_ironic_client(context=None):
         CONF, 'ironic', auth=user_auth or service_auth)
 
     kwargs = {'os_ironic_api_version': '1.65'}
-    cli = ironic_client.get_client(1,
-                                   session=sess, **kwargs)
+    cli = ironic_client.get_client(1, session=sess, **kwargs)
     return cli
 
 
@@ -54,8 +52,7 @@ def get_node_name(node_uuid, node_list=None):
     if node_list is None:
         node = get_ironic_client().node.get(node_uuid)
     else:
-        node = next((n for n in node_list
-                     if getattr(n, 'uuid') == node_uuid),
+        node = next((n for n in node_list if getattr(n, 'uuid') == node_uuid),
                     None)
     if node:
         node_name = node.name

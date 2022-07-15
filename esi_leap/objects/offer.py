@@ -124,7 +124,7 @@ class Offer(base.ESILEAPObject):
                 updates['resource_type'], updates['resource_uuid']),
             external=True)
         def _create_offer():
-            LOG.info("Creating offer")
+            LOG.info('Creating offer')
             if updates['start_time'] >= updates['end_time']:
                 raise exception.InvalidTimeRange(
                     resource='offer',
@@ -155,7 +155,7 @@ class Offer(base.ESILEAPObject):
         _create_offer()
 
     def cancel(self):
-        LOG.info("Deleting offer %s", self.uuid)
+        LOG.info('Deleting offer %s', self.uuid)
         leases = lease_obj.Lease.get_all(
             {'offer_uuid': self.uuid,
              'status': statuses.LEASE_CAN_DELETE},
@@ -172,7 +172,7 @@ class Offer(base.ESILEAPObject):
         _cancel_offer()
 
     def expire(self, context=None):
-        LOG.info("Expiring offer %s", self.uuid)
+        LOG.info('Expiring offer %s', self.uuid)
         leases = lease_obj.Lease.get_all(
             {'offer_uuid': self.uuid,
              'status': statuses.LEASE_CAN_DELETE},

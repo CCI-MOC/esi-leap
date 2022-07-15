@@ -25,7 +25,7 @@ class PolicyTestCase(base.TestCase):
     def setUp(self):
         super(PolicyTestCase, self).setUp()
 
-        CONF.set_override("auth_enable", True,
+        CONF.set_override('auth_enable', True,
                           group='pecan')
 
     def test_authorized(self):

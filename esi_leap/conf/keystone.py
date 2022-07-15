@@ -17,9 +17,7 @@ from oslo_config import cfg
 
 
 opts = []
-keystone_group = cfg.OptGroup(
-    'keystone',
-    title='Keystone Options')
+keystone_group = cfg.OptGroup('keystone', title='Keystone Options')
 
 
 def register_opts(conf):

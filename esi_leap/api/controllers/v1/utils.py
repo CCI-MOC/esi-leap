@@ -39,8 +39,8 @@ def check_resource_lease_admin(cdict, resource, project_id,
             # don't allow sub-sub-leases
             if parent_lease.parent_lease_uuid is None:
                 # check if offer is within start and end time bounds
-                if start_time >= parent_lease.start_time and \
-                   end_time <= parent_lease.end_time:
+                if ((start_time >= parent_lease.start_time) and
+                        (end_time <= parent_lease.end_time)):
                     return parent_lease_uuid
                 else:
                     raise exception.ResourceNoPermissionTime(
@@ -64,11 +64,9 @@ def get_offer(uuid_or_name, status_filters=[]):
                                               'status': status_filters})
 
         if len(offer_objs) > 1:
-            raise exception.OfferDuplicateName(
-                name=uuid_or_name)
+            raise exception.OfferDuplicateName(name=uuid_or_name)
         elif len(offer_objs) == 0:
-            raise exception.OfferNotFound(
-                offer_uuid=uuid_or_name)
+            raise exception.OfferNotFound(offer_uuid=uuid_or_name)
 
         return offer_objs[0]
 
@@ -136,30 +134,24 @@ def check_offer_policy_and_retrieve(request, policy_name, offer_ident,
 def check_offer_lessee(cdict, offer):
     project_id = cdict['project_id']
 
-    # pass if offer has no lessee limitation or project_id created
-    # the offer
+    # pass if offer has no lessee limitation or project_id created the offer
     if offer.lessee_id is None or offer.project_id == project_id:
         return
 
-    if offer.lessee_id not in keystone.get_parent_project_id_tree(
-            project_id):
+    if offer.lessee_id not in keystone.get_parent_project_id_tree(project_id):
         resource_policy_authorize(
             'esi_leap:offer:offer_admin',
             cdict, cdict, 'offer', offer.uuid)
 
 
-def offer_get_dict_with_added_info(offer,
-                                   project_list=None,
-                                   node_list=None):
+def offer_get_dict_with_added_info(offer, project_list=None, node_list=None):
     availabilities = offer.get_availabilities()
     resource = offer.resource_object()
 
     o = offer.to_dict()
     o['availabilities'] = availabilities
-    o['project'] = keystone.get_project_name(offer.project_id,
-                                             project_list)
-    o['lessee'] = keystone.get_project_name(offer.lessee_id,
-                                            project_list)
+    o['project'] = keystone.get_project_name(offer.project_id, project_list)
+    o['lessee'] = keystone.get_project_name(offer.lessee_id, project_list)
     o['resource'] = resource.get_resource_name(node_list)
     o['resource_class'] = resource.get_resource_class()
     return o

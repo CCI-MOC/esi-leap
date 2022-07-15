@@ -1,18 +1,18 @@
 ## Offer API
 
-The offer api endpoint can be reached at /v1/offers
+The Offer API endpoint can be reached at /v1/offers.
 
 ##### GET
 * The /v1/offers/\<uuid_or_name> endpoint is used to retrieve the offer with the given uuid. The response type is 'application/json'.
-* The /v1/offers endpoint is used to retrieve a list of offers. This url supports several url variables for retrieving offers filtered by given values. The response type is 'application/json'.
+* The /v1/offers endpoint is used to retrieve a list of offers. This URL supports several URL variables for retrieving offers filtered by given values. The response type is 'application/json'.
   * project_id: Returns all offers with given project_id.
   * status: Returns all offers with given status. 
     * This value will default to returning offers with status 'available'.
     * This value can be set to 'any' to return offers without filtering by status.
   * resource_uuid: Returns all offers with given resource_uuid.
   * resource_type: Returns all offers with given resource_type
-  * start_time and end_time: Passing in values for the start_time and end_time variables will return all offers with a start_time and end_time which completely span the given values. These two url variables must be used together. Passing in only one will throw an error. 
-  * available_start_time and available_end_time: Passing in values for the available_start_time and available_end_time variables will return all offers with availabilities which completely span the given values. These two url variables must be used together. Passing in only one will throw an error.
+  * start_time and end_time: Passing in values for the start_time and end_time variables will return all offers with a start_time and end_time which completely span the given values. These two URL variables must be used together. Passing in only one will throw an error. 
+  * available_start_time and available_end_time: Passing in values for the available_start_time and available_end_time variables will return all offers with availabilities which completely span the given values. These two URL variables must be used together. Passing in only one will throw an error.
 
 
 ##### POST
@@ -20,7 +20,7 @@ The offer api endpoint can be reached at /v1/offers
   * resource_type:
     * A string.
     * This field is required.
-  * resource_uuid: the uuid of the resource. If using with ironic this would be the node's uuid.
+  * resource_uuid: the uuid of the resource. If using with Ironic this would be the node's uuid.
     * A string.
     * This field is required.
   * start_time:
@@ -77,13 +77,13 @@ The lease api endpoint can be reached at /v1/leases
 
 ##### GET
 * The /v1/leases/\<uuid_or_name> endpoint is used to retrieve the lease with the given uuid. The response type is 'application/json'.
-* The /v1/leases endpoint is used to retrieve a list of leases. This url supports several url variables for retrieving offers filtered by given values. The response type is 'application/json'.
+* The /v1/leases endpoint is used to retrieve a list of leases. This URL supports several URL variables for retrieving offers filtered by given values. The response type is 'application/json'.
   * project_id: Returns all leases with given project_id.
     * This value will default to the project_id of the request.
   * status: Returns all offers with given status. 
     * This value will default to returning leases with status 'open'.
     * This value can be set to 'any' to return leases without filtering by status.
-  * start_time and end_time: Passing in values for the start_time and end_time variables will return all leases with a start_time and end_time which completely span the given values. These two url variables must be used together. Passing in only one will throw an error. 
+  * start_time and end_time: Passing in values for the start_time and end_time variables will return all leases with a start_time and end_time which completely span the given values. These two URL variables must be used together. Passing in only one will throw an error. 
   * owner: Returns all leases which are related to offers with project_id 'owner'.
   * view: Setting view to 'all' will return all leases in the database. This value can be used in combination with other filters.
 

@@ -22,32 +22,32 @@ start = datetime.datetime(2016, 7, 16, 19, 20, 30)
 
 def get_test_dummy_node_1():
     return {
-        "project_owner_id": "123456",
-        "project_id": "654321",
-        "lease_uuid": "001",
-        "resource_class": "fake",
-        "server_config": {
-            "new attribute XYZ": "new attribute XYZ",
-            "cpu_type": "Intel Xeon",
-            "cores": 16,
-            "ram_gb": 512,
-            "storage_type": "samsung SSD",
-            "storage_size_gb": 204
+        'project_owner_id': '123456',
+        'project_id': '654321',
+        'lease_uuid': '001',
+        'resource_class': 'fake',
+        'server_config': {
+            'new attribute XYZ': 'new attribute XYZ',
+            'cpu_type': 'Intel Xeon',
+            'cores': 16,
+            'ram_gb': 512,
+            'storage_type': 'samsung SSD',
+            'storage_size_gb': 204
         }
     }
 
 
 def get_test_dummy_node_2():
     return {
-        "project_owner_id": "123456",
-        "resource_class": "fake",
-        "server_config": {
-            "new attribute XYZ": "new attribute XYZ",
-            "cpu_type": "Intel Xeon",
-            "cores": 16,
-            "ram_gb": 512,
-            "storage_type": "samsung SSD",
-            "storage_size_gb": 204
+        'project_owner_id': '123456',
+        'resource_class': 'fake',
+        'server_config': {
+            'new attribute XYZ': 'new attribute XYZ',
+            'cpu_type': 'Intel Xeon',
+            'cores': 16,
+            'ram_gb': 512,
+            'storage_type': 'samsung SSD',
+            'storage_size_gb': 204
         }
     }
 
@@ -73,13 +73,13 @@ class TestDummyNode(base.TestCase):
         self.fake_read_data_2 = json.dumps(get_test_dummy_node_2())
 
     def test_resource_type(self):
-        self.assertEqual("dummy_node", self.fake_dummy_node.resource_type)
+        self.assertEqual('dummy_node', self.fake_dummy_node.resource_type)
 
     def test_get_resource_uuid(self):
-        self.assertEqual("1111", self.fake_dummy_node.get_resource_uuid())
+        self.assertEqual('1111', self.fake_dummy_node.get_resource_uuid())
 
     def test_get_resource_name(self):
-        self.assertEqual("dummy-node-1111",
+        self.assertEqual('dummy-node-1111',
                          self.fake_dummy_node.get_resource_name())
 
     def test_get_lease_uuid(self):

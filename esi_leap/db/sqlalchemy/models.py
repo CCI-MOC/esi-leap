@@ -22,9 +22,9 @@ from sqlalchemy import Index, Integer, String
 from esi_leap.common import statuses
 
 
-@compiles(DateTime, "mysql")
+@compiles(DateTime, 'mysql')
 def compile_datetime_mysql(type_, compiler, **kw):
-    return "DATETIME(6)"
+    return 'DATETIME(6)'
 
 
 class ESILEAPBase(models.TimestampMixin, models.ModelBase):
@@ -67,7 +67,7 @@ class Offer(Base):
                                ForeignKey('leases.uuid'),
                                nullable=True)
     parent_lease = orm.relationship(
-        "Lease",
+        'Lease',
         foreign_keys=[parent_lease_uuid],
     )
 
@@ -108,6 +108,6 @@ class Lease(Base):
         foreign_keys=offer_uuid,
         primaryjoin=offer_uuid == Offer.uuid)
     parent_lease = orm.relationship(
-        "Lease",
+        'Lease',
         backref=orm.backref('child_leases', remote_side=uuid),
     )

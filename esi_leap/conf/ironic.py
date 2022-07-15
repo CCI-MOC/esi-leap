@@ -17,9 +17,7 @@ from oslo_config import cfg
 
 
 opts = []
-ironic_group = cfg.OptGroup(
-    'ironic',
-    title='Ironic Options')
+ironic_group = cfg.OptGroup('ironic', title='Ironic Options')
 
 
 def register_opts(conf):

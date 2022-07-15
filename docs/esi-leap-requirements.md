@@ -1,12 +1,12 @@
-# ESI Leap Requirements
+# ESI-Leap Requirements
 
 ## Overview
-ESI Leap is a leasing service for bare metal. Ironic nodes owners can offer up their nodes to other users, while lesees can view offers and create a lease for available nodes.
+ESI-Leap is a leasing service for bare metal. Ironic nodes owners can offer up their nodes to other users, while lesees can view offers and create a lease for available nodes.
 
 ## Definitions
 
 ### Offer
-Ironic owners can bring up their nodes to ESI Leap with an offer. An offer consists of the resource uuid, leasing period, and the status, etc. Here is an example offer schema:
+Ironic owners can bring up their nodes to ESI-Leap with an offer. An offer consists of the resource uuid, leasing period, and the status, etc. Here is an example offer schema:
 ```
     {
         'id': 27,
@@ -29,16 +29,16 @@ The offer data model is designed to support the following basic APIs:
 * Create a new offer with given values.
 * Update an offer's fields. Such as update the status to 'available' or 'expired', etc.
 * Delete an offer by offer_uuid.
-Based on the above APIs, ESI Leap can provide various of functionalities for users. A leese can retrieve offers with their requirements and find the suitable offer(s). An owner can check their offers' status and make changes.
+Based on the above APIs, ESI-Leap can provide various of functionalities for users. A leese can retrieve offers with their requirements and find the suitable offer(s). An owner can check their offers' status and make changes.
 
 The lifecycle of an offer is
 * 'available' on offer creation.
-* 'expired' once an offer's end_time has passed
-* 'deleted' if an offer is prematurely deleted
+* 'expired' once an offer's end_time has passed.
+* 'deleted' if an offer is prematurely deleted.
 
-The offer api endpoint can be reached at /v1/offers
+The offer API endpoint can be reached at /v1/offers.
 
-An example offer response is shown below.
+An example offer response is shown below:
 
 ```
 {
@@ -80,10 +80,10 @@ An offer response has the following fields:
 * "uuid" is the primary key for an offer entry.
 * "name" is an identifier the user may set for an offer on creation. Can be used for offer management instead of 'uuid'. Does not have to be unique.
 * "project_id" is the project_id of the owner of the offer.
-* "resource_type" is the type of resource being made available for leasing. To use with ironic, set to 'ironic_node'. This is passed in as a string.
+* "resource_type" is the type of resource being made available for leasing. To use with Ironic, set to 'ironic_node'. This is passed in as a string.
 * "start_time" is a datetime representing the time in which the offer can be leased.
 * "end_time" is a datetime representing the time in which the offer can no longer be leased.
-* "status" is the status of the offer. There are three valid statuses for an offer
+* "status" is the status of the offer. There are three valid statuses for an offer:
   * available: an offer can be leased. This is the state of an offer on creation.
   * expired: an offer is no longer available for leasing. When an offer's end_time has passed, it's status is set to "expired".
   * deleted: an offer is no longer available for leasing. An offer is set to deleted when it is manually revoked by a user before its end_time has passed.
@@ -126,7 +126,7 @@ The lifecycle of a lease is
 * 'expired' once a leases's end_time has passed.
 * 'cancelled' if a lease is prematurely deleted.
 
-The lease api endpoint can be reached at /v1/leases
+The lease API endpoint can be reached at /v1/leases.
 
 An example lease response is shown below.
 
@@ -164,14 +164,14 @@ A lease response has the following fields:
 
 
 ### Manager Service
-An ESI Leap manager has periodic jobs to manage offers and leases. 
+An ESI-Leap manager has periodic jobs to manage offers and leases. 
 * expire offers: out-of-date offers, i.e, the current timestamp > offer's end_time, will be updated with an 'EXPIRED' status.
 * fulfill leases: if a lease's start_time <= the current timestamp and is not expired, the manager service will fulfill the resources in the leases and update the status of the leases to 'active'. 
-* expire leases: same as 'expire offers', ESI Leap will expire leases based on timestamp.
+* expire leases: same as 'expire offers', ESI-Leap will expire leases based on timestamp.
 * update offers: after the manager fulfills and expires leases, it will update the relevant offers' status. The offers in a fulfilled lease should be unavailable to others. Likewise, when a lease expires, offers in the lease should be updated and be available again. 
 
 ## Reporting API
-ESI Leap admin queries this API to learn about the usage of nodes given a period. The admin enters a date range to get all leases' information within that range. The results could be like this:
+ESI-Leap admin queries this API to learn about the usage of nodes given a period. The admin enters a date range to get all leases' information within that range. The results could be like this:
 ```
     [
         {
@@ -194,4 +194,4 @@ ESI Leap admin queries this API to learn about the usage of nodes given a period
         }
     ]
 ```
-With the leases and nodes information, admin can inform owners about the status of the node and who leases their nodes during a date range.
+With the leases and nodes information, the admin can inform owners about the status of the node and who leases their nodes during a date range.

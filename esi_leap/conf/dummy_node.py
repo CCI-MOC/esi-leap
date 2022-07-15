@@ -13,14 +13,10 @@
 from oslo_config import cfg
 
 
-opts = [
-    cfg.StrOpt('dummy_node_dir',
-               default='/tmp/nodes'),
-]
+opts = [cfg.StrOpt('dummy_node_dir', default='/tmp/nodes')]
 
-dummy_node_group = cfg.OptGroup(
-    'dummy_node',
-    title='Dummy Node Options')
+
+dummy_node_group = cfg.OptGroup('dummy_node', title='Dummy Node Options')
 
 
 def register_opts(conf):

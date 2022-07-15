@@ -19,8 +19,8 @@ from esi_leap.tests import base
 
 class FakeProject(object):
     def __init__(self):
-        self.id = "uuid"
-        self.name = "name"
+        self.id = 'uuid'
+        self.name = 'name'
 
 
 class KeystoneTestCase(base.TestCase):

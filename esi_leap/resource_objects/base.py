@@ -22,57 +22,39 @@ class ResourceObjectInterface(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_resource_uuid(self):
-        """Returns resource's uuid
-
-        """
+        """Returns resource's uuid"""
 
     @abc.abstractmethod
     def get_resource_name(self, resource_list):
-        """Returns resource's name
-
-        """
+        """Returns resource's name"""
 
     @abc.abstractmethod
     def get_lease_uuid(self):
-        """Returns resource's associated lease, if any
-
-        """
+        """Returns resource's associated lease, if any"""
 
     @abc.abstractmethod
     def get_project_id(self):
-        """Returns resource's associated lessee, if any
-
-        """
+        """Returns resource's associated lessee, if any"""
 
     @abc.abstractmethod
     def get_node_config(self):
-        """Returns resource's associated config, if any
-
-        """
+        """Returns resource's associated config, if any"""
 
     @abc.abstractmethod
     def get_resource_class(self):
-        """Returns resource's associated class, if any
-
-        """
+        """Returns resource's associated class, if any"""
 
     @abc.abstractmethod
     def set_lease(self, lease):
-        """Set the lease on the node
-
-        """
+        """Set the lease on the node"""
 
     @abc.abstractmethod
     def expire_lease(self, lease):
-        """Expire the lease on the node
-
-        """
+        """Expire the lease on the node"""
 
     @abc.abstractmethod
     def resource_admin_project_id(self):
-        """Return project_id of resource admin
-
-        """
+        """Return project_id of resource admin"""
 
     def verify_availability(self, start_time, end_time):
         self.dbapi.resource_verify_availability(
