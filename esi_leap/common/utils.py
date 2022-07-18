@@ -13,7 +13,6 @@
 from oslo_concurrency import lockutils
 
 _prefix = 'esileap'
-synchronized = lockutils.synchronized_with_prefix(_prefix)
 lock = lockutils.lock_with_prefix(_prefix)
 
 

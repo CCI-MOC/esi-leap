@@ -190,16 +190,14 @@ class LeasesController(rest.RestController):
                                          owner_id=None, resource_type=None,
                                          resource_uuid=None):
 
-        if status is None:
+        if status is not None:
+            status = [status] if status != 'any' else None
+        else:
             status = [statuses.CREATED, statuses.ACTIVE, statuses.ERROR,
                       statuses.WAIT_CANCEL, statuses.WAIT_EXPIRE,
                       statuses.WAIT_FULFILL]
-        elif status == 'any':
-            status = None
-        else:
-            status = [status]
 
-        possible_filters = {
+        filters = {
             'status': status,
             'offer_uuid': offer_uuid,
             'start_time': start_time,
@@ -210,8 +208,8 @@ class LeasesController(rest.RestController):
 
         if view == 'all':
             utils.policy_authorize('esi_leap:lease:lease_admin', cdict, cdict)
-            possible_filters['owner_id'] = owner_id
-            possible_filters['project_id'] = project_id
+            filters['owner_id'] = owner_id
+            filters['project_id'] = project_id
         else:
             utils.policy_authorize('esi_leap:lease:get_all', cdict, cdict)
 
@@ -220,32 +218,31 @@ class LeasesController(rest.RestController):
                     utils.policy_authorize('esi_leap:lease:lease_admin', cdict,
                                            cdict)
 
-                possible_filters['owner_id'] = owner_id
-                possible_filters['project_id'] = project_id
+                filters['owner_id'] = owner_id
+                filters['project_id'] = project_id
             else:
                 if project_id is None:
                     project_id = cdict['project_id']
-                    possible_filters['project_or_owner_id'] = project_id
+                    filters['project_or_owner_id'] = project_id
                 else:
                     if project_id != cdict['project_id']:
                         utils.policy_authorize('esi_leap:lease:lease_admin',
                                                cdict, cdict)
-                    possible_filters['project_id'] = project_id
+                    filters['project_id'] = project_id
 
-        if ((start_time and end_time is None) or
-                (end_time and start_time is None)):
+        # either both are defined or both are None
+        if bool(start_time) != bool(end_time):
+            raise exception.InvalidTimeAPICommand(resource='a lease',
+                                                  start_time=str(start_time),
+                                                  end_time=str(end_time))
+        if (start_time or end_time) and (end_time <= start_time):
             raise exception.InvalidTimeAPICommand(resource='a lease',
                                                   start_time=str(start_time),
                                                   end_time=str(end_time))
 
-        if start_time and end_time and end_time <= start_time:
-            raise exception.InvalidTimeAPICommand(resource='a lease',
-                                                  start_time=str(start_time),
-                                                  end_time=str(end_time))
-
-        filters = {}
-        for k, v in possible_filters.items():
-            if v is not None:
-                filters[k] = v
+        # unpack iterator to tuple so we can use 'del'
+        for k, v in tuple(filters.items()):
+            if v is None:
+                del filters[k]
 
         return filters

@@ -41,8 +41,8 @@ class Node(base.ESILEAPBase):
     future_leases = wsme.wsattr(wtypes.text)
 
     def __init__(self, **kwargs):
-        self.fields = ['name', 'owner', 'uuid', 'offer_uuid', 'lease_uuid',
-                       'lessee', 'future_offers', 'future_leases']
+        self.fields = ('name', 'owner', 'uuid', 'offer_uuid', 'lease_uuid',
+                       'lessee', 'future_offers', 'future_leases')
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
