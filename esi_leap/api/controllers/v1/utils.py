@@ -60,15 +60,16 @@ def get_offer(uuid_or_name, status_filters=[]):
         else:
             raise exception.OfferNotFound(offer_uuid=uuid_or_name)
     else:
-        offer_objs = offer_obj.Offer.get_all({'name': uuid_or_name,
-                                              'status': status_filters})
+        offers = offer_obj.Offer.get_all({'name': uuid_or_name,
+                                          'status': status_filters})
 
-        if len(offer_objs) > 1:
-            raise exception.OfferDuplicateName(name=uuid_or_name)
-        elif len(offer_objs) == 0:
-            raise exception.OfferNotFound(offer_uuid=uuid_or_name)
+        if len(offers) != 1:
+            if len(offers) == 0:
+                raise exception.OfferNotFound(offer_uuid=uuid_or_name)
+            else:
+                raise exception.OfferDuplicateName(name=uuid_or_name)
 
-        return offer_objs[0]
+        return offers[0]
 
 
 def get_lease(uuid_or_name, status_filters=[]):
@@ -82,10 +83,11 @@ def get_lease(uuid_or_name, status_filters=[]):
         leases = lease_obj.Lease.get_all({'name': uuid_or_name,
                                           'status': status_filters})
 
-        if len(leases) > 1:
-            raise exception.LeaseDuplicateName(name=uuid_or_name)
-        elif len(leases) == 0:
-            raise exception.LeaseNotFound(lease_id=uuid_or_name)
+        if len(leases) != 1:
+            if len(leases) == 0:
+                raise exception.LeaseNotFound(lease_id=uuid_or_name)
+            else:
+                raise exception.LeaseDuplicateName(name=uuid_or_name)
 
         return leases[0]
 

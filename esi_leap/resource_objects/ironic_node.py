@@ -78,9 +78,10 @@ class IronicNode(base.ResourceObjectInterface):
 
     def expire_lease(self, lease):
         patches = []
-        if self.get_lease_uuid() != lease.uuid:
+        uuid = self.get_lease_uuid()
+        if uuid != lease.uuid:
             return
-        if self.get_lease_uuid():
+        if uuid:
             patches.append({
                 'op': 'remove',
                 'path': '/properties/lease_uuid',

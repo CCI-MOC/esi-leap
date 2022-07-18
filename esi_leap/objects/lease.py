@@ -65,12 +65,9 @@ class Lease(base.ESILEAPObject):
     def create(self, context=None):
         updates = self.obj_get_changes()
 
-        @utils.synchronized(
-            utils.get_resource_lock_name(updates['resource_type'],
-                                         updates['resource_uuid']),
-            external=True)
-        def _create_lease():
-
+        with utils.lock(utils.get_resource_lock_name(updates['resource_type'],
+                                                     updates['resource_uuid']),
+                        external=True):
             if updates['start_time'] >= updates['end_time']:
                 raise exception.InvalidTimeRange(
                     resource='lease',
@@ -109,8 +106,6 @@ class Lease(base.ESILEAPObject):
             db_lease = self.dbapi.lease_create(updates)
             self._from_db_object(context, self, db_lease)
 
-        _create_lease()
-
     def cancel(self):
         leases = Lease.get_all(
             {'parent_lease_uuid': self.uuid,
@@ -125,10 +120,9 @@ class Lease(base.ESILEAPObject):
         for offer in offers:
             offer.cancel()
 
-        @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
-                                                         self.resource_uuid),
-                            external=True)
-        def _cancel_lease():
+        with utils.lock(utils.get_resource_lock_name(self.resource_type,
+                                                     self.resource_uuid),
+                        external=True):
             LOG.info('Deleting lease %s', self.uuid)
             try:
                 resource = self.resource_object()
@@ -145,8 +139,6 @@ class Lease(base.ESILEAPObject):
                 self.status = statuses.WAIT_CANCEL
             self.save(None)
 
-        _cancel_lease()
-
     def destroy(self):
         self.dbapi.lease_destroy(self.uuid)
         self.obj_reset_changes()
@@ -158,10 +150,9 @@ class Lease(base.ESILEAPObject):
         self._from_db_object(context, self, db_lease)
 
     def fulfill(self, context=None):
-        @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
-                                                         self.resource_uuid),
-                            external=True)
-        def _fulfill_lease():
+        with utils.lock(utils.get_resource_lock_name(self.resource_type,
+                                                     self.resource_uuid),
+                        external=True):
             LOG.info('Fulfilling lease %s', self.uuid)
             try:
                 resource = self.resource_object()
@@ -174,8 +165,6 @@ class Lease(base.ESILEAPObject):
                 LOG.info('Error fulfilling lease; setting to WAIT: %s', e)
                 self.status = statuses.WAIT_FULFILL
             self.save(context)
-
-        _fulfill_lease()
 
     def expire(self, context=None):
         leases = Lease.get_all(
@@ -191,10 +180,9 @@ class Lease(base.ESILEAPObject):
         for offer in offers:
             offer.expire(context)
 
-        @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
-                                                         self.resource_uuid),
-                            external=True)
-        def _expire_lease():
+        with utils.lock(utils.get_resource_lock_name(self.resource_type,
+                                                     self.resource_uuid),
+                        external=True):
             LOG.info('Expiring lease %s', self.uuid)
             try:
                 resource = self.resource_object()
@@ -210,8 +198,6 @@ class Lease(base.ESILEAPObject):
                 LOG.info('Error expiring lease; setting to WAIT: %s', e)
                 self.status = statuses.WAIT_EXPIRE
             self.save(context)
-
-        _expire_lease()
 
     def resource_object(self):
         return ro_factory.ResourceObjectFactory.get_resource_object(

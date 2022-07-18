@@ -150,7 +150,7 @@ class TestIronicNode(base.TestCase):
                 test_ironic_node.expire_lease(fake_lease)
 
                 mock_project_id_get.assert_called_once()
-                self.assertEqual(mock_lease_uuid_true.call_count, 2)
+                mock_lease_uuid_true.assert_called_once()
                 self.assertEqual(client_mock.call_count, 3)
                 client_mock.return_value.node.update.assert_called_once()
                 client_mock.return_value.node.get.assert_called_once_with(

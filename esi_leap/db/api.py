@@ -60,13 +60,13 @@ def to_dict(func):
     def decorator(*args, **kwargs):
         res = func(*args, **kwargs)
 
-        if isinstance(res, list):
+        try:
             return [item.to_dict() for item in res]
-
-        if res:
-            return res.to_dict()
-        else:
-            return None
+        except (AttributeError, TypeError):
+            if res:
+                return res.to_dict()
+            else:
+                return None
 
     return decorator
 

@@ -36,6 +36,7 @@ class APITestCase(base.DBTestCase):
         self.patch_context = mock.patch(
             'oslo_context.context.RequestContext.from_environ')
         self.mock_context = self.patch_context.start()
+        self.addCleanup(self.patch_context.stop)
         self.mock_context.return_value = self.context
 
         self.config(lock_path=tempfile.mkdtemp(), group='oslo_concurrency')
