@@ -28,11 +28,21 @@ def get_keystone_client():
     if _cached_keystone_client is not None:
         return _cached_keystone_client
 
-    auth_plugin = ks_loading.load_auth_from_conf_options(CONF, 'keystone')
-    sess = ks_loading.load_session_from_conf_options(CONF, 'keystone',
-                                                     auth=auth_plugin)
-    cli = keystone_client.Client(session=sess)
-    _cached_keystone_client = cli
+    try:
+
+        auth_plugin = ks_loading.load_auth_from_conf_options(CONF, 'keystone')
+        sess = ks_loading.load_session_from_conf_options(CONF, 'keystone',
+                                                         auth=auth_plugin)
+        cli = keystone_client.Client(session=sess)
+        _cached_keystone_client = cli
+
+    except keystone_client.ClientException:
+
+        auth_plugin = ks_loading.load_auth_from_conf_options(CONF, 'keystone')
+        sess = ks_loading.load_session_from_conf_options(CONF, 'keystone',
+                                                         auth=auth_plugin)
+        cli = keystone_client.Client(session=sess)
+        _cached_keystone_client = cli
 
     return cli
 
