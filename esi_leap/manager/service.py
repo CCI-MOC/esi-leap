@@ -72,7 +72,9 @@ class ManagerService(service.Service):
                     LOG.info('Fulfilling lease %s', lease.uuid)
                     lease.fulfill(self._context)
                 except Exception as e:
-                    LOG.info('Error fulfilling lease; setting to ERROR: %s', e)
+                    LOG.info('Error fulfilling lease: %s: %s' %
+                             (type(e).__name__, e))
+                    LOG.info('Setting lease status to ERROR')
                     lease.status = statuses.ERROR
                     lease.save()
 
@@ -89,7 +91,9 @@ class ManagerService(service.Service):
                     LOG.info('Expiring lease %s', lease.uuid)
                     lease.expire(self._context)
                 except Exception as e:
-                    LOG.info('Error expiring lease; setting to ERROR: %s', e)
+                    LOG.info('Error expiring lease: %s: %s' %
+                             (type(e).__name__, e))
+                    LOG.info('Setting lease status to ERROR')
                     lease.status = statuses.ERROR
                     lease.save()
 
@@ -99,10 +103,12 @@ class ManagerService(service.Service):
             {'status': [statuses.WAIT_CANCEL]}, self._context)
         for lease in leases:
             try:
-                LOG.info('Canceling lease %s', lease.uuid)
+                LOG.info('Cancelling lease %s', lease.uuid)
                 lease.cancel(self._context)
             except Exception as e:
-                LOG.info('Error cancelling lease; setting to ERROR: %s', e)
+                LOG.info('Error cancelling lease: %s: %s' %
+                         (type(e).__name__, e))
+                LOG.info('Setting lease status to ERROR')
                 lease.status = statuses.ERROR
                 lease.save()
 
@@ -119,7 +125,8 @@ class ManagerService(service.Service):
                              offer.resource_uuid)
                     offer.expire(self._context)
                 except Exception as e:
-                    LOG.info('Error expiring offer: %s', e)
+                    LOG.info('Error expiring offer: %s: %s' %
+                             (type(e).__name__, e))
                     offer.status = statuses.ERROR
                     offer.save()
 
