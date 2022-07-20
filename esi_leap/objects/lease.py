@@ -19,7 +19,7 @@ from esi_leap.db import api as dbapi
 from esi_leap.objects import base
 from esi_leap.objects import fields
 from esi_leap.objects import offer as offer_obj
-from esi_leap.resource_objects import resource_object_factory as ro_factory
+from esi_leap.resource_objects import get_resource_object
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -98,8 +98,8 @@ class Lease(base.ESILEAPObject):
                 parent_lease.verify_child_availability(updates['start_time'],
                                                        updates['end_time'])
             else:
-                ro = ro_factory.ResourceObjectFactory.get_resource_object(
-                    updates['resource_type'], updates['resource_uuid'])
+                ro = get_resource_object(updates['resource_type'],
+                                         updates['resource_uuid'])
                 ro.verify_availability(updates['start_time'],
                                        updates['end_time'])
 
@@ -206,8 +206,7 @@ class Lease(base.ESILEAPObject):
             self.save(context)
 
     def resource_object(self):
-        return ro_factory.ResourceObjectFactory.get_resource_object(
-            self.resource_type, self.resource_uuid)
+        return get_resource_object(self.resource_type, self.resource_uuid)
 
     def verify_child_availability(self, start_time, end_time):
         return self.dbapi.lease_verify_child_availability(

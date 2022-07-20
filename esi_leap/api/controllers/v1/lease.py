@@ -28,7 +28,7 @@ from esi_leap.common import keystone
 from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.objects import lease as lease_obj
-from esi_leap.resource_objects import resource_object_factory as ro_factory
+from esi_leap.resource_objects import get_resource_object
 
 CONF = esi_leap.conf.CONF
 
@@ -101,8 +101,7 @@ class LeasesController(rest.RestController):
             if resource_type is None:
                 resource_type = CONF.api.default_resource_type
 
-            resource = ro_factory.ResourceObjectFactory.get_resource_object(
-                resource_type, resource_uuid)
+            resource = get_resource_object(resource_type, resource_uuid)
             resource_uuid = resource.get_resource_uuid()
 
         filters = LeasesController._lease_get_all_authorize_filters(
@@ -141,8 +140,8 @@ class LeasesController(rest.RestController):
         lease_dict['uuid'] = uuidutils.generate_uuid()
         if 'resource_type' not in lease_dict:
             lease_dict['resource_type'] = CONF.api.default_resource_type
-        resource = ro_factory.ResourceObjectFactory.get_resource_object(
-            lease_dict['resource_type'], lease_dict['resource_uuid'])
+        resource = get_resource_object(lease_dict['resource_type'],
+                                       lease_dict['resource_uuid'])
         lease_dict['resource_uuid'] = resource.get_resource_uuid()
 
         if 'project_id' in lease_dict:

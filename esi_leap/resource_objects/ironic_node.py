@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_utils.uuidutils import is_uuid_like
+
 from esi_leap.common import ironic
 import esi_leap.conf
 from esi_leap.resource_objects import base
@@ -30,13 +32,11 @@ class IronicNode(base.ResourceObjectInterface):
 
     resource_type = 'ironic_node'
 
-    def __init__(self, uuid):
-        self._uuid = uuid
-
-    @classmethod
-    def get_by_name(cls, name):
-        node = get_ironic_client().node.get(name)
-        return IronicNode(node.uuid)
+    def __init__(self, ident):
+        if not is_uuid_like(ident):
+            node = get_ironic_client().node.get(ident)
+            ident = node.uuid
+        self._uuid = ident
 
     def get_resource_uuid(self):
         return self._uuid

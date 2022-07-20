@@ -117,8 +117,7 @@ class TestOffersController(test_api_base.APITestCase):
         data = self.get_json('/offers')
         self.assertEqual([], data['offers'])
 
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.offer.get_resource_object')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.offer.Offer.create')
@@ -158,8 +157,7 @@ class TestOffersController(test_api_base.APITestCase):
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
 
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.offer.get_resource_object')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.offer.Offer.create')
@@ -199,8 +197,7 @@ class TestOffersController(test_api_base.APITestCase):
         self.assertEqual(data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
 
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.offer.get_resource_object')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
@@ -246,8 +243,7 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'check_resource_lease_admin')
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.offer.get_resource_object')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.offer.Offer.create')
@@ -302,8 +298,7 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'check_resource_lease_admin')
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.offer.get_resource_object')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.offer.Offer.create')
@@ -434,8 +429,7 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.offer.get_resource_object')
     @mock.patch('esi_leap.api.controllers.v1.utils.' +
                 'offer_get_dict_with_added_info')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
@@ -493,8 +487,7 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.offer.get_resource_object')
     @mock.patch('esi_leap.api.controllers.v1.utils.' +
                 'offer_get_dict_with_added_info')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
@@ -503,22 +496,23 @@ class TestOffersController(test_api_base.APITestCase):
                                                        mock_gro,
                                                        mock_gpl,
                                                        mock_gnl):
+        fake_uuid = uuidutils.generate_uuid()
         mock_get_all.return_value = [self.test_offer, self.test_offer_2]
         mock_ogdwai.side_effect = [
             _get_offer_response(self.test_offer, use_datetime=True),
             _get_offer_response(self.test_offer_2, use_datetime=True)]
-        mock_gro.return_value = IronicNode('54321')
+        mock_gro.return_value = IronicNode(fake_uuid)
         mock_gpl.return_value = []
         mock_gnl.return_value = []
 
         expected_filters = {'status': statuses.OFFER_CAN_DELETE,
-                            'resource_uuid': '54321',
+                            'resource_uuid': fake_uuid,
                             'resource_type': 'ironic_node'}
         expected_resp = {'offers': [_get_offer_response(self.test_offer),
                                     _get_offer_response(self.test_offer_2)]}
 
-        request = self.get_json('/offers/?resource_uuid=54321')
-        mock_gro.assert_called_once_with('ironic_node', '54321')
+        request = self.get_json('/offers/?resource_uuid=%s' % fake_uuid)
+        mock_gro.assert_called_once_with('ironic_node', fake_uuid)
         mock_get_all.assert_called_once_with(expected_filters, self.context)
         mock_gpl.assert_called_once()
         mock_gnl.assert_called_once()
