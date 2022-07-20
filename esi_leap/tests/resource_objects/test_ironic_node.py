@@ -16,6 +16,7 @@ from esi_leap.tests import base
 import mock
 
 start = datetime.datetime(2016, 7, 16, 19, 20, 30)
+fake_uuid = '13921c8d-ce11-4b6d-99ed-10e19d184e5f'
 
 
 class FakeIronicNode(object):
@@ -26,7 +27,7 @@ class FakeIronicNode(object):
         self.name = 'fake-node'
         self.properties = {'lease_uuid': '001'}
         self.provision_state = 'available'
-        self.uuid = '1111'
+        self.uuid = fake_uuid
         self.resource_class = 'baremetal'
 
 
@@ -48,29 +49,29 @@ class TestIronicNode(base.TestCase):
         self.fake_admin_project_id_2 = '123456'
 
     def test_resource_type(self):
-        test_ironic_node = ironic_node.IronicNode('1111')
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
         self.assertEqual('ironic_node', test_ironic_node.resource_type)
 
     def test_get_resource_uuid(self):
-        test_ironic_node = ironic_node.IronicNode('1111')
-        self.assertEqual('1111', test_ironic_node.get_resource_uuid())
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
+        self.assertEqual(fake_uuid, test_ironic_node.get_resource_uuid())
 
     @mock.patch('esi_leap.common.ironic.get_node_name')
     def test_get_resource_name(self, mock_gnn):
         mock_gnn.return_value = 'node-name'
-        test_ironic_node = ironic_node.IronicNode('1111')
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
 
         resource_name = test_ironic_node.get_resource_name()
 
         self.assertEqual('node-name', resource_name)
-        mock_gnn.assert_called_once_with('1111', None)
+        mock_gnn.assert_called_once_with(fake_uuid, None)
 
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
     def test_get_by_name(self, client_mock):
         fake_get_node = FakeIronicNode()
         client_mock.return_value.node.get.return_value = fake_get_node
-        test_ironic_node = ironic_node.IronicNode.get_by_name('node-name')
-        self.assertEqual('1111', test_ironic_node.get_resource_uuid())
+        test_ironic_node = ironic_node.IronicNode('node-name')
+        self.assertEqual(fake_uuid, test_ironic_node.get_resource_uuid())
         client_mock.assert_called_once()
         client_mock.return_value.node.get.assert_called_once_with('node-name')
 
@@ -78,7 +79,7 @@ class TestIronicNode(base.TestCase):
     def test_get_lease_uuid(self, client_mock):
         fake_get_node = FakeIronicNode()
         client_mock.return_value.node.get.return_value = fake_get_node
-        test_ironic_node = ironic_node.IronicNode('1111')
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
         lease_uuid = test_ironic_node.get_lease_uuid()
         expected_lease_uuid = fake_get_node.properties.get('lease_uuid')
         self.assertEqual(lease_uuid, expected_lease_uuid)
@@ -90,7 +91,7 @@ class TestIronicNode(base.TestCase):
     def test_get_project_id(self, client_mock):
         fake_get_node = FakeIronicNode()
         client_mock.return_value.node.get.return_value = fake_get_node
-        test_ironic_node = ironic_node.IronicNode('1111')
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
         project_id = test_ironic_node.get_project_id()
         expected_project_id = fake_get_node.lessee
         self.assertEqual(project_id, expected_project_id)
@@ -102,7 +103,7 @@ class TestIronicNode(base.TestCase):
     def test_get_node_config(self, client_mock):
         fake_get_node = FakeIronicNode()
         client_mock.return_value.node.get.return_value = fake_get_node
-        test_ironic_node = ironic_node.IronicNode('1111')
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
         config = test_ironic_node.get_node_config()
         expected_config = fake_get_node.properties
         expected_config.pop('lease_uuid', None)
@@ -115,7 +116,7 @@ class TestIronicNode(base.TestCase):
     def test_get_resource_class(self, client_mock):
         fake_get_node = FakeIronicNode()
         client_mock.return_value.node.get.return_value = fake_get_node
-        test_ironic_node = ironic_node.IronicNode('1111')
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
         resource_class = test_ironic_node.get_resource_class()
         expected_resource_class = fake_get_node.resource_class
         self.assertEqual(resource_class, expected_resource_class)
@@ -125,7 +126,7 @@ class TestIronicNode(base.TestCase):
 
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
     def test_set_lease(self, client_mock):
-        test_ironic_node = ironic_node.IronicNode('1111')
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
         fake_lease = FakeLease()
         test_ironic_node.set_lease(fake_lease)
         client_mock.assert_called_once()
@@ -146,7 +147,7 @@ class TestIronicNode(base.TestCase):
             ) as mock_project_id_get:
                 mock_project_id_get.return_value = fake_lease.project_id
 
-                test_ironic_node = ironic_node.IronicNode('1111')
+                test_ironic_node = ironic_node.IronicNode(fake_uuid)
                 test_ironic_node.expire_lease(fake_lease)
 
                 mock_project_id_get.assert_called_once()
@@ -162,7 +163,7 @@ class TestIronicNode(base.TestCase):
             ironic_node.IronicNode, 'get_lease_uuid', autospec=True
         ) as mock_lease_uuid_false:
             mock_lease_uuid_false.return_value = 'none'
-            test_ironic_node = ironic_node.IronicNode('1111')
+            test_ironic_node = ironic_node.IronicNode(fake_uuid)
             fake_lease = FakeLease()
             test_ironic_node.expire_lease(fake_lease)
             mock_lease_uuid_false.assert_called_once()
@@ -171,6 +172,6 @@ class TestIronicNode(base.TestCase):
     def test_resource_admin_project_id(self, client_mock):
         fake_get_node = FakeIronicNode()
         client_mock.return_value.node.get.return_value = fake_get_node
-        test_ironic_node = ironic_node.IronicNode('1111')
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
         self.assertEqual(self.fake_admin_project_id_2,
                          test_ironic_node.resource_admin_project_id())

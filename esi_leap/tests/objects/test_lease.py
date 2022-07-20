@@ -493,8 +493,7 @@ class TestLeaseObject(base.DBTestCase):
             self.assertEqual(self.context, lease._context)
             self.assertEqual(updated_at, lease.updated_at)
 
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.objects.lease.get_resource_object')
     def test_resource_object(self, mock_gro):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         lease.resource_object()

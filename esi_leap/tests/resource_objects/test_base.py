@@ -14,6 +14,7 @@ import datetime
 from esi_leap.resource_objects import ironic_node
 from esi_leap.tests import base
 import mock
+from oslo_utils import uuidutils
 
 
 class TestResourceObjectInterface(base.TestCase):
@@ -26,7 +27,8 @@ class TestResourceObjectInterface(base.TestCase):
     def test_verify_availability_for_offer(self, mock_rva):
         start = self.base_time
         end = self.base_time + datetime.timedelta(days=10)
-        test_node = ironic_node.IronicNode('1111')
+        fake_uuid = uuidutils.generate_uuid()
+        test_node = ironic_node.IronicNode(fake_uuid)
 
         test_node.verify_availability(start, end)
-        mock_rva.assert_called_once_with('ironic_node', '1111', start, end)
+        mock_rva.assert_called_once_with('ironic_node', fake_uuid, start, end)
