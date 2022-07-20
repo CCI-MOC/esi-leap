@@ -22,6 +22,7 @@ import wsmeext.pecan as wsme_pecan
 from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
 from esi_leap.api.controllers.v1 import utils
+from esi_leap.common import constants
 from esi_leap.common import exception
 from esi_leap.common import ironic
 from esi_leap.common import keystone
@@ -115,6 +116,7 @@ class LeasesController(rest.RestController):
 
         lease_collection = LeaseCollection()
         leases = lease_obj.Lease.get_all(filters, request)
+
         lease_collection.leases = []
         if len(leases) > 0:
             project_list = keystone.get_project_list()
@@ -208,6 +210,7 @@ class LeasesController(rest.RestController):
             'end_time': end_time,
             'resource_type': resource_type,
             'resource_uuid': resource_uuid,
+            'time_filter_type': constants.WITHIN_TIME_FILTER,
         }
 
         if view == 'all':

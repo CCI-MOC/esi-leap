@@ -18,6 +18,7 @@ from oslo_utils import uuidutils
 import testtools
 
 from esi_leap.api.controllers.v1.lease import LeasesController
+from esi_leap.common import constants
 from esi_leap.common import exception
 from esi_leap.common import statuses
 from esi_leap.objects import lease as lease_obj
@@ -544,6 +545,7 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         expected_filters = {
             'status': ['random'],
             'offer_uuid': 'offeruuid',
+            'time_filter_type': constants.WITHIN_TIME_FILTER
         }
 
         # admin
@@ -577,7 +579,8 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
     def test_lease_get_all_no_view_project_no_owner(self):
 
         expected_filters = {
-            'status': ['random']
+            'status': ['random'],
+            'time_filter_type': constants.WITHIN_TIME_FILTER
         }
 
         # admin
@@ -622,7 +625,8 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
     def test_lease_get_all_no_view_any_projectid_owner(self):
 
         expected_filters = {
-            'status': ['random']
+            'status': ['random'],
+            'time_filter_type': constants.WITHIN_TIME_FILTER
         }
 
         # admin
@@ -679,7 +683,8 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
     def test_lease_get_all_all_view(self):
 
         expected_filters = {
-            'status': ['random']
+            'status': ['random'],
+            'time_filter_type': constants.WITHIN_TIME_FILTER
         }
 
         # admin
@@ -719,7 +724,8 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
         expected_filters = {
             'status': ['random'],
             'start_time': start,
-            'end_time': end
+            'end_time': end,
+            'time_filter_type': constants.WITHIN_TIME_FILTER
         }
 
         # admin
@@ -746,7 +752,8 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
             'project_or_owner_id': 'adminid',
             'status': [statuses.CREATED, statuses.ACTIVE, statuses.ERROR,
                        statuses.WAIT_CANCEL, statuses.WAIT_EXPIRE,
-                       statuses.WAIT_FULFILL]
+                       statuses.WAIT_FULFILL],
+            'time_filter_type': constants.WITHIN_TIME_FILTER
         }
 
         # admin

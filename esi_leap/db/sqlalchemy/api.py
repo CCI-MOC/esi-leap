@@ -20,6 +20,7 @@ from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import or_
 
+from esi_leap.common import constants
 from esi_leap.common import exception
 from esi_leap.common import keystone
 from esi_leap.common import statuses
@@ -134,7 +135,7 @@ def offer_get_all(filters):
                                  models.Offer.lessee_id.in_(lessee_id_list)))
 
     if start and end:
-        if time_filter_type == 'within':
+        if time_filter_type == constants.WITHIN_TIME_FILTER:
             query = query.filter(((start <= models.Offer.start_time) &
                                   (end >= models.Offer.start_time)) |
 
@@ -294,7 +295,7 @@ def lease_get_all(filters):
         query = query.filter((models.Lease.status.in_(status)))
 
     if start and end:
-        if time_filter_type == 'within':
+        if time_filter_type == constants.WITHIN_TIME_FILTER:
             query = query.filter(((start <= models.Lease.start_time) &
                                   (end >= models.Lease.start_time)) |
 
