@@ -135,7 +135,9 @@ class Lease(base.ESILEAPObject):
                 self.status = statuses.DELETED
                 self.expire_time = datetime.datetime.now()
             except Exception as e:
-                LOG.info('Error canceling lease; setting to WAIT: %s', e)
+                LOG.info('Error canceling lease: %s: %s' %
+                         (type(e).__name__, e))
+                LOG.info('Setting lease status to WAIT')
                 self.status = statuses.WAIT_CANCEL
             self.save(None)
 
@@ -162,7 +164,9 @@ class Lease(base.ESILEAPObject):
                 self.status = statuses.ACTIVE
                 self.fulfill_time = datetime.datetime.now()
             except Exception as e:
-                LOG.info('Error fulfilling lease; setting to WAIT: %s', e)
+                LOG.info('Error fulfilling lease: %s: %s' %
+                         (type(e).__name__, e))
+                LOG.info('Setting lease status to WAIT')
                 self.status = statuses.WAIT_FULFILL
             self.save(context)
 
@@ -195,7 +199,9 @@ class Lease(base.ESILEAPObject):
                 self.status = statuses.EXPIRED
                 self.expire_time = datetime.datetime.now()
             except Exception as e:
-                LOG.info('Error expiring lease; setting to WAIT: %s', e)
+                LOG.info('Error expiring lease: %s: %s' %
+                         (type(e).__name__, e))
+                LOG.info('Setting lease status to WAIT')
                 self.status = statuses.WAIT_EXPIRE
             self.save(context)
 
