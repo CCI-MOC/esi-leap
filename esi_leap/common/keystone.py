@@ -38,10 +38,11 @@ def get_keystone_client():
 
 
 def get_parent_project_id_tree(project_id):
-    project = get_keystone_client().projects.get(project_id)
+    ks_client = get_keystone_client()
+    project = ks_client.projects.get(project_id)
     project_ids = [project.id]
     while project.parent_id is not None:
-        project = get_keystone_client().projects.get(project.parent_id)
+        project = ks_client.projects.get(project.parent_id)
         project_ids.append(project.id)
     return project_ids
 
@@ -62,9 +63,6 @@ def get_project_list():
 
 
 def get_project_name(project_id, project_list=None):
-    project_name = ''
-    project = None
-
     if project_id:
         if project_list is None:
             project = get_keystone_client().projects.get(project_id)
@@ -72,7 +70,6 @@ def get_project_name(project_id, project_list=None):
             project = next((p for p in project_list
                             if getattr(p, 'id') == project_id),
                            None)
-        if project:
-            project_name = project.name
-
-    return project_name
+        return project.name if project else ''
+    else:
+        return ''

@@ -119,11 +119,9 @@ class Offer(base.ESILEAPObject):
     def create(self, context=None):
         updates = self.obj_get_changes()
 
-        @utils.synchronized(
-            utils.get_resource_lock_name(
-                updates['resource_type'], updates['resource_uuid']),
-            external=True)
-        def _create_offer():
+        with utils.lock(utils.get_resource_lock_name(updates['resource_type'],
+                                                     updates['resource_uuid']),
+                        external=True):
             LOG.info('Creating offer')
             if updates['start_time'] >= updates['end_time']:
                 raise exception.InvalidTimeRange(
@@ -152,8 +150,6 @@ class Offer(base.ESILEAPObject):
             db_offer = self.dbapi.offer_create(updates)
             self._from_db_object(context, self, db_offer)
 
-        _create_offer()
-
     def cancel(self):
         LOG.info('Deleting offer %s', self.uuid)
         leases = lease_obj.Lease.get_all(
@@ -163,13 +159,11 @@ class Offer(base.ESILEAPObject):
         for lease in leases:
             lease.cancel()
 
-        @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
-                                                         self.resource_uuid))
-        def _cancel_offer():
+        with utils.lock(utils.get_resource_lock_name(self.resource_type,
+                                                     self.resource_uuid),
+                        external=True):
             self.status = statuses.DELETED
             self.save(None)
-
-        _cancel_offer()
 
     def expire(self, context=None):
         LOG.info('Expiring offer %s', self.uuid)
@@ -180,14 +174,11 @@ class Offer(base.ESILEAPObject):
         for lease in leases:
             lease.expire(context)
 
-        @utils.synchronized(utils.get_resource_lock_name(self.resource_type,
-                                                         self.resource_uuid))
-        def _expire_offer():
-            # expire offer
+        with utils.lock(utils.get_resource_lock_name(self.resource_type,
+                                                     self.resource_uuid),
+                        external=True):
             self.status = statuses.EXPIRED
             self.save(context)
-
-        _expire_offer()
 
     def verify_availability(self, start_time, end_time):
         return self.dbapi.offer_verify_availability(

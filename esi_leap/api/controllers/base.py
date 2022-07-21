@@ -17,7 +17,10 @@ from wsme import types as wtypes
 class ESILEAPBase(wtypes.Base):
 
     def to_dict(self):
-        return dict(
-            (k, getattr(self, k))
-            for k in self.fields
-            if hasattr(self, k) and getattr(self, k) != wsme.Unset)
+        esi_leap_dict = {}
+        if self.fields:
+            for key in self.fields:
+                val = getattr(self, key, wsme.Unset)
+                if val != wsme.Unset:
+                    esi_leap_dict[key] = val
+        return esi_leap_dict

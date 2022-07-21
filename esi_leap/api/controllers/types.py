@@ -39,8 +39,6 @@ class JsonType(wtypes.UserType):
 
 class Collection(wtypes.Base):
 
-    next = wtypes.text
-
     @property
     def collection(self):
         return getattr(self, self._type)
@@ -54,7 +52,7 @@ class Collection(wtypes.Base):
             return wtypes.Unset
 
         url = url or self._type
-        q_args = ''.join(['%s=%s&' % (key, kwargs[key]) for key in kwargs])
+        q_args = ''.join(['%s=%s&' % item for item in kwargs.items()])
         next_args = '?%(args)slimit=%(limit)d&marker=%(marker)s' % {
             'args': q_args, 'limit': limit,
             'marker': getattr(self.collection[-1], 'uuid')}

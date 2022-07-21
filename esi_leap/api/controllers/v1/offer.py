@@ -60,8 +60,8 @@ class Offer(base.ESILEAPBase):
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
-        for attr in ['availabilities', 'project', 'lessee',
-                     'resource', 'resource_class']:
+        for attr in ('availabilities', 'project', 'lessee',
+                     'resource', 'resource_class'):
             setattr(self, attr, kwargs.get(attr, wtypes.Unset))
 
 
@@ -114,28 +114,25 @@ class OffersController(rest.RestController):
                 resource_type, resource_uuid)
             resource_uuid = resource.get_resource_uuid()
 
-        if ((start_time and end_time is None) or
-                (end_time and start_time is None)):
+        # either both are defined or both are None
+        if bool(start_time) != bool(end_time):
+            raise exception.InvalidTimeAPICommand(resource='an offer',
+                                                  start_time=str(start_time),
+                                                  end_time=str(end_time))
+        if (start_time or end_time) and (end_time <= start_time):
             raise exception.InvalidTimeAPICommand(resource='an offer',
                                                   start_time=str(start_time),
                                                   end_time=str(end_time))
 
-        if start_time and end_time and end_time <= start_time:
-            raise exception.InvalidTimeAPICommand(resource='an offer',
-                                                  start_time=str(start_time),
-                                                  end_time=str(end_time))
-
-        if ((available_start_time and available_end_time is None) or
-                (available_end_time and available_start_time is None)):
+        if bool(available_start_time) != bool(available_end_time):
             raise exception.InvalidAvailabilityAPICommand(
-                a_start=str(start_time),
-                a_end=str(end_time))
-
-        if (available_start_time and available_end_time and
+                a_start=str(available_start_time),
+                a_end=str(available_end_time))
+        if ((available_start_time or available_end_time) and
                 (available_end_time <= available_start_time)):
             raise exception.InvalidAvailabilityAPICommand(
-                a_start=available_start_time,
-                a_end=available_end_time)
+                a_start=str(available_start_time),
+                a_end=str(available_end_time))
 
         if status is None:
             status = statuses.OFFER_CAN_DELETE
@@ -148,7 +145,7 @@ class OffersController(rest.RestController):
         except exception.HTTPForbidden:
             lessee_id = cdict['project_id']
 
-        possible_filters = {
+        filters = {
             'project_id': project_id,
             'lessee_id': lessee_id,
             'resource_type': resource_type,
@@ -160,10 +157,10 @@ class OffersController(rest.RestController):
             'available_end_time': available_end_time,
         }
 
-        filters = {}
-        for k, v in possible_filters.items():
-            if v is not None:
-                filters[k] = v
+        # unpack iterator to tuple so we can use 'del'
+        for k, v in tuple(filters.items()):
+            if v is None:
+                del filters[k]
 
         offer_collection = OfferCollection()
         offers = offer_obj.Offer.get_all(filters, request)
