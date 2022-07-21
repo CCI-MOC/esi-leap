@@ -31,14 +31,16 @@ class RootController(rest.RestController):
     def index(self):
         pecan.response.status_code = 300
         pecan.response.content_type = 'application/json'
-        versions = {"versions": [
-            {
-                'id': 'v1.0',
-                'status': 'CURRENT',
-                'links': [{
-                    "href": "{0}/v1".format(pecan.request.host_url),
-                    "rel": "self"
-                }]
-            }
-        ]}
+        versions = {
+            'versions': [
+                {
+                    'id': 'v1.0',
+                    'status': 'CURRENT',
+                    'links': [{
+                        'href': '{0}/v1'.format(pecan.request.host_url),
+                        'rel': 'self'
+                    }]
+                }
+            ]
+        }
         return jsonutils.dump_as_bytes(versions)

@@ -65,14 +65,14 @@ class IronicNode(base.ResourceObjectInterface):
     def set_lease(self, lease):
         patches = []
         patches.append({
-            "op": "add",
-            "path": "/properties/lease_uuid",
-            "value": lease.uuid,
+            'op': 'add',
+            'path': '/properties/lease_uuid',
+            'value': lease.uuid,
         })
         patches.append({
-            "op": "add",
-            "path": "/lessee",
-            "value": lease.project_id,
+            'op': 'add',
+            'path': '/lessee',
+            'value': lease.project_id,
         })
         get_ironic_client().node.update(self._uuid, patches)
 
@@ -82,19 +82,19 @@ class IronicNode(base.ResourceObjectInterface):
             return
         if self.get_lease_uuid():
             patches.append({
-                "op": "remove",
-                "path": "/properties/lease_uuid",
+                'op': 'remove',
+                'path': '/properties/lease_uuid',
             })
         if self.get_project_id():
             patches.append({
-                "op": "remove",
-                "path": "/lessee",
+                'op': 'remove',
+                'path': '/lessee',
             })
         if len(patches) > 0:
             get_ironic_client().node.update(self._uuid, patches)
         state = get_ironic_client().node.get(self._uuid).provision_state
-        if state == "active":
-            get_ironic_client().node.set_provision_state(self._uuid, "deleted")
+        if state == 'active':
+            get_ironic_client().node.set_provision_state(self._uuid, 'deleted')
 
     def resource_admin_project_id(self):
         node = get_ironic_client().node.get(self._uuid)

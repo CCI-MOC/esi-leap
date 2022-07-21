@@ -114,26 +114,25 @@ class OffersController(rest.RestController):
                 resource_type, resource_uuid)
             resource_uuid = resource.get_resource_uuid()
 
-        if (start_time and end_time is None) or\
-           (end_time and start_time is None):
+        if ((start_time and end_time is None) or
+                (end_time and start_time is None)):
             raise exception.InvalidTimeAPICommand(resource='an offer',
                                                   start_time=str(start_time),
                                                   end_time=str(end_time))
 
-        if start_time and end_time and\
-           end_time <= start_time:
+        if start_time and end_time and end_time <= start_time:
             raise exception.InvalidTimeAPICommand(resource='an offer',
                                                   start_time=str(start_time),
                                                   end_time=str(end_time))
 
-        if (available_start_time and available_end_time is None) or\
-           (available_end_time and available_start_time is None):
+        if ((available_start_time and available_end_time is None) or
+                (available_end_time and available_start_time is None)):
             raise exception.InvalidAvailabilityAPICommand(
                 a_start=str(start_time),
                 a_end=str(end_time))
 
-        if available_start_time and available_end_time and\
-                available_end_time <= available_start_time:
+        if (available_start_time and available_end_time and
+                (available_end_time <= available_start_time)):
             raise exception.InvalidAvailabilityAPICommand(
                 a_start=available_start_time,
                 a_end=available_end_time)
@@ -173,14 +172,14 @@ class OffersController(rest.RestController):
         if len(offers) > 0:
             project_list = keystone.get_project_list()
             node_list = ironic.get_node_list()
-            offers_with_added_info = [Offer(**utils.
-                                            offer_get_dict_with_added_info(
-                                                o, project_list, node_list))
-                                      for o in offers]
+            offers_with_added_info = [
+                Offer(**utils.offer_get_dict_with_added_info(o, project_list,
+                                                             node_list))
+                for o in offers]
             if resource_class:
-                offer_collection.offers = [o for o in offers_with_added_info
-                                           if o.resource_class ==
-                                           resource_class]
+                offer_collection.offers = [
+                    o for o in offers_with_added_info
+                    if o.resource_class == resource_class]
             else:
                 offer_collection.offers = offers_with_added_info
 
@@ -211,10 +210,10 @@ class OffersController(rest.RestController):
             offer_dict['end_time'] = datetime.datetime.max
 
         if offer_dict['start_time'] >= offer_dict['end_time']:
-            raise exception.\
-                InvalidTimeRange(resource="an offer",
-                                 start_time=str(offer_dict['start_time']),
-                                 end_time=str(offer_dict['end_time']))
+            raise exception.InvalidTimeRange(
+                resource='an offer',
+                start_time=str(offer_dict['start_time']),
+                end_time=str(offer_dict['end_time']))
 
         try:
             utils.check_resource_admin(cdict, resource, request.project_id)
@@ -267,8 +266,7 @@ class OffersController(rest.RestController):
             lease_dict['start_time'] = datetime.datetime.now()
 
         if 'end_time' not in lease_dict:
-            q = offer.get_first_availability(
-                lease_dict['start_time'])
+            q = offer.get_first_availability(lease_dict['start_time'])
             if q is None:
                 lease_dict['end_time'] = offer.end_time
             else:

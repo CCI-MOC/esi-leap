@@ -59,7 +59,7 @@ class TestOffersController(test_api_base.APITestCase):
         self.test_offer = offer.Offer(
             resource_type='test_node',
             resource_uuid=uuidutils.generate_uuid(),
-            name="test_offer",
+            name='test_offer',
             uuid=uuidutils.generate_uuid(),
             status=statuses.AVAILABLE,
             start_time=start,
@@ -70,7 +70,7 @@ class TestOffersController(test_api_base.APITestCase):
         self.test_offer_drt = offer.Offer(
             resource_type='ironic_node',
             resource_uuid=uuidutils.generate_uuid(),
-            name="test_offer",
+            name='test_offer',
             uuid=uuidutils.generate_uuid(),
             status=statuses.AVAILABLE,
             start_time=start,
@@ -81,7 +81,7 @@ class TestOffersController(test_api_base.APITestCase):
         self.test_offer_lessee = offer.Offer(
             resource_type='test_node',
             resource_uuid=uuidutils.generate_uuid(),
-            name="test_offer",
+            name='test_offer',
             uuid=uuidutils.generate_uuid(),
             lessee_id='lessee-uuid',
             status=statuses.AVAILABLE,
@@ -93,7 +93,7 @@ class TestOffersController(test_api_base.APITestCase):
         self.test_offer_2 = offer.Offer(
             resource_type='test_node',
             resource_uuid=uuidutils.generate_uuid(),
-            name="test_offer2",
+            name='test_offer2',
             uuid=uuidutils.generate_uuid(),
             status=statuses.DELETED,
             start_time=start,
@@ -104,7 +104,7 @@ class TestOffersController(test_api_base.APITestCase):
         self.test_offer_with_parent = offer.Offer(
             resource_type='test_node',
             resource_uuid=uuidutils.generate_uuid(),
-            name="test_offer",
+            name='test_offer',
             uuid=uuidutils.generate_uuid(),
             status=statuses.AVAILABLE,
             start_time=start,
@@ -122,7 +122,7 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.offer.Offer.create')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     def test_post(self, mock_ogdwai, mock_create, mock_cra,
                   mock_generate_uuid, mock_gro):
@@ -133,11 +133,11 @@ class TestOffersController(test_api_base.APITestCase):
         mock_ogdwai.return_value = self.test_offer.to_dict()
 
         data = {
-            "resource_type": self.test_offer.resource_type,
-            "resource_uuid": self.test_offer.resource_uuid,
-            "name": self.test_offer.name,
-            "start_time": "2016-07-16T00:00:00",
-            "end_time": "2016-10-24T00:00:00"
+            'resource_type': self.test_offer.resource_type,
+            'resource_uuid': self.test_offer.resource_uuid,
+            'name': self.test_offer.name,
+            'start_time': '2016-07-16T00:00:00',
+            'end_time': '2016-10-24T00:00:00'
         }
 
         request = self.post_json('/offers', data)
@@ -163,7 +163,7 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.offer.Offer.create')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     def test_post_default_resource_type(self, mock_ogdwai, mock_create,
                                         mock_cra, mock_generate_uuid,
@@ -174,10 +174,10 @@ class TestOffersController(test_api_base.APITestCase):
         mock_ogdwai.return_value = self.test_offer_drt.to_dict()
 
         data = {
-            "resource_uuid": self.test_offer_drt.resource_uuid,
-            "name": self.test_offer_drt.name,
-            "start_time": "2016-07-16T00:00:00",
-            "end_time": "2016-10-24T00:00:00"
+            'resource_uuid': self.test_offer_drt.resource_uuid,
+            'name': self.test_offer_drt.name,
+            'start_time': '2016-07-16T00:00:00',
+            'end_time': '2016-10-24T00:00:00'
         }
 
         request = self.post_json('/offers', data)
@@ -205,7 +205,7 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.offer.Offer.create')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     def test_post_lessee(self, mock_ogdwai, mock_create, mock_cra,
                          mock_generate_uuid, mock_gpufi, mock_gro):
@@ -217,12 +217,12 @@ class TestOffersController(test_api_base.APITestCase):
         mock_ogdwai.return_value = self.test_offer_lessee.to_dict()
 
         data = {
-            "resource_type": self.test_offer_lessee.resource_type,
-            "resource_uuid": self.test_offer_lessee.resource_uuid,
-            "name": self.test_offer_lessee.name,
-            "start_time": "2016-07-16T00:00:00",
-            "end_time": "2016-10-24T00:00:00",
-            "lessee_id": "lessee-uuid"
+            'resource_type': self.test_offer_lessee.resource_type,
+            'resource_uuid': self.test_offer_lessee.resource_uuid,
+            'name': self.test_offer_lessee.name,
+            'start_time': '2016-07-16T00:00:00',
+            'end_time': '2016-10-24T00:00:00',
+            'lessee_id': 'lessee-uuid'
         }
 
         request = self.post_json('/offers', data)
@@ -251,7 +251,7 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.offer.Offer.create')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     def test_post_non_admin_parent_lease(self, mock_ogdwai, mock_create,
                                          mock_cra, mock_generate_uuid,
@@ -267,11 +267,11 @@ class TestOffersController(test_api_base.APITestCase):
         mock_crla.return_value = self.test_offer_with_parent.parent_lease_uuid
 
         data = {
-            "resource_type": self.test_offer_with_parent.resource_type,
-            "resource_uuid": self.test_offer_with_parent.resource_uuid,
-            "name": self.test_offer_with_parent.name,
-            "start_time": "2016-07-16T00:00:00",
-            "end_time": "2016-10-24T00:00:00"
+            'resource_type': self.test_offer_with_parent.resource_type,
+            'resource_uuid': self.test_offer_with_parent.resource_uuid,
+            'name': self.test_offer_with_parent.name,
+            'start_time': '2016-07-16T00:00:00',
+            'end_time': '2016-10-24T00:00:00'
         }
 
         request = self.post_json('/offers', data)
@@ -279,8 +279,8 @@ class TestOffersController(test_api_base.APITestCase):
         data['project_id'] = self.context.project_id
         data['uuid'] = self.test_offer_with_parent.uuid
         data['status'] = statuses.AVAILABLE
-        data['parent_lease_uuid'] = \
-            self.test_offer_with_parent.parent_lease_uuid
+        data['parent_lease_uuid'] = (
+            self.test_offer_with_parent.parent_lease_uuid)
 
         mock_gro.assert_called_once_with(
             self.test_offer_with_parent.resource_type,
@@ -307,7 +307,7 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
     @mock.patch('esi_leap.objects.offer.Offer.create')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     def test_post_non_admin_no_parent_lease(self, mock_ogdwai, mock_create,
                                             mock_cra, mock_generate_uuid,
@@ -323,11 +323,11 @@ class TestOffersController(test_api_base.APITestCase):
         mock_crla.return_value = None
 
         data = {
-            "resource_type": self.test_offer_with_parent.resource_type,
-            "resource_uuid": self.test_offer_with_parent.resource_uuid,
-            "name": self.test_offer_with_parent.name,
-            "start_time": "2016-07-16T00:00:00",
-            "end_time": "2016-10-24T00:00:00"
+            'resource_type': self.test_offer_with_parent.resource_type,
+            'resource_uuid': self.test_offer_with_parent.resource_uuid,
+            'name': self.test_offer_with_parent.name,
+            'start_time': '2016-07-16T00:00:00',
+            'end_time': '2016-10-24T00:00:00'
         }
 
         request = self.post_json('/offers', data, expect_errors=True)
@@ -351,7 +351,7 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
     def test_get_nofilters(self, mock_get_all, mock_ogdwai, mock_gpl,
@@ -377,7 +377,7 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
     def test_get_any_status(self, mock_get_all, mock_ogdwai, mock_gpl,
@@ -404,7 +404,7 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
     def test_get_project_filter(self, mock_get_all, mock_ogdwai,
@@ -436,7 +436,7 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
     def test_get_resource_filter(self, mock_get_all, mock_ogdwai, mock_gro,
@@ -455,8 +455,8 @@ class TestOffersController(test_api_base.APITestCase):
         expected_resp = {'offers': [_get_offer_response(self.test_offer),
                                     _get_offer_response(self.test_offer_2)]}
 
-        request = self.get_json(
-            '/offers/?resource_uuid=54321&resource_type=test_node')
+        request = self.get_json('/offers/?resource_uuid=54321&'
+                                'resource_type=test_node')
 
         mock_gro.assert_called_once_with('test_node', '54321')
         mock_get_all.assert_called_once_with(expected_filters, self.context)
@@ -467,7 +467,7 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
     def test_get_resource_class_filter(self, mock_get_all, mock_ogdwai,
@@ -483,8 +483,7 @@ class TestOffersController(test_api_base.APITestCase):
         expected_filters = {'status': statuses.OFFER_CAN_DELETE}
         expected_resp = {'offers': [_get_offer_response(self.test_offer),
                                     _get_offer_response(self.test_offer_2)]}
-        request = self.get_json(
-            '/offers/?resource_class=fake')
+        request = self.get_json('/offers/?resource_class=fake')
 
         mock_get_all.assert_called_once_with(expected_filters, self.context)
         mock_gpl.assert_called_once()
@@ -496,7 +495,7 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.resource_objects.resource_object_factory.'
                 'ResourceObjectFactory.get_resource_object')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
     def test_get_resource_filter_default_resource_type(self, mock_get_all,
@@ -518,8 +517,7 @@ class TestOffersController(test_api_base.APITestCase):
         expected_resp = {'offers': [_get_offer_response(self.test_offer),
                                     _get_offer_response(self.test_offer_2)]}
 
-        request = self.get_json(
-            '/offers/?resource_uuid=54321')
+        request = self.get_json('/offers/?resource_uuid=54321')
         mock_gro.assert_called_once_with('ironic_node', '54321')
         mock_get_all.assert_called_once_with(expected_filters, self.context)
         mock_gpl.assert_called_once()
@@ -529,7 +527,7 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     @mock.patch('esi_leap.objects.offer.Offer.get_all')
     @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
@@ -562,7 +560,7 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch('esi_leap.api.controllers.v1.utils.check_offer_lessee')
     @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'check_offer_policy_and_retrieve')
-    @mock.patch('esi_leap.api.controllers.v1.utils.' +
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')
     def test_get_one(self, mock_ogdwai, mock_copar, mock_col):
         mock_copar.return_value = self.test_offer
@@ -590,9 +588,9 @@ class TestOffersController(test_api_base.APITestCase):
         mock_generate_uuid.return_value = lease_uuid
         mock_copar.return_value = self.test_offer
         data = {
-            "name": "lease_claim",
-            "start_time": "2016-07-16T19:20:30",
-            "end_time": "2016-08-16T19:20:30"
+            'name': 'lease_claim',
+            'start_time': '2016-07-16T19:20:30',
+            'end_time': '2016-08-16T19:20:30'
         }
 
         request = self.post_json('/offers/' + self.test_offer.uuid + '/claim',
@@ -621,9 +619,9 @@ class TestOffersController(test_api_base.APITestCase):
         mock_generate_uuid.return_value = lease_uuid
         mock_copar.return_value = self.test_offer_with_parent
         data = {
-            "name": "lease_claim",
-            "start_time": "2016-07-16T19:20:30",
-            "end_time": "2016-08-16T19:20:30"
+            'name': 'lease_claim',
+            'start_time': '2016-07-16T19:20:30',
+            'end_time': '2016-08-16T19:20:30'
         }
 
         request = self.post_json(

@@ -29,17 +29,13 @@ class APITestCase(base.DBTestCase):
     def setUp(self):
         super(APITestCase, self).setUp()
 
-        CONF.set_override("auth_enable", False,
-                          group='pecan')
+        CONF.set_override('auth_enable', False, group='pecan')
 
-        self.app = pecan.testing.load_test_app(
-            dict(app.get_pecan_config()))
+        self.app = pecan.testing.load_test_app(dict(app.get_pecan_config()))
 
         self.patch_context = mock.patch(
-            'oslo_context.context.RequestContext.from_environ'
-        )
+            'oslo_context.context.RequestContext.from_environ')
         self.mock_context = self.patch_context.start()
-
         self.mock_context.return_value = self.context
 
         self.config(lock_path=tempfile.mkdtemp(), group='oslo_concurrency')
@@ -65,8 +61,7 @@ class APITestCase(base.DBTestCase):
         full_path = path_prefix + path
         query_params = {'q.field': [],
                         'q.value': [],
-                        'q.op': [],
-                        }
+                        'q.op': []}
         for query in q:
             for name in ['field', 'op', 'value']:
                 query_params['q.%s' % name].append(query.get(name, ''))
@@ -100,7 +95,7 @@ class APITestCase(base.DBTestCase):
         return self._request_json(path=path, params=params,
                                   expect_errors=expect_errors,
                                   headers=headers, extra_environ=extra_environ,
-                                  status=status, method="post")
+                                  status=status, method='post')
 
     # borrowed from Ironic
     def delete_json(self, path, expect_errors=False, headers=None,
@@ -118,11 +113,11 @@ class APITestCase(base.DBTestCase):
         return self._request_json(path=path, params={},
                                   expect_errors=expect_errors,
                                   headers=headers, extra_environ=extra_environ,
-                                  status=status, method="delete")
+                                  status=status, method='delete')
 
     # borrowed from Ironic
     def _request_json(self, path, params, expect_errors=False, headers=None,
-                      method="post", extra_environ=None, status=None,
+                      method='post', extra_environ=None, status=None,
                       path_prefix=PATH_PREFIX):
         """Sends simulated HTTP request to Pecan test app.
 
@@ -140,7 +135,7 @@ class APITestCase(base.DBTestCase):
         """
 
         full_path = path_prefix + path
-        response = getattr(self.app, "%s_json" % method)(
+        response = getattr(self.app, '%s_json' % method)(
             str(full_path),
             params=params,
             headers=headers,

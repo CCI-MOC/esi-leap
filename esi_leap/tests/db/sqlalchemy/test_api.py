@@ -291,9 +291,9 @@ class TestOfferAPI(base.DBTestCase):
                          (o1.uuid, o1.start_time,), None)
         test_lease_3['offer_uuid'] = o1.uuid
         api.lease_create(test_lease_3)
-        self.assertEqual(api.offer_get_first_availability
-                         (o1.uuid, o1.start_time), (now + datetime
-                                                    .timedelta(days=50),))
+        self.assertEqual(api.offer_get_first_availability(o1.uuid,
+                                                          o1.start_time),
+                         (now + datetime.timedelta(days=50),))
 
     def test_offer_get_by_uuid(self):
         o1 = api.offer_create(test_offer_1)
@@ -603,27 +603,27 @@ class TestLeaseVerifyChildAvailability(base.DBTestCase):
     def test_lease_verify_child_availability(self):
         parent_lease = api.lease_create(self.parent_lease_data)
 
-        start = self.parent_lease_data['start_time'] + \
-            datetime.timedelta(days=1)
+        start = (self.parent_lease_data['start_time'] +
+                 datetime.timedelta(days=1))
         end = self.parent_lease_data['end_time'] + datetime.timedelta(days=-1)
         api.lease_verify_child_availability(parent_lease, start, end)
 
-        start = self.parent_lease_data['start_time'] + \
-            datetime.timedelta(days=-1)
+        start = (self.parent_lease_data['start_time'] +
+                 datetime.timedelta(days=-1))
         end = self.parent_lease_data['end_time'] + datetime.timedelta(days=-1)
         self.assertRaises(e.LeaseNoTimeAvailabilities,
                           api.lease_verify_child_availability,
                           parent_lease, start, end,)
 
-        start = self.parent_lease_data['start_time'] + \
-            datetime.timedelta(days=1)
+        start = (self.parent_lease_data['start_time'] +
+                 datetime.timedelta(days=1))
         end = self.parent_lease_data['end_time'] + datetime.timedelta(days=1)
         self.assertRaises(e.LeaseNoTimeAvailabilities,
                           api.lease_verify_child_availability,
                           parent_lease, start, end,)
 
-        start = self.parent_lease_data['start_time'] + \
-            datetime.timedelta(days=-1)
+        start = (self.parent_lease_data['start_time'] +
+                 datetime.timedelta(days=-1))
         end = self.parent_lease_data['end_time'] + datetime.timedelta(days=1)
         self.assertRaises(e.LeaseNoTimeAvailabilities,
                           api.lease_verify_child_availability,
@@ -633,8 +633,8 @@ class TestLeaseVerifyChildAvailability(base.DBTestCase):
         parent_lease = api.lease_create(self.parent_lease_data)
         api.lease_create(self.child_lease_data)
 
-        start = self.child_lease_data['start_time'] + \
-            datetime.timedelta(days=-5)
+        start = (self.child_lease_data['start_time'] +
+                 datetime.timedelta(days=-5))
         end = self.child_lease_data['start_time'] + datetime.timedelta(days=-1)
         api.lease_verify_child_availability(parent_lease, start, end)
 
@@ -642,15 +642,15 @@ class TestLeaseVerifyChildAvailability(base.DBTestCase):
         end = self.child_lease_data['end_time'] + datetime.timedelta(days=5)
         api.lease_verify_child_availability(parent_lease, start, end)
 
-        start = self.child_lease_data['start_time'] + \
-            datetime.timedelta(days=1)
+        start = (self.child_lease_data['start_time'] +
+                 datetime.timedelta(days=1))
         end = self.child_lease_data['end_time'] + datetime.timedelta(days=5)
         self.assertRaises(e.LeaseNoTimeAvailabilities,
                           api.lease_verify_child_availability,
                           parent_lease, start, end,)
 
-        start = self.child_lease_data['start_time'] + \
-            datetime.timedelta(days=-1)
+        start = (self.child_lease_data['start_time'] +
+                 datetime.timedelta(days=-1))
         end = self.child_lease_data['end_time'] + datetime.timedelta(days=-1)
         self.assertRaises(e.LeaseNoTimeAvailabilities,
                           api.lease_verify_child_availability,
@@ -660,8 +660,8 @@ class TestLeaseVerifyChildAvailability(base.DBTestCase):
         parent_lease = api.lease_create(self.parent_lease_data)
         api.offer_create(self.child_offer_data)
 
-        start = self.child_offer_data['start_time'] + \
-            datetime.timedelta(days=-5)
+        start = (self.child_offer_data['start_time'] +
+                 datetime.timedelta(days=-5))
         end = self.child_offer_data['start_time'] + datetime.timedelta(days=-1)
         api.lease_verify_child_availability(parent_lease, start, end)
 
@@ -669,15 +669,15 @@ class TestLeaseVerifyChildAvailability(base.DBTestCase):
         end = self.child_offer_data['end_time'] + datetime.timedelta(days=5)
         api.lease_verify_child_availability(parent_lease, start, end)
 
-        start = self.child_offer_data['start_time'] + \
-            datetime.timedelta(days=1)
+        start = (self.child_offer_data['start_time'] +
+                 datetime.timedelta(days=1))
         end = self.child_offer_data['end_time'] + datetime.timedelta(days=5)
         self.assertRaises(e.LeaseNoTimeAvailabilities,
                           api.lease_verify_child_availability,
                           parent_lease, start, end,)
 
-        start = self.child_offer_data['start_time'] + \
-            datetime.timedelta(days=-1)
+        start = (self.child_offer_data['start_time'] +
+                 datetime.timedelta(days=-1))
         end = self.child_offer_data['end_time'] + datetime.timedelta(days=-1)
         self.assertRaises(e.LeaseNoTimeAvailabilities,
                           api.lease_verify_child_availability,
@@ -693,8 +693,7 @@ class TestResourceVerifyAvailabilityAPI(base.DBTestCase):
 
         start = test_offer_4['end_time'] + datetime.timedelta(days=1)
         end = test_offer_4['end_time'] + datetime.timedelta(days=5)
-        api.resource_verify_availability(r_type, r_uuid,
-                                         start, end)
+        api.resource_verify_availability(r_type, r_uuid, start, end)
 
         start = test_offer_4['start_time'] + datetime.timedelta(days=1)
         end = test_offer_4['end_time'] + datetime.timedelta(days=-1)

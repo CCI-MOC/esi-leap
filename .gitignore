@@ -7,3 +7,4 @@ ChangeLog
 __pycache__/
 .stestr/
 .tox/
+*.swp

@@ -60,7 +60,7 @@ class Lease(base.ESILEAPBase):
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
-        for attr in ['project', 'owner', 'resource', 'resource_class']:
+        for attr in ('project', 'owner', 'resource', 'resource_class'):
             setattr(self, attr, kwargs.get(attr, wtypes.Unset))
 
 
@@ -106,13 +106,11 @@ class LeasesController(rest.RestController):
                 resource_type, resource_uuid)
             resource_uuid = resource.get_resource_uuid()
 
-        filters = LeasesController.\
-            _lease_get_all_authorize_filters(
-                cdict,
-                project_id=project_id, start_time=start_time,
-                end_time=end_time, status=status,
-                offer_uuid=offer_uuid, view=view, owner_id=owner_id,
-                resource_type=resource_type, resource_uuid=resource_uuid)
+        filters = LeasesController._lease_get_all_authorize_filters(
+            cdict, project_id=project_id, owner_id=owner_id,
+            start_time=start_time, end_time=end_time,
+            status=status, offer_uuid=offer_uuid, view=view,
+            resource_type=resource_type, resource_uuid=resource_uuid)
 
         lease_collection = LeaseCollection()
         leases = lease_obj.Lease.get_all(filters, request)
@@ -121,14 +119,14 @@ class LeasesController(rest.RestController):
         if len(leases) > 0:
             project_list = keystone.get_project_list()
             node_list = ironic.get_node_list()
-            leases_with_added_info = [Lease(**utils.
-                                            lease_get_dict_with_added_info(
-                                                l, project_list, node_list))
-                                      for l in leases]
+            leases_with_added_info = [
+                Lease(**utils.lease_get_dict_with_added_info(l, project_list,
+                                                             node_list))
+                for l in leases]
             if resource_class:
-                lease_collection.leases = [l for l in leases_with_added_info
-                                           if l.resource_class ==
-                                           resource_class]
+                lease_collection.leases = [
+                    l for l in leases_with_added_info
+                    if l.resource_class == resource_class]
             else:
                 lease_collection.leases = leases_with_added_info
 
@@ -237,14 +235,13 @@ class LeasesController(rest.RestController):
                                                cdict, cdict)
                     possible_filters['project_id'] = project_id
 
-        if (start_time and end_time is None) or \
-                (end_time and start_time is None):
-            raise exception.InvalidTimeAPICommand(resource="a lease",
+        if ((start_time and end_time is None) or
+                (end_time and start_time is None)):
+            raise exception.InvalidTimeAPICommand(resource='a lease',
                                                   start_time=str(start_time),
                                                   end_time=str(end_time))
 
-        if start_time and end_time and\
-           end_time <= start_time:
+        if start_time and end_time and end_time <= start_time:
             raise exception.InvalidTimeAPICommand(resource='a lease',
                                                   start_time=str(start_time),
                                                   end_time=str(end_time))
