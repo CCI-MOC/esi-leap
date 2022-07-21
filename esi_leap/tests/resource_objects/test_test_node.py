@@ -53,7 +53,7 @@ class TestTestNode(base.TestCase):
         self.assertEqual(resource_uuid, '1111')
 
     def test_get_resource_name(self):
-        self.assertEqual("test-node-1111",
+        self.assertEqual('test-node-1111',
                          self.fake_test_node.get_resource_name())
 
     def test_get_lease_uuid(self):
@@ -74,17 +74,12 @@ class TestTestNode(base.TestCase):
 
     def test_set_lease(self):
         fake_lease = get_test_lease()
-        self.assertEqual(
-            self.fake_test_node.set_lease(
-                fake_lease), None)
+        self.assertEqual(self.fake_test_node.set_lease(fake_lease), None)
 
     def test_expire_lease(self):
         fake_lease = get_test_lease()
-        self.assertEqual(
-            self.fake_test_node.expire_lease(
-                fake_lease), None)
+        self.assertEqual(self.fake_test_node.expire_lease(fake_lease), None)
 
     def test_resource_admin_project_id(self):
-        self.assertEqual(
-            self.fake_admin_project_id_2,
-            self.fake_test_node.resource_admin_project_id())
+        self.assertEqual(self.fake_admin_project_id_2,
+                         self.fake_test_node.resource_admin_project_id())

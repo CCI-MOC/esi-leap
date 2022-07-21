@@ -26,51 +26,51 @@ class DummyNode(base.ResourceObjectInterface):
 
     def __init__(self, uuid):
         self._uuid = uuid
-        self._path = DUMMY_NODE_DIR + "/" + uuid
+        self._path = DUMMY_NODE_DIR + '/' + uuid
 
     def get_resource_uuid(self):
         return self._uuid
 
     def get_resource_name(self, resource_list=None):
-        return "dummy-node-%s" % self._uuid
+        return 'dummy-node-%s' % self._uuid
 
     def get_lease_uuid(self):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        return node_dict.get("lease_uuid", None)
+        return node_dict.get('lease_uuid', None)
 
     def get_project_id(self):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        return node_dict.get("project_id", None)
+        return node_dict.get('project_id', None)
 
     def get_node_config(self):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        return node_dict.get("server_config", None)
+        return node_dict.get('server_config', None)
 
     def get_resource_class(self):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        return node_dict.get("resource_class", None)
+        return node_dict.get('resource_class', None)
 
     def set_lease(self, lease):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        node_dict["lease_uuid"] = lease.uuid
-        node_dict["project_id"] = lease.project_id
+        node_dict['lease_uuid'] = lease.uuid
+        node_dict['project_id'] = lease.project_id
         with open(self._path, 'w') as node_file:
             json.dump(node_dict, node_file)
 
     def expire_lease(self, lease):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        node_dict.pop("lease_uuid", None)
-        node_dict.pop("project_id", None)
+        node_dict.pop('lease_uuid', None)
+        node_dict.pop('project_id', None)
         with open(self._path, 'w') as node_file:
             json.dump(node_dict, node_file)
 
     def resource_admin_project_id(self):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
-        return node_dict.get("project_owner_id", None)
+        return node_dict.get('project_owner_id', None)

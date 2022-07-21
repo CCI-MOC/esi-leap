@@ -22,13 +22,11 @@ class TestResourceObjectInterface(base.TestCase):
         super(TestResourceObjectInterface, self).setUp()
         self.base_time = datetime.datetime(2016, 7, 16, 19, 20, 30)
 
-    @mock.patch(
-        'esi_leap.db.sqlalchemy.api.resource_verify_availability')
+    @mock.patch('esi_leap.db.sqlalchemy.api.resource_verify_availability')
     def test_verify_availability_for_offer(self, mock_rva):
         start = self.base_time
         end = self.base_time + datetime.timedelta(days=10)
-        test_node = ironic_node.IronicNode("1111")
+        test_node = ironic_node.IronicNode('1111')
 
         test_node.verify_availability(start, end)
-        mock_rva.assert_called_once_with(
-            'ironic_node', '1111', start, end)
+        mock_rva.assert_called_once_with('ironic_node', '1111', start, end)

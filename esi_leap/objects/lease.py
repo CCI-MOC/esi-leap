@@ -129,7 +129,7 @@ class Lease(base.ESILEAPObject):
                                                          self.resource_uuid),
                             external=True)
         def _cancel_lease():
-            LOG.info("Deleting lease %s", self.uuid)
+            LOG.info('Deleting lease %s', self.uuid)
             try:
                 resource = self.resource_object()
                 if resource.get_lease_uuid() == self.uuid:
@@ -141,7 +141,7 @@ class Lease(base.ESILEAPObject):
                 self.status = statuses.DELETED
                 self.expire_time = datetime.datetime.now()
             except Exception as e:
-                LOG.info("Error canceling lease; setting to WAIT: %s", e)
+                LOG.info('Error canceling lease; setting to WAIT: %s', e)
                 self.status = statuses.WAIT_CANCEL
             self.save(None)
 
@@ -162,7 +162,7 @@ class Lease(base.ESILEAPObject):
                                                          self.resource_uuid),
                             external=True)
         def _fulfill_lease():
-            LOG.info("Fulfilling lease %s", self.uuid)
+            LOG.info('Fulfilling lease %s', self.uuid)
             try:
                 resource = self.resource_object()
                 resource.set_lease(self)
@@ -171,7 +171,7 @@ class Lease(base.ESILEAPObject):
                 self.status = statuses.ACTIVE
                 self.fulfill_time = datetime.datetime.now()
             except Exception as e:
-                LOG.info("Error fulfilling lease; setting to WAIT: %s", e)
+                LOG.info('Error fulfilling lease; setting to WAIT: %s', e)
                 self.status = statuses.WAIT_FULFILL
             self.save(context)
 
@@ -195,7 +195,7 @@ class Lease(base.ESILEAPObject):
                                                          self.resource_uuid),
                             external=True)
         def _expire_lease():
-            LOG.info("Expiring lease %s", self.uuid)
+            LOG.info('Expiring lease %s', self.uuid)
             try:
                 resource = self.resource_object()
                 if resource.get_lease_uuid() == self.uuid:
@@ -207,7 +207,7 @@ class Lease(base.ESILEAPObject):
                 self.status = statuses.EXPIRED
                 self.expire_time = datetime.datetime.now()
             except Exception as e:
-                LOG.info("Error expiring lease; setting to WAIT: %s", e)
+                LOG.info('Error expiring lease; setting to WAIT: %s', e)
                 self.status = statuses.WAIT_EXPIRE
             self.save(context)
 

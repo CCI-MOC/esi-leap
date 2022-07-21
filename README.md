@@ -30,7 +30,7 @@ https://github.com/CCI-MOC/python-esileapclient
 ### Create the esi-leap Database
 
 The esi-leap service requires a database to store its information. To set this up using
-the MySQL databse used by other OpenStack services, run the following, replacing
+the MySQL database used by other OpenStack services, run the following, replacing
 \<PASSWORD\> with a suitable password and \<DATABASE\_IP\> with the IP address of your
 MySQL database (if you're not sure, use localhost or 127.0.0.1).
 
@@ -126,7 +126,7 @@ dummy_node_dir=/tmp/nodes
 
 ### Run the Services
 
-Start by instantiatiating the database:
+Start by instantiating the database:
 
 ```
     $ sudo esi-leap-dbsync create_schema

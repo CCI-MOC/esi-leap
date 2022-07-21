@@ -59,7 +59,7 @@ class Collection(wtypes.Base):
             'args': q_args, 'limit': limit,
             'marker': getattr(self.collection[-1], 'uuid')}
 
-        next_link = "%(url)s/v1/%(resource)s%(args)s" % {
+        next_link = '%(url)s/v1/%(resource)s%(args)s' % {
             'url': url,
             'resource': self._type,
             'args': next_args

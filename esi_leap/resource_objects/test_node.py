@@ -25,7 +25,7 @@ class TestNode(base.ResourceObjectInterface):
         return self._uuid
 
     def get_resource_name(self, resource_list=None):
-        return "test-node-%s" % self._uuid
+        return 'test-node-%s' % self._uuid
 
     def get_lease_uuid(self):
         return '12345'
@@ -37,7 +37,7 @@ class TestNode(base.ResourceObjectInterface):
         return {}
 
     def get_resource_class(self):
-        return "fake"
+        return 'fake'
 
     def set_lease(self, lease):
         return

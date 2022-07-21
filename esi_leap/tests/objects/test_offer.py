@@ -31,7 +31,7 @@ class TestOfferObject(base.DBTestCase):
         start = datetime.datetime(2016, 7, 16, 19, 20, 30)
         self.test_offer_data = {
             'id': 27,
-            'name': "o",
+            'name': 'o',
             'uuid': uuidutils.generate_uuid(),
             'project_id': '0wn5r',
             'lessee_id': None,
@@ -46,7 +46,7 @@ class TestOfferObject(base.DBTestCase):
             'updated_at': None
         }
         self.test_offer_create_data = {
-            'name': "o",
+            'name': 'o',
             'project_id': '0wn5r',
             'resource_type': 'dummy_node',
             'resource_uuid': '1718',
@@ -54,18 +54,16 @@ class TestOfferObject(base.DBTestCase):
             'end_time': start + datetime.timedelta(days=100),
             'properties': {'floor_price': 3},
         }
-        self.test_offer_create_parent_lease_data = \
-            self.test_offer_create_data.copy()
-        self.test_offer_create_parent_lease_data['parent_lease_uuid'] \
-            = 'parent-lease-uuid'
+        self.test_offer_create_parent_lease_data = (
+            self.test_offer_create_data.copy())
+        self.test_offer_create_parent_lease_data['parent_lease_uuid'] = (
+            'parent-lease-uuid')
         self.test_parent_lease = lease.Lease(
             uuid=uuidutils.generate_uuid(),
-            status=statuses.ACTIVE,
-        )
+            status=statuses.ACTIVE)
         self.test_parent_lease_expired = lease.Lease(
             uuid=uuidutils.generate_uuid(),
-            status=statuses.EXPIRED,
-        )
+            status=statuses.EXPIRED)
 
         self.config(lock_path=tempfile.mkdtemp(), group='oslo_concurrency')
 
@@ -81,8 +79,7 @@ class TestOfferObject(base.DBTestCase):
 
     @mock.patch('esi_leap.db.sqlalchemy.api.offer_get_all')
     def test_get_all(self, mock_offer_get_all):
-        mock_offer_get_all.return_value = [
-            self.test_offer_data]
+        mock_offer_get_all.return_value = [self.test_offer_data]
 
         offers = offer.Offer.get_all({}, self.context)
 
@@ -95,62 +92,36 @@ class TestOfferObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.offer.datetime')
     def test_get_availabilities_offer_in_future(self, mock_datetime,
                                                 mock_ogct):
-        o = offer.Offer(
-            self.context, **self.test_offer_data)
+        o = offer.Offer(self.context, **self.test_offer_data)
+
         # test offer start_time > now
         mock_datetime.datetime.now = mock.Mock(
             return_value=o.start_time + datetime.timedelta(days=-5))
-        mock_ogct.return_value = [
-            [
-                o.start_time + datetime.timedelta(days=10),
-                o.start_time + datetime.timedelta(days=20)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=20),
-                o.start_time + datetime.timedelta(days=30)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=50),
-                o.start_time + datetime.timedelta(days=60)
-            ]
-        ]
 
+        mock_ogct.return_value = [
+            [o.start_time + datetime.timedelta(days=10),
+             o.start_time + datetime.timedelta(days=20)],
+            [o.start_time + datetime.timedelta(days=20),
+             o.start_time + datetime.timedelta(days=30)],
+            [o.start_time + datetime.timedelta(days=50),
+             o.start_time + datetime.timedelta(days=60)]
+        ]
         expect = [
-            [
-                o.start_time,
-                o.start_time + datetime.timedelta(days=10)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=30),
-                o.start_time + datetime.timedelta(days=50)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=60),
-                o.end_time
-            ],
+            [o.start_time, o.start_time + datetime.timedelta(days=10)],
+            [o.start_time + datetime.timedelta(days=30),
+             o.start_time + datetime.timedelta(days=50)],
+            [o.start_time + datetime.timedelta(days=60), o.end_time]
         ]
         a = o.get_availabilities()
         self.assertEqual(a, expect)
 
-        mock_ogct.return_value = [
-            [
-                o.start_time,
-                o.end_time
-            ],
-        ]
-
+        mock_ogct.return_value = [[o.start_time, o.end_time]]
         expect = []
         a = o.get_availabilities()
         self.assertEqual(a, expect)
 
         mock_ogct.return_value = []
-
-        expect = [
-            [
-                o.start_time,
-                o.end_time
-            ],
-        ]
+        expect = [[o.start_time, o.end_time]]
         a = o.get_availabilities()
         self.assertEqual(a, expect)
 
@@ -158,46 +129,29 @@ class TestOfferObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.offer.datetime')
     def test_get_availabilities_conflicts_in_future(self, mock_datetime,
                                                     mock_ogct):
-        o = offer.Offer(
-            self.context, **self.test_offer_data)
+        o = offer.Offer(self.context, **self.test_offer_data)
+
         # test offer start_time <= now < first conflict start_time
         now = o.start_time + datetime.timedelta(days=10)
         mock_datetime.datetime.now = mock.Mock(return_value=now)
         mock_ogct.return_value = []
-        expect = [
-            [
-                now,
-                o.end_time
-            ],
-        ]
+        expect = [[now, o.end_time]]
 
         a = o.get_availabilities()
         self.assertEqual(a, expect)
-
         mock_ogct.return_value = [
-            [
-                o.start_time + datetime.timedelta(days=10),
-                o.start_time + datetime.timedelta(days=20)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=20),
-                o.start_time + datetime.timedelta(days=30)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=50),
-                o.start_time + datetime.timedelta(days=60)
-            ]
+            [o.start_time + datetime.timedelta(days=10),
+             o.start_time + datetime.timedelta(days=20)],
+            [o.start_time + datetime.timedelta(days=20),
+             o.start_time + datetime.timedelta(days=30)],
+            [o.start_time + datetime.timedelta(days=50),
+             o.start_time + datetime.timedelta(days=60)]
         ]
 
         expect = [
-            [
-                o.start_time + datetime.timedelta(days=30),
-                o.start_time + datetime.timedelta(days=50)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=60),
-                o.end_time
-            ],
+            [o.start_time + datetime.timedelta(days=30),
+             o.start_time + datetime.timedelta(days=50)],
+            [o.start_time + datetime.timedelta(days=60), o.end_time]
         ]
         a = o.get_availabilities()
         self.assertEqual(a, expect)
@@ -206,42 +160,26 @@ class TestOfferObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.offer.datetime')
     def test_get_availabilities_conflicts_current(self, mock_datetime,
                                                   mock_ogct):
-        o = offer.Offer(
-            self.context, **self.test_offer_data)
+        o = offer.Offer(self.context, **self.test_offer_data)
+
         # test a conflict is happening right now
         now = o.start_time + datetime.timedelta(days=10)
         mock_datetime.datetime.now = mock.Mock(return_value=now)
         mock_ogct.return_value = [
-            [
-                o.start_time,
-                o.start_time + datetime.timedelta(days=4)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=5),
-                o.start_time + datetime.timedelta(days=15)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=20),
-                o.start_time + datetime.timedelta(days=30)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=50),
-                o.start_time + datetime.timedelta(days=60)
-            ]
+            [o.start_time, o.start_time + datetime.timedelta(days=4)],
+            [o.start_time + datetime.timedelta(days=5),
+             o.start_time + datetime.timedelta(days=15)],
+            [o.start_time + datetime.timedelta(days=20),
+             o.start_time + datetime.timedelta(days=30)],
+            [o.start_time + datetime.timedelta(days=50),
+             o.start_time + datetime.timedelta(days=60)]
         ]
         expect = [
-            [
-                o.start_time + datetime.timedelta(days=15),
-                o.start_time + datetime.timedelta(days=20)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=30),
-                o.start_time + datetime.timedelta(days=50)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=60),
-                o.end_time
-            ],
+            [o.start_time + datetime.timedelta(days=15),
+             o.start_time + datetime.timedelta(days=20)],
+            [o.start_time + datetime.timedelta(days=30),
+             o.start_time + datetime.timedelta(days=50)],
+            [o.start_time + datetime.timedelta(days=60), o.end_time]
         ]
         a = o.get_availabilities()
         self.assertEqual(a, expect)
@@ -250,35 +188,24 @@ class TestOfferObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.offer.datetime')
     def test_get_availabilities_conflicts_past(self, mock_datetime,
                                                mock_ogct):
-        o = offer.Offer(
-            self.context, **self.test_offer_data)
+        o = offer.Offer(self.context, **self.test_offer_data)
+
         # test all conflicts happened in the past
         now = o.start_time + datetime.timedelta(days=10)
         mock_datetime.datetime.now = mock.Mock(return_value=now)
         mock_ogct.return_value = [
-            [
-                o.start_time,
-                o.start_time + datetime.timedelta(days=4)
-            ],
-            [
-                o.start_time + datetime.timedelta(days=5),
-                o.start_time + datetime.timedelta(days=10)
-            ]
+            [o.start_time, o.start_time + datetime.timedelta(days=4)],
+            [o.start_time + datetime.timedelta(days=5),
+             o.start_time + datetime.timedelta(days=10)]
         ]
-        expect = [
-            [
-                now,
-                o.end_time
-            ]
-        ]
+        expect = [[now, o.end_time]]
         a = o.get_availabilities()
         self.assertEqual(a, expect)
 
     @mock.patch('esi_leap.db.sqlalchemy.api.resource_verify_availability')
     @mock.patch('esi_leap.db.sqlalchemy.api.offer_create')
     def test_create(self, mock_oc, mock_rva):
-        o = offer.Offer(
-            self.context, **self.test_offer_create_data)
+        o = offer.Offer(self.context, **self.test_offer_create_data)
         mock_oc.return_value = self.test_offer_data
 
         o.create(self.context)
@@ -292,7 +219,7 @@ class TestOfferObject(base.DBTestCase):
     def test_create_invalid_time(self):
         start = self.test_offer_data['start_time']
         bad_offer = {
-            'name': "o",
+            'name': 'o',
             'project_id': '0wn5r',
             'resource_type': 'dummy_node',
             'resource_uuid': '1718',
@@ -302,8 +229,7 @@ class TestOfferObject(base.DBTestCase):
             'properties': {'floor_price': 3},
         }
 
-        o = offer.Offer(
-            self.context, **bad_offer)
+        o = offer.Offer(self.context, **bad_offer)
 
         self.assertRaises(exception.InvalidTimeRange, o.create)
 
@@ -311,8 +237,9 @@ class TestOfferObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.lease.Lease.get')
     @mock.patch('esi_leap.db.sqlalchemy.api.offer_create')
     def test_create_with_parent_lease(self, mock_oc, mock_lg, mock_lvca):
-        o = offer.Offer(
-            self.context, **self.test_offer_create_parent_lease_data)
+        o = offer.Offer(self.context,
+                        **self.test_offer_create_parent_lease_data)
+
         mock_lg.return_value = self.test_parent_lease
         mock_oc.return_value = self.test_offer_data
 
@@ -330,8 +257,9 @@ class TestOfferObject(base.DBTestCase):
     @mock.patch('esi_leap.db.sqlalchemy.api.offer_create')
     def test_create_with_parent_lease_expired(self, mock_oc, mock_lg,
                                               mock_lvca):
-        o = offer.Offer(
-            self.context, **self.test_offer_create_parent_lease_data)
+        o = offer.Offer(self.context,
+                        **self.test_offer_create_parent_lease_data)
+
         mock_lg.return_value = self.test_parent_lease_expired
         mock_oc.return_value = self.test_offer_data
 
@@ -344,15 +272,12 @@ class TestOfferObject(base.DBTestCase):
     @mock.patch('esi_leap.db.sqlalchemy.api.resource_verify_availability')
     @mock.patch('esi_leap.db.sqlalchemy.api.offer_create')
     def test_create_concurrent(self, mock_oc, mock_rva):
-        o = offer.Offer(
-            self.context, **self.test_offer_create_data)
-        o2 = offer.Offer(
-            self.context, **self.test_offer_create_data)
-
+        o = offer.Offer(self.context, **self.test_offer_create_data)
+        o2 = offer.Offer(self.context, **self.test_offer_create_data)
         o2.id = 28
 
         def update_mock(updates):
-            mock_rva.side_effect = Exception("bad")
+            mock_rva.side_effect = Exception('bad')
 
         mock_oc.side_effect = update_mock
 
@@ -365,7 +290,7 @@ class TestOfferObject(base.DBTestCase):
         thread.join()
         thread2.join()
 
-        assert mock_rva.call_count == 2
+        self.assertEqual(mock_rva.call_count, 2)
         mock_oc.assert_called_once()
 
     @mock.patch('esi_leap.db.sqlalchemy.api.offer_destroy')
@@ -390,8 +315,7 @@ class TestOfferObject(base.DBTestCase):
 
         updated_values = self.test_offer_data.copy()
         updated_values['status'] = new_status
-        mock_offer_update.assert_called_once_with(
-            o.uuid, updated_values)
+        mock_offer_update.assert_called_once_with(o.uuid, updated_values)
         self.assertEqual(self.context, o._context)
         self.assertEqual(updated_at, o.updated_at)
 

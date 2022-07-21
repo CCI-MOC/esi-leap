@@ -32,7 +32,7 @@ class TestResourceObjectFactory(base.TestCase):
         mock_iul.assert_called_once_with('1111')
         self.assertTrue(isinstance(node,
                                    resource_objects.ironic_node.IronicNode))
-        self.assertEqual("1111", node.get_resource_uuid())
+        self.assertEqual('1111', node.get_resource_uuid())
 
     @mock.patch('esi_leap.resource_objects.ironic_node.IronicNode.get_by_name')
     @mock.patch('oslo_utils.uuidutils.is_uuid_like')
@@ -46,21 +46,21 @@ class TestResourceObjectFactory(base.TestCase):
         mock_gbn.assert_called_once_with('node-name')
         self.assertTrue(isinstance(node,
                                    resource_objects.ironic_node.IronicNode))
-        self.assertEqual("1111", node.get_resource_uuid())
+        self.assertEqual('1111', node.get_resource_uuid())
 
     def test_dummy_node(self):
         node = ro_factory.ResourceObjectFactory.get_resource_object(
             'dummy_node', '1111')
         self.assertTrue(isinstance(node,
                                    resource_objects.dummy_node.DummyNode))
-        self.assertEqual("1111", node.get_resource_uuid())
+        self.assertEqual('1111', node.get_resource_uuid())
 
     def test_test_node(self):
         node = ro_factory.ResourceObjectFactory.get_resource_object(
             'test_node', '1111')
         self.assertTrue(isinstance(node,
                                    resource_objects.test_node.TestNode))
-        self.assertEqual("1111", node.get_resource_uuid())
+        self.assertEqual('1111', node.get_resource_uuid())
 
     def test_unknown_resource_type(self):
         self.assertRaises(exception.ResourceTypeUnknown,

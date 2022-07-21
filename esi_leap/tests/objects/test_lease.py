@@ -71,8 +71,8 @@ class TestLeaseObject(base.DBTestCase):
         self.test_lease_offer_dict = self.test_lease_dict.copy()
         self.test_lease_offer_dict['offer_uuid'] = self.test_offer.uuid
         self.test_lease_parent_lease_dict = self.test_lease_dict.copy()
-        self.test_lease_parent_lease_dict['parent_lease_uuid'] = \
-            'parent-lease-uuid'
+        self.test_lease_parent_lease_dict['parent_lease_uuid'] = (
+            'parent-lease-uuid')
         self.test_lease_create_dict = {
             'name': 'lease_create',
             'project_id': 'le55ee',
@@ -84,10 +84,10 @@ class TestLeaseObject(base.DBTestCase):
         }
         self.test_lease_create_offer_dict = self.test_lease_create_dict.copy()
         self.test_lease_create_offer_dict['offer_uuid'] = self.test_offer.uuid
-        self.test_lease_create_parent_lease_dict = \
-            self.test_lease_create_dict.copy()
-        self.test_lease_create_parent_lease_dict['parent_lease_uuid'] \
-            = 'parent-lease-uuid'
+        self.test_lease_create_parent_lease_dict = (
+            self.test_lease_create_dict.copy())
+        self.test_lease_create_parent_lease_dict['parent_lease_uuid'] = (
+            'parent-lease-uuid')
 
         self.config(lock_path=tempfile.mkdtemp(), group='oslo_concurrency')
 
@@ -99,24 +99,21 @@ class TestLeaseObject(base.DBTestCase):
 
             lease = lease_obj.Lease.get(lease_uuid, self.context)
 
-            mock_lease_get_by_uuid.assert_called_once_with(
-                lease_uuid)
+            mock_lease_get_by_uuid.assert_called_once_with(lease_uuid)
             self.assertEqual(self.context, lease._context)
 
     def test_get_all(self):
         with mock.patch.object(
                 self.db_api, 'lease_get_all', autospec=True
         ) as mock_lease_get_all:
-            mock_lease_get_all.return_value = \
-                [self.test_lease_dict, self.test_lease_offer_dict]
+            mock_lease_get_all.return_value = [self.test_lease_dict,
+                                               self.test_lease_offer_dict]
 
-            leases = lease_obj.Lease.get_all(
-                {}, self.context)
+            leases = lease_obj.Lease.get_all({}, self.context)
 
             mock_lease_get_all.assert_called_once_with({})
             self.assertEqual(len(leases), 2)
-            self.assertIsInstance(
-                leases[0], lease_obj.Lease)
+            self.assertIsInstance(leases[0], lease_obj.Lease)
             self.assertEqual(self.context, leases[0]._context)
 
     @mock.patch('esi_leap.db.sqlalchemy.api.resource_verify_availability')
@@ -124,14 +121,12 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.offer.Offer.get')
     @mock.patch('esi_leap.db.sqlalchemy.api.lease_create')
     def test_create(self, mock_lc, mock_og, mock_ova, mock_rva):
-        lease = lease_obj.Lease(
-            self.context, **self.test_lease_create_dict)
+        lease = lease_obj.Lease(self.context, **self.test_lease_create_dict)
         mock_lc.return_value = self.test_lease_dict
 
         lease.create()
 
-        mock_lc.assert_called_once_with(
-            self.test_lease_create_dict)
+        mock_lc.assert_called_once_with(self.test_lease_create_dict)
         mock_og.assert_not_called
         mock_ova.assert_not_called
         mock_rva.assert_called_once_with(lease.resource_type,
@@ -144,8 +139,8 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.offer.Offer.get')
     @mock.patch('esi_leap.db.sqlalchemy.api.lease_create')
     def test_create_with_offer(self, mock_lc, mock_og, mock_ova, mock_rva):
-        lease = lease_obj.Lease(
-            self.context, **self.test_lease_create_offer_dict)
+        lease = lease_obj.Lease(self.context,
+                                **self.test_lease_create_offer_dict)
         mock_lc.return_value = self.test_lease_offer_dict
         mock_og.return_value = self.test_offer
 
@@ -162,8 +157,8 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.lease.Lease.get')
     @mock.patch('esi_leap.db.sqlalchemy.api.lease_create')
     def test_create_with_parent_lease(self, mock_lc, mock_lg, mock_lvca):
-        lease = lease_obj.Lease(
-            self.context, **self.test_lease_create_parent_lease_dict)
+        lease = lease_obj.Lease(self.context,
+                                **self.test_lease_create_parent_lease_dict)
         mock_lc.return_value = self.test_lease_offer_dict
         mock_lg.return_value = self.test_parent_lease
 
@@ -181,8 +176,8 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.db.sqlalchemy.api.lease_create')
     def test_create_with_parent_lease_expired(self, mock_lc, mock_lg,
                                               mock_lvca):
-        lease = lease_obj.Lease(
-            self.context, **self.test_lease_create_parent_lease_dict)
+        lease = lease_obj.Lease(self.context,
+                                **self.test_lease_create_parent_lease_dict)
         mock_lg.return_value = self.test_parent_lease_expired
 
         self.assertRaises(exception.LeaseNotActive, lease.create)
@@ -211,11 +206,11 @@ class TestLeaseObject(base.DBTestCase):
         self.assertRaises(exception.InvalidTimeRange, lease.create)
 
     def test_create_concurrent_offer_conflict(self):
-        lease = lease_obj.Lease(
-            self.context, **self.test_lease_create_offer_dict)
+        lease = lease_obj.Lease(self.context,
+                                **self.test_lease_create_offer_dict)
 
-        lease2 = lease_obj.Lease(
-            self.context, **self.test_lease_create_offer_dict)
+        lease2 = lease_obj.Lease(self.context,
+                                 **self.test_lease_create_offer_dict)
 
         lease2.id = 28
 
@@ -230,7 +225,7 @@ class TestLeaseObject(base.DBTestCase):
                     mock_offer_get.return_value = self.test_offer
 
                     def update_mock(updates):
-                        mock_ovca.side_effect = Exception("bad")
+                        mock_ovca.side_effect = Exception('bad')
 
                     mock_lease_create.side_effect = update_mock
 
@@ -271,7 +266,7 @@ class TestLeaseObject(base.DBTestCase):
         test_node = TestNode('test-node', '12345')
 
         mock_ro.return_value = test_node
-        mock_set_lease.side_effect = Exception("bad")
+        mock_set_lease.side_effect = Exception('bad')
 
         lease.fulfill()
 
@@ -317,7 +312,7 @@ class TestLeaseObject(base.DBTestCase):
 
         mock_ro.return_value = test_node
         mock_glu.return_value = lease.uuid
-        mock_expire_lease.side_effect = Exception("bad")
+        mock_expire_lease.side_effect = Exception('bad')
 
         lease.cancel()
 
@@ -411,7 +406,7 @@ class TestLeaseObject(base.DBTestCase):
 
         mock_ro.return_value = test_node
         mock_glu.return_value = lease.uuid
-        mock_expire_lease.side_effect = Exception("bad")
+        mock_expire_lease.side_effect = Exception('bad')
 
         lease.expire()
 
@@ -475,8 +470,7 @@ class TestLeaseObject(base.DBTestCase):
 
             lease.destroy()
 
-            mock_lease_cancel.assert_called_once_with(
-                lease.uuid)
+            mock_lease_cancel.assert_called_once_with(lease.uuid)
 
     def test_save(self):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
@@ -494,8 +488,8 @@ class TestLeaseObject(base.DBTestCase):
 
             updated_values = self.test_lease_dict.copy()
             updated_values['status'] = new_status
-            mock_lease_update.assert_called_once_with(
-                lease.uuid, updated_values)
+            mock_lease_update.assert_called_once_with(lease.uuid,
+                                                      updated_values)
             self.assertEqual(self.context, lease._context)
             self.assertEqual(updated_at, lease.updated_at)
 

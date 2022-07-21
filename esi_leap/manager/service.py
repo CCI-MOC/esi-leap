@@ -30,7 +30,7 @@ LOG = logging.getLogger(__name__)
 class ManagerService(service.Service):
     def __init__(self):
         super(ManagerService, self).__init__()
-        LOG.info("Creating esi-leap manager RPC server")
+        LOG.info('Creating esi-leap manager RPC server')
         self._server = messaging.get_rpc_server(
             target=utils.get_target(),
             transport=messaging.get_rpc_transport(CONF),
@@ -44,24 +44,24 @@ class ManagerService(service.Service):
 
     def start(self):
         super(ManagerService, self).start()
-        LOG.info("Starting esi-leap manager RPC server")
+        LOG.info('Starting esi-leap manager RPC server')
         self.tg.add_thread(self._server.start)
-        LOG.info("Starting _fulfill_leases periodic job")
+        LOG.info('Starting _fulfill_leases periodic job')
         self.tg.add_timer(EVENT_INTERVAL, self._fulfill_leases)
-        LOG.info("Starting _expire_leases periodic job")
+        LOG.info('Starting _expire_leases periodic job')
         self.tg.add_timer(EVENT_INTERVAL, self._expire_leases)
-        LOG.info("Starting _cancel_leases periodic job")
+        LOG.info('Starting _cancel_leases periodic job')
         self.tg.add_timer(EVENT_INTERVAL, self._cancel_leases)
-        LOG.info("Starting _expire_offers periodic job")
+        LOG.info('Starting _expire_offers periodic job')
         self.tg.add_timer(EVENT_INTERVAL, self._expire_offers)
 
     def stop(self):
         super(ManagerService, self).stop()
-        LOG.info("Shutting down esi-leap manager RPC server")
+        LOG.info('Shutting down esi-leap manager RPC server')
         self._server.stop()
 
     def _fulfill_leases(self):
-        LOG.info("Checking for leases to fulfill")
+        LOG.info('Checking for leases to fulfill')
         leases = lease_obj.Lease.get_all(
             {'status': [statuses.CREATED, statuses.WAIT_FULFILL]},
             self._context)
@@ -69,15 +69,15 @@ class ManagerService(service.Service):
         for lease in leases:
             if lease.start_time <= now and now <= lease.end_time:
                 try:
-                    LOG.info("Fulfilling lease %s", lease.uuid)
+                    LOG.info('Fulfilling lease %s', lease.uuid)
                     lease.fulfill(self._context)
                 except Exception as e:
-                    LOG.info("Error fulfilling lease; setting to ERROR: %s", e)
+                    LOG.info('Error fulfilling lease; setting to ERROR: %s', e)
                     lease.status = statuses.ERROR
                     lease.save()
 
     def _expire_leases(self):
-        LOG.info("Checking for expiring leases")
+        LOG.info('Checking for expiring leases')
         leases = lease_obj.Lease.get_all(
             {'status': [statuses.ACTIVE, statuses.CREATED,
                         statuses.WAIT_EXPIRE, statuses.WAIT_FULFILL]},
@@ -86,41 +86,40 @@ class ManagerService(service.Service):
         for lease in leases:
             if lease.end_time <= now:
                 try:
-                    LOG.info("Expiring lease %s", lease.uuid)
+                    LOG.info('Expiring lease %s', lease.uuid)
                     lease.expire(self._context)
                 except Exception as e:
-                    LOG.info("Error expiring lease; setting to ERROR: %s", e)
+                    LOG.info('Error expiring lease; setting to ERROR: %s', e)
                     lease.status = statuses.ERROR
                     lease.save()
 
     def _cancel_leases(self):
-        LOG.info("Checking for leases to cancel")
+        LOG.info('Checking for leases to cancel')
         leases = lease_obj.Lease.get_all(
             {'status': [statuses.WAIT_CANCEL]}, self._context)
         for lease in leases:
             try:
-                LOG.info("Canceling lease %s", lease.uuid)
+                LOG.info('Canceling lease %s', lease.uuid)
                 lease.cancel(self._context)
             except Exception as e:
-                LOG.info("Error cancelling lease; setting to ERROR: %s", e)
+                LOG.info('Error cancelling lease; setting to ERROR: %s', e)
                 lease.status = statuses.ERROR
                 lease.save()
 
     def _expire_offers(self):
-        LOG.info("Checking for expiring offers")
+        LOG.info('Checking for expiring offers')
         offers = offer_obj.Offer.get_all({'status': statuses.OFFER_CAN_DELETE},
                                          self._context)
 
         for offer in offers:
-            if offer.end_time and \
-               offer.end_time <= timeutils.utcnow():
+            if offer.end_time and offer.end_time <= timeutils.utcnow():
                 try:
-                    LOG.info("Expiring offer %s for %s %s",
+                    LOG.info('Expiring offer %s for %s %s',
                              offer.uuid, offer.resource_type,
                              offer.resource_uuid)
                     offer.expire(self._context)
                 except Exception as e:
-                    LOG.info("Error expiring offer: %s", e)
+                    LOG.info('Error expiring offer: %s', e)
                     offer.status = statuses.ERROR
                     offer.save()
 

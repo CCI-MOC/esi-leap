@@ -32,7 +32,7 @@ class TestCollection(unittest.TestCase):
         self.assertEqual(self.test_collection.has_next(0), False)
 
     def test_get_next(self):
-        kwargs = {"key1": "Things", "key2": "Stuff"}
+        kwargs = {'key1': 'Things', 'key2': 'Stuff'}
         link = ("{{'key1': 'Things', 'key2': 'Stuff'}}"
                 "/v1/stuff?limit=3&marker={0}".format(self.obj3.uuid))
         self.assertEqual(self.test_collection.get_next(2, kwargs),

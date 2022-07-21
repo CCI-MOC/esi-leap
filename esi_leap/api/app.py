@@ -32,11 +32,11 @@ class ContextHook(hooks.PecanHook):
 
 def get_pecan_config():
     cfg_dict = {
-        "app": {
-            "root": CONF.pecan.root,
-            "modules": CONF.pecan.modules,
-            "debug": CONF.pecan.debug,
-            "auth_enable": CONF.pecan.auth_enable
+        'app': {
+            'root': CONF.pecan.root,
+            'modules': CONF.pecan.modules,
+            'debug': CONF.pecan.debug,
+            'auth_enable': CONF.pecan.auth_enable
         }
     }
 

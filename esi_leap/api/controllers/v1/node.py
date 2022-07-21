@@ -41,8 +41,8 @@ class Node(base.ESILEAPBase):
     future_leases = wsme.wsattr(wtypes.text)
 
     def __init__(self, **kwargs):
-        self.fields = ["name", "owner", "uuid", "offer_uuid", "lease_uuid",
-                       "lessee", "future_offers", "future_leases"]
+        self.fields = ['name', 'owner', 'uuid', 'offer_uuid', 'lease_uuid',
+                       'lessee', 'future_offers', 'future_leases']
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
@@ -52,7 +52,7 @@ class NodeCollection(types.Collection):
 
     def __init__(self, **kwargs):
         self._type = 'nodes'
-        self.nodes = kwargs.get("nodes", [])
+        self.nodes = kwargs.get('nodes', [])
 
 
 class NodesController(rest.RestController):
@@ -67,20 +67,18 @@ class NodesController(rest.RestController):
         project_list = keystone.get_project_list()
         now = datetime.now()
 
-        offers = offer_obj.Offer.get_all({"status": "available"},
+        offers = offer_obj.Offer.get_all({'status': statuses.AVAILABLE},
                                          context)
 
-        leases = lease_obj.Lease.get_all({"status": [statuses.CREATED]},
+        leases = lease_obj.Lease.get_all({'status': [statuses.CREATED]},
                                          context)
 
         for node in nodes:
             future_offers = []
             current_offer = None
 
-            node_offers = [
-                offer for offer in offers
-                if offer.resource_uuid == node.uuid
-            ]
+            node_offers = [offer for offer in offers
+                           if offer.resource_uuid == node.uuid]
 
             for offer in node_offers:
                 if offer.start_time > now:
@@ -89,10 +87,8 @@ class NodesController(rest.RestController):
                     current_offer = offer
             future_offers = ' '.join(future_offers)
 
-            f_lease_uuids = ''.join(
-                [lease.uuid for lease in leases
-                    if lease.resource_uuid == node.uuid]
-            )
+            f_lease_uuids = ''.join([lease.uuid for lease in leases
+                                     if lease.resource_uuid == node.uuid])
 
             n = Node(name=node.name, uuid=node.uuid,
                      owner=keystone.get_project_name(node.owner, project_list),
@@ -103,8 +99,8 @@ class NodesController(rest.RestController):
 
             if current_offer:
                 n.offer_uuid = current_offer.uuid
-            if "lease_uuid" in node.properties:
-                n.lease_uuid = node.properties["lease_uuid"]
+            if 'lease_uuid' in node.properties:
+                n.lease_uuid = node.properties['lease_uuid']
 
             node_collection.nodes.append(n)
 

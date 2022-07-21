@@ -29,7 +29,7 @@ class TestService(base.TestCase):
         self.test_offer = offer.Offer(
             resource_type='test_node',
             resource_uuid='abc',
-            name="o",
+            name='o',
             uuid=uuidutils.generate_uuid(),
             status=statuses.AVAILABLE,
             start_time=datetime.datetime(3000, 7, 16),
@@ -204,7 +204,7 @@ class TestService(base.TestCase):
         error_offer = offer.Offer(
             resource_type='test_node',
             resource_uuid='abc',
-            name="o",
+            name='o',
             uuid=uuidutils.generate_uuid(),
             status=statuses.AVAILABLE,
             start_time=datetime.datetime(3000, 7, 16),

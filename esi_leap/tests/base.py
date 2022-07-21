@@ -39,13 +39,13 @@ class Database(fixtures.Fixture):
         models.Base.metadata.create_all(self.engine)
 
         conn = self.engine.connect()
-        self._DB = "".join(line for line in conn.connection.iterdump())
+        self._DB = ''.join(line for line in conn.connection.iterdump())
         self.engine.dispose()
 
     def setUp(self):
         super(Database, self).setUp()
 
-        if self.sql_connection == "sqlite://":
+        if self.sql_connection == 'sqlite://':
             conn = self.engine.connect()
             conn.connection.executescript(self._DB)
             self.addCleanup(self.engine.dispose)
@@ -69,8 +69,7 @@ class DBTestCase(TestCase):
 
     def setUp(self):
         super(DBTestCase, self).setUp()
-        CONF.set_override('connection', 'sqlite://',
-                          group='database')
+        CONF.set_override('connection', 'sqlite://', group='database')
 
         self.db_api = db_api.get_instance()
 

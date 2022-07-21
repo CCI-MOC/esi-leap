@@ -18,8 +18,8 @@ from esi_leap.tests import base
 
 class FakeNode(object):
     def __init__(self):
-        self.uuid = "uuid"
-        self.name = "name"
+        self.uuid = 'uuid'
+        self.name = 'name'
 
 
 class IronicTestCase(base.TestCase):

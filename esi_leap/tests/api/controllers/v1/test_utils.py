@@ -27,21 +27,16 @@ from esi_leap.objects import offer
 from esi_leap.resource_objects.test_node import TestNode
 
 
-admin_ctx = ctx.RequestContext(project_id='adminid',
-                               roles=['admin'])
+admin_ctx = ctx.RequestContext(project_id='adminid', roles=['admin'])
 
-owner_ctx = ctx.RequestContext(project_id='ownerid',
-                               roles=['owner'])
+owner_ctx = ctx.RequestContext(project_id='ownerid', roles=['owner'])
 owner_ctx_dict = owner_ctx.to_policy_values()
 
-lessee_ctx = ctx.RequestContext(project_id="lesseeid",
-                                roles=['lessee'])
+lessee_ctx = ctx.RequestContext(project_id='lesseeid', roles=['lessee'])
 lessee_ctx_dict = lessee_ctx.to_policy_values()
 
-owner_ctx_2 = ctx.RequestContext(project_id='ownerid2',
-                                 roles=['owner'])
-lessee_ctx_2 = ctx.RequestContext(project_id="lesseeid2",
-                                  roles=['lessee'])
+owner_ctx_2 = ctx.RequestContext(project_id='ownerid2', roles=['owner'])
+lessee_ctx_2 = ctx.RequestContext(project_id='lesseeid2', roles=['lessee'])
 
 
 start = datetime.datetime(2016, 7, 16)
@@ -59,7 +54,7 @@ o_uuid = uuidutils.generate_uuid()
 test_offer = offer.Offer(
     resource_type='test_node',
     resource_uuid=test_node_1._uuid,
-    name="o",
+    name='o',
     uuid=o_uuid,
     lessee_id=None,
     status=statuses.AVAILABLE,
@@ -71,7 +66,7 @@ test_offer = offer.Offer(
 test_offer_2 = offer.Offer(
     resource_type='test_node',
     resource_uuid=test_node_1._uuid,
-    name="o",
+    name='o',
     uuid=uuidutils.generate_uuid(),
     lessee_id=None,
     status=statuses.EXPIRED,
@@ -83,7 +78,7 @@ test_offer_2 = offer.Offer(
 test_offer_lessee_match = offer.Offer(
     resource_type='test_node',
     resource_uuid=test_node_1._uuid,
-    name="o",
+    name='o',
     uuid=uuidutils.generate_uuid(),
     lessee_id='lesseeid',
     status=statuses.EXPIRED,
@@ -95,7 +90,7 @@ test_offer_lessee_match = offer.Offer(
 test_offer_lessee_no_match = offer.Offer(
     resource_type='test_node',
     resource_uuid=test_node_1._uuid,
-    name="o",
+    name='o',
     uuid=uuidutils.generate_uuid(),
     lessee_id='otherlesseeid',
     status=statuses.EXPIRED,
@@ -656,7 +651,7 @@ class TestOfferGetDictWithAddedInfoUtils(testtools.TestCase):
         o = offer.Offer(
             resource_type='test_node',
             resource_uuid='1234567890',
-            name="o",
+            name='o',
             status=statuses.AVAILABLE,
             start_time=start,
             end_time=start + datetime.timedelta(days=100),
@@ -713,8 +708,7 @@ class TestLeaseGetDictWithAddedInfoUtils(testtools.TestCase):
         mock_gpn.return_value = 'project-name'
         mock_grn.return_value = 'resource-name'
 
-        output_dict = utils.lease_get_dict_with_added_info(
-            self.test_lease)
+        output_dict = utils.lease_get_dict_with_added_info(self.test_lease)
 
         expected_output_dict = self.test_lease.to_dict()
         expected_output_dict['resource'] = 'resource-name'

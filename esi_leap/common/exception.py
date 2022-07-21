@@ -16,7 +16,7 @@ from esi_leap.common.i18n import _
 
 
 class ESILeapException(Exception):
-    msg_fmt = _("An unknown exception occurred.")
+    msg_fmt = _('An unknown exception occurred.')
     code = http_client.INTERNAL_SERVER_ERROR
     safe = False
 
@@ -41,105 +41,106 @@ class ESILeapException(Exception):
 
 class HTTPForbidden(ESILeapException):
     code = http_client.FORBIDDEN
-    msg_fmt = _("Access was denied to %(rule)s.")
+    msg_fmt = _('Access was denied to %(rule)s.')
 
 
 class HTTPResourceForbidden(ESILeapException):
     code = http_client.FORBIDDEN
-    msg_fmt = _("Access was denied to %(resource_type)s %(resource)s.")
+    msg_fmt = _('Access was denied to %(resource_type)s %(resource)s.')
 
 
 class LeaseNoPermission(ESILeapException):
-    msg_fmt = _("You do not have permissions on "
-                "lease %(lease_uuid)s.")
+    msg_fmt = _('You do not have permissions on '
+                'lease %(lease_uuid)s.')
 
 
 class LeaseDuplicateName(ESILeapException):
-    msg_fmt = _("Duplicate leases with name %(name)s.")
+    msg_fmt = _('Duplicate leases with name %(name)s.')
 
 
 class LeaseNotActive(ESILeapException):
-    msg_fmt = _("Lease with name or uuid %(lease_id)s not active.")
+    msg_fmt = _('Lease with name or uuid %(lease_id)s not active.')
 
 
 class LeaseNotFound(ESILeapException):
-    msg_fmt = _("Lease with name or uuid %(lease_id)s not found.")
+    msg_fmt = _('Lease with name or uuid %(lease_id)s not found.')
 
 
 class LeaseNoOfferUUID(ESILeapException):
-    msg_fmt = _("Cannot create lease without parameter offer_uuid.")
+    msg_fmt = _('Cannot create lease without parameter offer_uuid.')
 
 
 class LeaseNoTimeAvailabilities(ESILeapException):
-    msg_fmt = _("Lease %(lease_uuid)s has no availabilities at given "
-                "time range %(start_time)s, %(end_time)s.")
+    msg_fmt = _('Lease %(lease_uuid)s has no availabilities at given '
+                'time range %(start_time)s, %(end_time)s.')
 
 
 class OfferNoPermission(ESILeapException):
-    msg_fmt = _("You do not have permissions on "
-                "offer %(offer_uuid)s.")
+    msg_fmt = _('You do not have permissions on '
+                'offer %(offer_uuid)s.')
 
 
 class OfferDuplicateName(ESILeapException):
-    msg_fmt = _("Duplicate offers with name %(name)s.")
+    msg_fmt = _('Duplicate offers with name %(name)s.')
 
 
 class OfferNotFound(ESILeapException):
-    msg_fmt = _("Offer with name or uuid %(offer_uuid)s not found.")
+    msg_fmt = _('Offer with name or uuid %(offer_uuid)s not found.')
 
 
 class OfferNoTimeAvailabilities(ESILeapException):
-    msg_fmt = _("Offer %(offer_uuid)s has no availabilities at given "
-                "time range %(start_time)s, %(end_time)s.")
+    msg_fmt = _('Offer %(offer_uuid)s has no availabilities at given '
+                'time range %(start_time)s, %(end_time)s.')
 
 
 class OfferNotAvailable(ESILeapException):
-    msg_fmt = _("Offer %(offer_uuid)s does not have status "
-                "'available'. Got offer status '%(status)s'.")
+    msg_fmt = _('Offer %(offer_uuid)s does not have status '
+                '"available". Got offer status "%(status)s".')
 
 
 class ProjectNoPermission(ESILeapException):
-    msg_fmt = _("You do not have permissions on project %(project_id)s.")
+    msg_fmt = _('You do not have permissions on project %(project_id)s.')
 
 
 class ProjectNoSuchName(ESILeapException):
-    msg_fmt = _("No project named %(name)s.")
+    msg_fmt = _('No project named %(name)s.')
 
 
 class ResourceTimeConflict(ESILeapException):
-    msg_fmt = ("Time conflict for %(resource_type)s %(resource_uuid)s.")
+    msg_fmt = ('Time conflict for %(resource_type)s %(resource_uuid)s.')
 
 
 class ResourceNoPermission(ESILeapException):
-    msg_fmt = _("You do not have permissions on "
-                "%(resource_type)s %(resource_uuid)s.")
+    msg_fmt = _('You do not have permissions on '
+                '%(resource_type)s %(resource_uuid)s.')
 
 
 class ResourceNoPermissionTime(ESILeapException):
-    msg_fmt = _("You do not have permissions on "
-                "%(resource_type)s %(resource_uuid)s for the time range "
-                "%(start_time)s - %(end_time)s.")
+    msg_fmt = _('You do not have permissions on '
+                '%(resource_type)s %(resource_uuid)s for the time range '
+                '%(start_time)s - %(end_time)s.')
 
 
 class ResourceTypeUnknown(ESILeapException):
-    msg_fmt = _("%(resource_type)s resource type unknown.")
+    msg_fmt = _('%(resource_type)s resource type unknown.')
 
 
 class InvalidTimeAPICommand(ESILeapException):
-    msg_fmt = _("Attempted to get %(resource)s resource without providing "
-                "both a valid Start Time and End Time. "
-                "Start Time must be strictly less than End Time. "
-                "Got %(start_time)s, %(end_time)s")
+    msg_fmt = _('Attempted to get %(resource)s resource without providing '
+                'both a valid Start Time and End Time. '
+                'Start Time must be strictly less than End Time. '
+                'Got %(start_time)s, %(end_time)s.')
 
 
 class InvalidAvailabilityAPICommand(ESILeapException):
-    msg_fmt = _("Attempted to get an offer resource without providing "
-                "both a valid Availability Start Time and Availability "
-                "End Time. Availability Start Time must be strictly "
-                "less than Availability End Time. "
-                "Got %(a_start)s, %(a_end)s")
+    msg_fmt = _('Attempted to get an offer resource without providing '
+                'both a valid Availability Start Time and Availability '
+                'End Time. Availability Start Time must be strictly '
+                'less than Availability End Time. '
+                'Got %(a_start)s, %(a_end)s.')
 
 
 class InvalidTimeRange(ESILeapException):
-    msg_fmt = _("Attempted to create %(resource)s resource with an invalid "
-                "Start Time %(start_time)s and End Time %(end_time)s.")
+    msg_fmt = _('Attempted to create %(resource)s resource with an invalid '
+                'Start Time and End Time. Start Time must be strictly less '
+                'than End Time. Got %(start_time)s, %(end_time)s.')
