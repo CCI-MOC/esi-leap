@@ -30,7 +30,7 @@ from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
-from esi_leap.resource_objects import resource_object_factory as ro_factory
+from esi_leap.resource_objects import get_resource_object
 
 CONF = esi_leap.conf.CONF
 
@@ -110,8 +110,7 @@ class OffersController(rest.RestController):
         if resource_uuid is not None:
             if resource_type is None:
                 resource_type = CONF.api.default_resource_type
-            resource = ro_factory.ResourceObjectFactory.get_resource_object(
-                resource_type, resource_uuid)
+            resource = get_resource_object(resource_type, resource_uuid)
             resource_uuid = resource.get_resource_uuid()
 
         # either both are defined or both are None
@@ -193,8 +192,8 @@ class OffersController(rest.RestController):
         offer_dict['uuid'] = uuidutils.generate_uuid()
         if 'resource_type' not in offer_dict:
             offer_dict['resource_type'] = CONF.api.default_resource_type
-        resource = ro_factory.ResourceObjectFactory.get_resource_object(
-            offer_dict['resource_type'], offer_dict['resource_uuid'])
+        resource = get_resource_object(offer_dict['resource_type'],
+                                       offer_dict['resource_uuid'])
         offer_dict['resource_uuid'] = resource.get_resource_uuid()
 
         if 'lessee_id' in offer_dict:

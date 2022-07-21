@@ -88,8 +88,7 @@ class TestLeasesController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'lease_get_dict_with_added_info')
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.lease.get_resource_object')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
@@ -133,8 +132,7 @@ class TestLeasesController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'lease_get_dict_with_added_info')
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.lease.get_resource_object')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
@@ -142,7 +140,7 @@ class TestLeasesController(test_api_base.APITestCase):
     def test_post_default_resource_type(self, mock_create, mock_cra,
                                         mock_generate_uuid, mock_gpufi,
                                         mock_gro, mock_lgdwai):
-        resource = IronicNode('1234567890')
+        resource = IronicNode('13921c8d-ce11-4b6d-99ed-10e19d184e5f')
         data = {
             'project_id': 'lesseeid',
             'resource_uuid': '1234567890',
@@ -181,8 +179,7 @@ class TestLeasesController(test_api_base.APITestCase):
                 'lease_get_dict_with_added_info')
     @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'check_resource_lease_admin')
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.lease.get_resource_object')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
@@ -190,7 +187,7 @@ class TestLeasesController(test_api_base.APITestCase):
     def test_post_non_admin_parent_lease(self, mock_create, mock_cra,
                                          mock_generate_uuid, mock_gpufi,
                                          mock_gro, mock_crla, mock_lgdwai):
-        resource = IronicNode('1234567890')
+        resource = IronicNode('13921c8d-ce11-4b6d-99ed-10e19d184e5f')
         data = {
             'project_id': 'lesseeid',
             'resource_uuid': '1234567890',
@@ -238,8 +235,7 @@ class TestLeasesController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'check_resource_lease_admin')
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.lease.get_resource_object')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('oslo_utils.uuidutils.generate_uuid')
     @mock.patch('esi_leap.api.controllers.v1.utils.check_resource_admin')
@@ -247,23 +243,24 @@ class TestLeasesController(test_api_base.APITestCase):
     def test_post_non_admin_no_parent_lease(self, mock_create, mock_cra,
                                             mock_generate_uuid, mock_gpufi,
                                             mock_gro, mock_crla):
-        resource = IronicNode('1234567890')
+        fake_uuid = '13921c8d-ce11-4b6d-99ed-10e19d184e5f'
+        resource = IronicNode(fake_uuid)
         mock_gro.return_value = resource
         mock_gpufi.return_value = 'lesseeid'
         mock_generate_uuid.return_value = self.test_lease.uuid
         mock_cra.side_effect = exception.HTTPResourceForbidden(
-            resource_type='ironic_node', resource='1234567890')
+            resource_type='ironic_node', resource=fake_uuid)
         mock_crla.return_value = None
 
         data = {
             'project_id': 'lesseeid',
-            'resource_uuid': '1234567890',
+            'resource_uuid': fake_uuid,
             'start_time': '2016-07-17T19:20:30',
             'end_time': '2016-08-14T19:20:30'
         }
         request = self.post_json('/leases', data, expect_errors=True)
 
-        mock_gro.assert_called_once_with('ironic_node', '1234567890')
+        mock_gro.assert_called_once_with('ironic_node', fake_uuid)
         mock_generate_uuid.assert_called_once()
         mock_cra.assert_called_once_with(
             self.context.to_policy_values(),
@@ -380,8 +377,7 @@ class TestLeasesController(test_api_base.APITestCase):
     @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'lease_get_dict_with_added_info')
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.lease.get_resource_object')
     @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
                 '_lease_get_all_authorize_filters')
     @mock.patch('esi_leap.objects.lease.Lease.get_all')
@@ -478,8 +474,7 @@ class TestLeasesController(test_api_base.APITestCase):
     @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'lease_get_dict_with_added_info')
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.api.controllers.v1.lease.get_resource_object')
     @mock.patch('esi_leap.api.controllers.v1.lease.LeasesController.'
                 '_lease_get_all_authorize_filters')
     @mock.patch('esi_leap.objects.lease.Lease.get_all')
@@ -487,14 +482,15 @@ class TestLeasesController(test_api_base.APITestCase):
                                                        mock_lgaaf, mock_gro,
                                                        mock_lgdwai, mock_gpl,
                                                        mock_gnl):
-        mock_gro.return_value = IronicNode('54321')
+        fake_uuid = uuidutils.generate_uuid()
+        mock_gro.return_value = IronicNode(fake_uuid)
         mock_get_all.return_value = [self.test_lease, self.test_lease]
         mock_gpl.return_value = []
         mock_gnl.return_value = []
 
-        self.get_json('/leases?resource_uuid=54321')
+        self.get_json('/leases?resource_uuid=%s' % fake_uuid)
 
-        mock_gro.assert_called_once_with('ironic_node', '54321')
+        mock_gro.assert_called_once_with('ironic_node', fake_uuid)
         mock_lgaaf.assert_called_once_with(self.context.to_policy_values(),
                                            project_id=None,
                                            start_time=None,
@@ -504,7 +500,7 @@ class TestLeasesController(test_api_base.APITestCase):
                                            view=None,
                                            owner_id=None,
                                            resource_type='ironic_node',
-                                           resource_uuid='54321')
+                                           resource_uuid=fake_uuid)
 
         mock_get_all.assert_called_once()
         mock_gpl.assert_called_once()

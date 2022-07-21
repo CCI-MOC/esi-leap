@@ -325,8 +325,7 @@ class TestOfferObject(base.DBTestCase):
         o.verify_availability(o.start_time, o.end_time)
         mock_ova.assert_called_once_with(o, o.start_time, o.end_time)
 
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.objects.offer.get_resource_object')
     def test_resource_object(self, mock_gro):
         o = offer.Offer(self.context, **self.test_offer_data)
         o.resource_object()

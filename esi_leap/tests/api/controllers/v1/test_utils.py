@@ -700,8 +700,7 @@ class TestLeaseGetDictWithAddedInfoUtils(testtools.TestCase):
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.'
                 'get_resource_name')
     @mock.patch('esi_leap.common.keystone.get_project_name')
-    @mock.patch('esi_leap.resource_objects.resource_object_factory.'
-                'ResourceObjectFactory.get_resource_object')
+    @mock.patch('esi_leap.objects.lease.get_resource_object')
     def test_lease_get_dict_with_added_info(self, mock_gro, mock_gpn,
                                             mock_grn):
         mock_gro.return_value = TestNode('111')
