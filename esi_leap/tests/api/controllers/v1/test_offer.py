@@ -398,6 +398,33 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'offer_get_dict_with_added_info')
+    @mock.patch('esi_leap.objects.offer.Offer.get_all')
+    def test_get_status_filter(self, mock_get_all, mock_ogdwai,
+                               mock_gpl, mock_gnl):
+        mock_get_all.return_value = [self.test_offer, self.test_offer_2]
+        mock_ogdwai.side_effect = [
+            _get_offer_response(self.test_offer, use_datetime=True),
+            _get_offer_response(self.test_offer_2, use_datetime=True)]
+        mock_gpl.return_value = []
+        mock_gnl.return_value = []
+
+        expected_filters = {'status': [statuses.AVAILABLE]}
+        expected_resp = {'offers': [_get_offer_response(self.test_offer),
+                                    _get_offer_response(self.test_offer_2)]}
+
+        request = self.get_json(
+            '/offers/?status=available')
+
+        mock_get_all.assert_called_once_with(expected_filters, self.context)
+        mock_gpl.assert_called_once()
+        mock_gnl.assert_called_once()
+        assert mock_ogdwai.call_count == 2
+        self.assertEqual(request, expected_resp)
+
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
     @mock.patch('esi_leap.api.controllers.v1.utils.'
                 'offer_get_dict_with_added_info')

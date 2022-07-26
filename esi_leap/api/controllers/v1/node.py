@@ -67,7 +67,7 @@ class NodesController(rest.RestController):
         project_list = keystone.get_project_list()
         now = datetime.now()
 
-        offers = offer_obj.Offer.get_all({'status': statuses.AVAILABLE},
+        offers = offer_obj.Offer.get_all({'status': [statuses.AVAILABLE]},
                                          context)
 
         leases = lease_obj.Lease.get_all({'status': [statuses.CREATED]},
