@@ -137,6 +137,8 @@ class OffersController(rest.RestController):
             status = statuses.OFFER_CAN_DELETE
         elif status == 'any':
             status = None
+        else:
+            status = [status]
 
         try:
             utils.policy_authorize('esi_leap:offer:offer_admin', cdict, cdict)
