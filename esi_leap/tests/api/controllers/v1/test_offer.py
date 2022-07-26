@@ -620,7 +620,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_copar.assert_called_once_with(self.context,
                                            'esi_leap:offer:claim',
                                            self.test_offer.uuid,
-                                           statuses.AVAILABLE)
+                                           [statuses.AVAILABLE])
         mock_col.assert_called_once_with(self.context.to_policy_values(),
                                          self.test_offer)
         mock_lease_create.assert_called_once()
@@ -652,7 +652,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_copar.assert_called_once_with(self.context,
                                            'esi_leap:offer:claim',
                                            self.test_offer_with_parent.uuid,
-                                           statuses.AVAILABLE)
+                                           [statuses.AVAILABLE])
         mock_col.assert_called_once_with(self.context.to_policy_values(),
                                          self.test_offer_with_parent)
         mock_lease_create.assert_called_once()
