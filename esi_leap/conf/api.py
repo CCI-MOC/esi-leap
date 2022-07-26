@@ -14,7 +14,7 @@ from oslo_config import cfg
 
 
 opts = [
-    cfg.HostAddressOpt('host_ip', default='127.0.0.1'),
+    cfg.HostAddressOpt('host_ip', default='0.0.0.0'),
     cfg.PortOpt('port', default=7777),
     cfg.IntOpt('max_limit', default=1000),
     cfg.StrOpt('public_endpoint'),
