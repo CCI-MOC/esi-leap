@@ -246,7 +246,7 @@ class OffersController(rest.RestController):
         cdict = request.to_policy_values()
 
         offer = utils.check_offer_policy_and_retrieve(
-            request, 'esi_leap:offer:claim', offer_uuid, statuses.AVAILABLE)
+            request, 'esi_leap:offer:claim', offer_uuid, [statuses.AVAILABLE])
         utils.check_offer_lessee(cdict, offer)
 
         lease_dict = new_lease.to_dict()
