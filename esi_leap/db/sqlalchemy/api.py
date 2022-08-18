@@ -300,7 +300,11 @@ def lease_get_all(filters):
                                   (end >= models.Lease.start_time)) |
 
                                  ((start <= models.Lease.end_time) &
-                                  (end >= models.Lease.end_time)))
+                                  (end >= models.Lease.end_time)) |
+
+                                 ((start >= models.Lease.start_time) &
+                                  (end <= models.Lease.end_time)))
+
         else:
             query = query.filter((start >= models.Lease.start_time) &
                                  (end <= models.Lease.end_time))

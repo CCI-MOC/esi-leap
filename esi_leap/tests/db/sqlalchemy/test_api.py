@@ -150,6 +150,19 @@ test_lease_5 = dict(
     status=statuses.EXPIRED,
 )
 
+test_lease_6 = dict(
+    project_id='0wn3r',
+    owner_id='0wn3r_2',
+    name='l6',
+    resource_uuid='2222',
+    resource_type='dummy_node',
+    start_time=now + datetime.timedelta(days=5),
+    end_time=now + datetime.timedelta(days=30),
+    uuid='6666',
+    properties={},
+    status=statuses.EXPIRED,
+)
+
 
 class TestOfferAPI(base.DBTestCase):
 
@@ -496,6 +509,7 @@ class TestLeaseAPI(base.DBTestCase):
         api.lease_create(test_lease_1)
         api.lease_create(test_lease_2)
         api.lease_create(test_lease_3)
+        api.lease_create(test_lease_6)
 
         start_time = test_lease_1['end_time'] + datetime.timedelta(days=-1)
         end_time = test_lease_2['start_time'] + datetime.timedelta(days=1)
@@ -505,9 +519,10 @@ class TestLeaseAPI(base.DBTestCase):
                                  'time_filter_type': 'within'})
         res_uuids = [res_lease.to_dict()['uuid'] for res_lease in res]
 
-        self.assertEqual(2, res.count())
+        self.assertEqual(3, res.count())
         self.assertIn(test_lease_1['uuid'], res_uuids)
         self.assertIn(test_lease_2['uuid'], res_uuids)
+        self.assertIn(test_lease_6['uuid'], res_uuids)
 
     def test_lease_get_all_filter_by_project_or_owner_id(self):
         api.lease_create(test_lease_1)
