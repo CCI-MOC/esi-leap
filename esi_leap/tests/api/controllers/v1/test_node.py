@@ -22,6 +22,8 @@ class FakeIronicNode(object):
         self.uuid = 'fake-uuid'
         self.properties = {'lease_uuid': 'fake-lease-uuid'}
         self.lessee = 'fake-project-uuid'
+        self.maintenance = False
+        self.provision_state = 'active'
 
 
 class FakeProject(object):
