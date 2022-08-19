@@ -33,6 +33,8 @@ class Node(base.ESILEAPBase):
 
     name = wsme.wsattr(wtypes.text)
     owner = wsme.wsattr(wtypes.text)
+    maintenance = wsme.wsattr(wtypes.text)
+    provision_state = wsme.wsattr(wtypes.text)
     uuid = wsme.wsattr(wtypes.text)
     offer_uuid = wsme.wsattr(wtypes.text)
     lease_uuid = wsme.wsattr(wtypes.text)
@@ -42,7 +44,8 @@ class Node(base.ESILEAPBase):
 
     def __init__(self, **kwargs):
         self.fields = ('name', 'owner', 'uuid', 'offer_uuid', 'lease_uuid',
-                       'lessee', 'future_offers', 'future_leases')
+                       'lessee', 'future_offers', 'future_leases',
+                       'provision_state', 'maintenance')
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
@@ -91,6 +94,8 @@ class NodesController(rest.RestController):
                                      if lease.resource_uuid == node.uuid])
 
             n = Node(name=node.name, uuid=node.uuid,
+                     provision_state=node.provision_state,
+                     maintenance=str(node.maintenance),
                      owner=keystone.get_project_name(node.owner, project_list),
                      lessee=keystone.get_project_name(node.lessee,
                                                       project_list),
