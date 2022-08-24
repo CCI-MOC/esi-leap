@@ -47,11 +47,9 @@ def get_node_list(context=None):
     return get_ironic_client(context).node.list(detail=True)
 
 
-def get_node_name(node_uuid, node_list=None):
+def get_node(node_uuid, node_list=None):
     if node_list is None:
         node = get_ironic_client().node.get(node_uuid)
     else:
-        node = next((n for n in node_list if getattr(n, 'uuid') == node_uuid),
-                    None)
-
-    return node.name if node else ''
+        node = next((n for n in node_list if n.uuid == node_uuid), None)
+    return node

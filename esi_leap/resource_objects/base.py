@@ -41,7 +41,7 @@ class ResourceObjectInterface(object, metaclass=abc.ABCMeta):
         """Returns resource's associated config, if any"""
 
     @abc.abstractmethod
-    def get_resource_class(self):
+    def get_resource_class(self, resource_list):
         """Returns resource's associated class, if any"""
 
     @abc.abstractmethod

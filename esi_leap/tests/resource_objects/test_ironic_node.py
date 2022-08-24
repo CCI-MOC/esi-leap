@@ -56,15 +56,26 @@ class TestIronicNode(base.TestCase):
         test_ironic_node = ironic_node.IronicNode(fake_uuid)
         self.assertEqual(fake_uuid, test_ironic_node.get_resource_uuid())
 
-    @mock.patch('esi_leap.common.ironic.get_node_name')
-    def test_get_resource_name(self, mock_gnn):
-        mock_gnn.return_value = 'node-name'
+    @mock.patch('esi_leap.common.ironic.get_node')
+    def test_get_resource_name(self, mock_gn):
         test_ironic_node = ironic_node.IronicNode(fake_uuid)
+        fake_get_node = FakeIronicNode()
+        mock_gn.return_value = fake_get_node
 
-        resource_name = test_ironic_node.get_resource_name()
+        name = test_ironic_node.get_resource_name()
 
-        self.assertEqual('node-name', resource_name)
-        mock_gnn.assert_called_once_with(fake_uuid, None)
+        self.assertEqual('fake-node', name)
+        mock_gn.assert_called_once_with(fake_uuid, None)
+
+    @mock.patch('esi_leap.common.ironic.get_node')
+    def test_get_resource_name_no_node(self, mock_gn):
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
+        mock_gn.return_value = None
+
+        name = test_ironic_node.get_resource_name()
+
+        self.assertEqual('', name)
+        mock_gn.assert_called_once_with(fake_uuid, None)
 
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
     def test_get_by_name(self, client_mock):
@@ -112,17 +123,26 @@ class TestIronicNode(base.TestCase):
         client_mock.return_value.node.get.assert_called_once_with(
             test_ironic_node._uuid)
 
-    @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
-    def test_get_resource_class(self, client_mock):
-        fake_get_node = FakeIronicNode()
-        client_mock.return_value.node.get.return_value = fake_get_node
+    @mock.patch('esi_leap.common.ironic.get_node')
+    def test_get_resource_class(self, mock_gn):
         test_ironic_node = ironic_node.IronicNode(fake_uuid)
+        fake_get_node = FakeIronicNode()
+        mock_gn.return_value = fake_get_node
+
         resource_class = test_ironic_node.get_resource_class()
-        expected_resource_class = fake_get_node.resource_class
-        self.assertEqual(resource_class, expected_resource_class)
-        client_mock.assert_called_once()
-        client_mock.return_value.node.get.assert_called_once_with(
-            test_ironic_node._uuid)
+
+        self.assertEqual('baremetal', resource_class)
+        mock_gn.assert_called_once_with(fake_uuid, None)
+
+    @mock.patch('esi_leap.common.ironic.get_node')
+    def test_get_resource_class_no_node(self, mock_gn):
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
+        mock_gn.return_value = None
+
+        resource_class = test_ironic_node.get_resource_class()
+
+        self.assertEqual('', resource_class)
+        mock_gn.assert_called_once_with(fake_uuid, None)
 
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)
     def test_set_lease(self, client_mock):

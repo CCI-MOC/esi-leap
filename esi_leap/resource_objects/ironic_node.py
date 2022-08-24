@@ -42,7 +42,8 @@ class IronicNode(base.ResourceObjectInterface):
         return self._uuid
 
     def get_resource_name(self, resource_list=None):
-        return ironic.get_node_name(self._uuid, resource_list)
+        node = ironic.get_node(self._uuid, resource_list)
+        return getattr(node, 'name', '')
 
     def get_lease_uuid(self):
         node = get_ironic_client().node.get(self._uuid)
@@ -58,9 +59,9 @@ class IronicNode(base.ResourceObjectInterface):
         config.pop('lease_uuid', None)
         return config
 
-    def get_resource_class(self):
-        node = get_ironic_client().node.get(self._uuid)
-        return node.resource_class
+    def get_resource_class(self, resource_list=None):
+        node = ironic.get_node(self._uuid, resource_list)
+        return getattr(node, 'resource_class', '')
 
     def set_lease(self, lease):
         patches = []
