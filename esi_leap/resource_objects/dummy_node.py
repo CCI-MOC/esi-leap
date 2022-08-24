@@ -49,7 +49,7 @@ class DummyNode(base.ResourceObjectInterface):
             node_dict = json.load(node_file)
         return node_dict.get('server_config', None)
 
-    def get_resource_class(self):
+    def get_resource_class(self, resource_list=None):
         with open(self._path) as node_file:
             node_dict = json.load(node_file)
         return node_dict.get('resource_class', None)
