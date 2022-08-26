@@ -104,7 +104,7 @@ class ManagerService(service.Service):
         for lease in leases:
             try:
                 LOG.info('Cancelling lease %s', lease.uuid)
-                lease.cancel(self._context)
+                lease.cancel()
             except Exception as e:
                 LOG.info('Error cancelling lease: %s: %s' %
                          (type(e).__name__, e))

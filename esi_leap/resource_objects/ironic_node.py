@@ -34,34 +34,33 @@ class IronicNode(base.ResourceObjectInterface):
 
     def __init__(self, ident):
         if not is_uuid_like(ident):
-            node = get_ironic_client().node.get(ident)
-            ident = node.uuid
-        self._uuid = ident
+            self._node = get_ironic_client().node.get(ident)
+            self._uuid = self._node.uuid
+        else:
+            self._node = None
+            self._uuid = ident
 
     def get_resource_uuid(self):
         return self._uuid
 
     def get_resource_name(self, resource_list=None):
-        node = ironic.get_node(self._uuid, resource_list)
-        return getattr(node, 'name', '')
+        return getattr(self._get_node(resource_list), 'name', '')
 
     def get_lease_uuid(self):
-        node = get_ironic_client().node.get(self._uuid)
-        return node.properties.get('lease_uuid', None)
+        return self._get_node().properties.get('lease_uuid', None)
 
     def get_project_id(self):
-        node = get_ironic_client().node.get(self._uuid)
-        return node.lessee
+        return self._get_node().lessee
 
     def get_node_config(self):
-        node = get_ironic_client().node.get(self._uuid)
+        node = self._get_node()
         config = node.properties
         config.pop('lease_uuid', None)
         return config
 
     def get_resource_class(self, resource_list=None):
-        node = ironic.get_node(self._uuid, resource_list)
-        return getattr(node, 'resource_class', '')
+        return getattr(self._get_node(resource_list),
+                       'resource_class', '')
 
     def set_lease(self, lease):
         patches = []
@@ -94,10 +93,14 @@ class IronicNode(base.ResourceObjectInterface):
             })
         if len(patches) > 0:
             get_ironic_client().node.update(self._uuid, patches)
-        state = get_ironic_client().node.get(self._uuid).provision_state
+        state = self._get_node().provision_state
         if state == 'active':
             get_ironic_client().node.set_provision_state(self._uuid, 'deleted')
 
     def resource_admin_project_id(self):
-        node = get_ironic_client().node.get(self._uuid)
-        return node.owner
+        return self._get_node().owner
+
+    def _get_node(self, resource_list=None):
+        if not self._node:
+            self._node = ironic.get_node(self._uuid, resource_list)
+        return self._node
