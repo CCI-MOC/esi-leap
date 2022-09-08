@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import concurrent.futures
 from datetime import datetime
 import pecan
 from pecan import rest
@@ -63,11 +64,18 @@ class NodesController(rest.RestController):
     @wsme_pecan.wsexpose(NodeCollection)
     def get_all(self):
         context = pecan.request.context
-        nodes = ironic.get_node_list(context)
+
+        nodes = None
+        project_list = None
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            f1 = executor.submit(ironic.get_node_list, context)
+            f2 = executor.submit(keystone.get_project_list)
+            nodes = f1.result()
+            project_list = f2.result()
 
         node_collection = NodeCollection()
 
-        project_list = keystone.get_project_list()
         now = datetime.now()
 
         offers = offer_obj.Offer.get_all({'status': [statuses.AVAILABLE]},

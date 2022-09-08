@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import concurrent.futures
 import datetime
 import http.client as http_client
 from oslo_utils import uuidutils
@@ -115,9 +116,17 @@ class LeasesController(rest.RestController):
         leases = lease_obj.Lease.get_all(filters, request)
 
         lease_collection.leases = []
+
         if len(leases) > 0:
-            project_list = keystone.get_project_list()
-            node_list = ironic.get_node_list()
+            project_list = None
+            node_list = None
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                f1 = executor.submit(ironic.get_node_list)
+                f2 = executor.submit(keystone.get_project_list)
+                node_list = f1.result()
+                project_list = f2.result()
+
             leases_with_added_info = [
                 Lease(**utils.lease_get_dict_with_added_info(l, project_list,
                                                              node_list))
