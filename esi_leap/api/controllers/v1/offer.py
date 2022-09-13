@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import concurrent.futures
 import datetime
 import http.client as http_client
 from oslo_utils import uuidutils
@@ -167,9 +168,16 @@ class OffersController(rest.RestController):
         offers = offer_obj.Offer.get_all(filters, request)
 
         offer_collection.offers = []
+
         if len(offers) > 0:
-            project_list = keystone.get_project_list()
-            node_list = ironic.get_node_list()
+            project_list = None
+            node_list = None
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                f1 = executor.submit(ironic.get_node_list)
+                f2 = executor.submit(keystone.get_project_list)
+                node_list = f1.result()
+                project_list = f2.result()
+
             offers_with_added_info = [
                 Offer(**utils.offer_get_dict_with_added_info(o, project_list,
                                                              node_list))
