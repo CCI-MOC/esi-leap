@@ -15,10 +15,22 @@ from oslo_utils.uuidutils import is_uuid_like
 from esi_leap.common import ironic
 import esi_leap.conf
 from esi_leap.resource_objects import base
+from ironicclient.common.apiclient import exceptions
 
 
 CONF = esi_leap.conf.CONF
 _cached_ironic_client = None
+
+
+class UnknownIronicNode(object):
+    def __init__(self):
+        self.name = 'unknown-node'
+        self.owner = ''
+        self.uuid = 'unknown-uuid'
+        self.properties = {}
+        self.lessee = ''
+        self.maintenance = False
+        self.provision_state = 'unknown'
 
 
 def get_ironic_client():
@@ -101,6 +113,10 @@ class IronicNode(base.ResourceObjectInterface):
         return self._get_node().owner
 
     def _get_node(self, resource_list=None):
-        if not self._node:
-            self._node = ironic.get_node(self._uuid, resource_list)
+        try:
+            if not self._node:
+                self._node = ironic.get_node(self._uuid, resource_list)
+        except exceptions.NotFound:
+            self._node = UnknownIronicNode()
+
         return self._node
