@@ -10,10 +10,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import oslo_i18n as i18n
+import sys
 
-_translators = i18n.TranslatorFactory(domain='esi-leap')
+from oslo_log import log as logging
 
-# The primary translation function using the well-known name "_"
-_ = _translators.primary
-install = i18n.install
+from esi_leap.api.app import WSGIApplication
+from esi_leap.common import i18n
+from esi_leap.common import service
+import esi_leap.conf
+
+
+CONF = esi_leap.conf.CONF
+LOG = logging.getLogger(__name__)
+
+
+def initialize_wsgi_app(argv=sys.argv):
+    i18n.install('esi_leap')
+
+    service.prepare_service(argv)
+
+    LOG.debug('Configuration:')
+    CONF.log_opt_values(LOG, logging.DEBUG)
+
+    return WSGIApplication()
