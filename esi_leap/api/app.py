@@ -61,3 +61,12 @@ def setup_app(config=None):
         app = auth_token.AuthProtocol(app, dict(CONF.keystone_authtoken))
 
     return app
+
+
+class WSGIApplication(object):
+    def __init__(self):
+        pecan_cfg = get_pecan_config()
+        self.app = setup_app(pecan_cfg)
+
+    def __call__(self, environ, start_response):
+        return self.app(environ, start_response)
