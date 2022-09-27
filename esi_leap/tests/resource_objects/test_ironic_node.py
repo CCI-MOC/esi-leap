@@ -14,6 +14,7 @@ import datetime
 from esi_leap.common import statuses
 from esi_leap.resource_objects import ironic_node
 from esi_leap.tests import base
+from ironicclient.common.apiclient import exceptions
 import mock
 
 start = datetime.datetime(2016, 7, 16, 19, 20, 30)
@@ -197,3 +198,12 @@ class TestIronicNode(base.TestCase):
         self.assertEqual(fake_get_node,
                          test_ironic_node._get_node())
         mock_gn.assert_not_called
+
+    @mock.patch('esi_leap.common.ironic.get_node')
+    def test_get_unknown_node(self, mock_gn):
+        unknown_get_node = ironic_node.UnknownIronicNode()
+        mock_gn.side_effect = exceptions.NotFound
+        test_unknown_node = ironic_node.IronicNode(fake_uuid)
+        test_unknown_node._node = unknown_get_node
+        self.assertEqual(type(unknown_get_node),
+                         type(ironic_node.UnknownIronicNode()))
