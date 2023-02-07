@@ -1,10 +1,12 @@
 # esi-leap
 
-esi-leap is an OpenStack service for acting as a FLOCX provider to communicate with a FLOCX
-marketplace. It is intended to work on top of the
-[esi-common library](https://github.com/CCI-MOC/esi-common), which supports an OpenStack
-install that simulates Ironic multi-tenancy through the use of `project_owner_id` and
-`project_id` property attributes.
+esi-leap is an OpenStack service for leasing baremetal nodes, designed to run
+on top of [multi-tenant
+Ironic](https://docs.openstack.org/ironic/latest/admin/node-multitenancy.html).
+It consists of an API that provides endpoints for leasing operations and a
+manager service that updates the status of leases and offers as required. See
+the [documentation](https://esi.readthedocs.io/en/latest/index.html) for
+more info on ESI.
 
 
 ### Installation
@@ -29,16 +31,19 @@ https://github.com/CCI-MOC/python-esileapclient
 
 ### Create the esi-leap Database
 
-The esi-leap service requires a database to store its information. To set this up using
-the MySQL database used by other OpenStack services, run the following, replacing
-\<PASSWORD\> with a suitable password and \<DATABASE\_IP\> with the IP address of your
-MySQL database (if you're not sure, use localhost or 127.0.0.1).
+The esi-leap service requires a database to store its information. To set this
+up using the MySQL database used by other OpenStack services, run the following
+commands, replacing \<PASSWORD\> with a suitable password and \<DATABASE\_IP\>
+with the IP address of your MySQL database (if you're not sure, use localhost
+or 127.0.0.1).
 
 ```
     $ mysql -u root -p
     mysql> CREATE USER 'esi_leap'@'<DATABASE_IP>' IDENTIFIED BY '<PASSWORD>';
+    mysql> CREATE USER 'esi_leap'@'%' IDENTIFIED BY '<PASSWORD>';
     mysql> CREATE DATABASE esi_leap CHARACTER SET utf8;
     mysql> GRANT ALL PRIVILEGES ON esi_leap.* TO 'esi_leap'@'<DATABASE_IP>';
+    mysql> GRANT ALL PRIVILEGES ON esi_leap.* TO 'esi_leap'@'%';
     mysql> FLUSH PRIVILEGES;
 ```
 
@@ -51,7 +56,8 @@ If you use this method, the resulting database connection string should be:
 
 ### Configuration
 
-Run the following to generate the configuration file and copy it to the right place:
+Run the following commands to generate the configuration file and copy it to
+the right place:
 
 ```
     $ tox -egenconfig
@@ -59,12 +65,12 @@ Run the following to generate the configuration file and copy it to the right pl
     $ sudo cp etc/esi-leap/esi-leap.conf.sample /etc/esi-leap/esi-leap.conf
 ```
 
-Edit `/etc/esi-leap/esi-leap.conf` with the proper values. Some useful values include:
+Edit `/etc/esi-leap/esi-leap.conf` with the proper values. (see sample config
+template below):
 
 ```
 [DEFAULT]
 
-debug=True
 log_dir=/var/log/esi-leap
 transport_url=<transport URL for messaging>
 
@@ -87,10 +93,10 @@ project_domain_name=Default
 api_endpoint=<admin Keystone endpoint>
 auth_type=password
 auth_url=<keystone auth URL>
-username=admin
+username=esi-leap
 password=<password>
 user_domain_name=Default
-project_name=admin
+project_name=service
 project_domain_name=Default
 
 [oslo_concurrency]
@@ -101,7 +107,6 @@ driver=messagingv2
 transport_url=<transport URL for messaging>
 
 [ironic]                              # ONLY NECESSARY IF USING IRONIC NODES
-
 auth_type = password
 api_endpoint = <ironic API endpoint>
 auth_url = <keystone auth URL>
@@ -119,8 +124,10 @@ dummy_node_dir=/tmp/nodes
 ### Create the OpenStack Service
 
 ```
+    $ openstack user create --domain default --password-prompt esi-leap
+    $ openstack role add --project service --user esi-leap admin
     $ openstack service create --name esi-leap lease
-    $ openstack endpoint create esi-leap --region RegionOne public http://localhost:7777
+    $ openstack endpoint create esi-leap --region RegionOne public http://<YOUR_IP>:7777
 ```
 
 
