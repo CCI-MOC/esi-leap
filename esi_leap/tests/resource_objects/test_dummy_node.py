@@ -10,11 +10,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 import datetime
+import json
+
+import mock
+
 from esi_leap.common import statuses
 from esi_leap.resource_objects import dummy_node
 from esi_leap.tests import base
-import json
-import mock
 
 
 start = datetime.datetime(2016, 7, 16, 19, 20, 30)
@@ -131,3 +133,9 @@ class TestDummyNode(base.TestCase):
             self.assertEqual(self.fake_admin_project_id_2,
                              self.fake_dummy_node.resource_admin_project_id())
             self.assertEqual(mock_file_open.call_count, 1)
+
+    @mock.patch('builtins.open')
+    def test_get_deleted_node_info(self, mock_open):
+        mock_open.side_effect = FileNotFoundError
+        self.assertEqual(self.fake_dummy_node.get_resource_class(),
+                         'unknown-class')

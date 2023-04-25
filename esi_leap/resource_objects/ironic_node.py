@@ -10,27 +10,20 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from ironicclient.common.apiclient import exceptions as ir_exception
+from oslo_log import log as logging
 from oslo_utils.uuidutils import is_uuid_like
 
+from esi_leap.common import exception
 from esi_leap.common import ironic
 import esi_leap.conf
 from esi_leap.resource_objects import base
-from ironicclient.common.apiclient import exceptions
 
 
 CONF = esi_leap.conf.CONF
 _cached_ironic_client = None
 
-
-class UnknownIronicNode(object):
-    def __init__(self):
-        self.name = 'unknown-node'
-        self.owner = ''
-        self.uuid = 'unknown-uuid'
-        self.properties = {}
-        self.lessee = ''
-        self.maintenance = False
-        self.provision_state = 'unknown'
+LOG = logging.getLogger(__name__)
 
 
 def get_ironic_client():
@@ -56,23 +49,33 @@ class IronicNode(base.ResourceObjectInterface):
         return self._uuid
 
     def get_resource_name(self, resource_list=None):
-        return getattr(self._get_node(resource_list), 'name', '')
+        return self._get_node_attr('name', '',
+                                   resource_list=resource_list,
+                                   err_msg='Error getting resource name',
+                                   err_val='unknown')
 
     def get_lease_uuid(self):
-        return self._get_node().properties.get('lease_uuid', None)
+        props = self._get_node_attr('properties', None,
+                                    err_msg='Error getting lease UUID',
+                                    err_val='unknown-lease-id')
+        return None if props is None else props.get('lease_uuid', None)
 
     def get_project_id(self):
-        return self._get_node().lessee
+        return self._get_node_attr('lessee', '',
+                                   err_msg='Error getting project ID',
+                                   err_val='unknown-project-id')
 
     def get_node_config(self):
-        node = self._get_node()
-        config = node.properties
+        config = self._get_node_attr('properties', {},
+                                     err_msg='Error getting resource config')
         config.pop('lease_uuid', None)
         return config
 
     def get_resource_class(self, resource_list=None):
-        return getattr(self._get_node(resource_list),
-                       'resource_class', '')
+        return self._get_node_attr('resource_class', '',
+                                   resource_list=resource_list,
+                                   err_msg='Error getting resource class',
+                                   err_val='unknown-class')
 
     def set_lease(self, lease):
         patches = []
@@ -110,13 +113,25 @@ class IronicNode(base.ResourceObjectInterface):
             get_ironic_client().node.set_provision_state(self._uuid, 'deleted')
 
     def resource_admin_project_id(self):
-        return self._get_node().owner
+        return self._get_node_attr('owner', '',
+                                   err_msg='Error getting resource admin '
+                                           'project id',
+                                   err_val='unknown-admin-id')
 
     def _get_node(self, resource_list=None):
         try:
             if not self._node:
                 self._node = ironic.get_node(self._uuid, resource_list)
-        except exceptions.NotFound:
-            self._node = UnknownIronicNode()
-
+        except ir_exception.NotFound as e:
+            raise exception.NodeNotFound(uuid=self._uuid,
+                                         resource_type=self.resource_type,
+                                         err=str(e))
         return self._node
+
+    def _get_node_attr(self, attr, default=None, resource_list=None,
+                       err_val=None, err_msg=None):
+        try:
+            return getattr(self._get_node(resource_list), attr, default)
+        except exception.NodeNotFound:
+            LOG.exception(err_msg)
+            return err_val if err_val is not None else default
