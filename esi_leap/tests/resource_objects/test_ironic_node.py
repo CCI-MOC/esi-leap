@@ -11,11 +11,14 @@
 #    under the License.
 
 import datetime
+
+from ironicclient.common.apiclient import exceptions as ir_exception
+import mock
+
+from esi_leap.common import exception
 from esi_leap.common import statuses
 from esi_leap.resource_objects import ironic_node
 from esi_leap.tests import base
-from ironicclient.common.apiclient import exceptions
-import mock
 
 start = datetime.datetime(2016, 7, 16, 19, 20, 30)
 fake_uuid = '13921c8d-ce11-4b6d-99ed-10e19d184e5f'
@@ -201,9 +204,7 @@ class TestIronicNode(base.TestCase):
 
     @mock.patch('esi_leap.common.ironic.get_node')
     def test_get_unknown_node(self, mock_gn):
-        unknown_get_node = ironic_node.UnknownIronicNode()
-        mock_gn.side_effect = exceptions.NotFound
+        mock_gn.side_effect = ir_exception.NotFound
         test_unknown_node = ironic_node.IronicNode(fake_uuid)
-        test_unknown_node._node = unknown_get_node
-        self.assertEqual(type(unknown_get_node),
-                         type(ironic_node.UnknownIronicNode()))
+        self.assertRaises(exception.NodeNotFound,
+                          test_unknown_node._get_node)

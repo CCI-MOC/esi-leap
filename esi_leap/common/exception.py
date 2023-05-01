@@ -144,3 +144,8 @@ class InvalidTimeRange(ESILeapException):
     msg_fmt = _('Attempted to create %(resource)s resource with an invalid '
                 'Start Time and End Time. Start Time must be strictly less '
                 'than End Time. Got %(start_time)s, %(end_time)s.')
+
+
+class NodeNotFound(ESILeapException):
+    msg_fmt = _('Encountered an error fetching info for node %(uuid)s '
+                '(%(resource_type)s): %(err)s')
