@@ -84,6 +84,16 @@ class IronicNode(base.ResourceObjectInterface):
                                    err_msg='Error getting lessee project id',
                                    err_val=error.UNKNOWN['lessee_project_id'])
 
+    def get_node_provision_state(self):
+        return self._get_node_attr('provision_state', '',
+                                   err_msg='Error getting provision state',
+                                   err_val=error.UNKNOWN['provision_state'])
+
+    def get_node_power_state(self):
+        return self._get_node_attr('power_state', '',
+                                   err_msg='Error getting power state',
+                                   err_val=error.UNKNOWN['power_state'])
+
     def set_lease(self, lease):
         patches = []
         patches.append({

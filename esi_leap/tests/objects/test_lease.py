@@ -18,6 +18,7 @@ import threading
 
 from esi_leap.common import exception
 from esi_leap.common import statuses
+from esi_leap.objects import fields as obj_fields
 from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
 from esi_leap.resource_objects.test_node import TestNode
@@ -245,7 +246,10 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.lease.Lease.resource_object')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.set_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_fulfill(self, mock_save, mock_set_lease, mock_ro):
+    @mock.patch('esi_leap.common.notification_utils'
+                '._emit_notification')
+    def test_fulfill(self, mock_notify,
+                     mock_save, mock_set_lease, mock_ro):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
 
@@ -253,6 +257,14 @@ class TestLeaseObject(base.DBTestCase):
 
         lease.fulfill()
 
+        mock_notify.assert_has_calls([mock.call(mock.ANY, mock.ANY, 'fulfill',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.START,
+                                      mock.ANY, node=mock.ANY),
+                                      mock.call(mock.ANY, mock.ANY, 'fulfill',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.END,
+                                      mock.ANY, node=mock.ANY)])
         mock_ro.assert_called_once()
         mock_set_lease.assert_called_once()
         mock_save.assert_called_once()
@@ -261,7 +273,10 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.lease.Lease.resource_object')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.set_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_fulfill_error(self, mock_save, mock_set_lease, mock_ro):
+    @mock.patch('esi_leap.common.notification_utils'
+                '._emit_notification')
+    def test_fulfill_error(self, mock_notify, mock_save,
+                           mock_set_lease, mock_ro):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
 
@@ -270,6 +285,7 @@ class TestLeaseObject(base.DBTestCase):
 
         lease.fulfill()
 
+        mock_notify.assert_not_called()
         mock_ro.assert_called_once()
         mock_set_lease.assert_called_once()
         mock_save.assert_called_once()
@@ -281,7 +297,10 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_cancel(self, mock_save, mock_rl, mock_glu, mock_ro,
+    @mock.patch('esi_leap.common.notification_utils'
+                '._emit_notification')
+    def test_cancel(self, mock_notify, mock_save,
+                    mock_rl, mock_glu, mock_ro,
                     mock_lg, mock_sl):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
@@ -291,6 +310,14 @@ class TestLeaseObject(base.DBTestCase):
 
         lease.cancel()
 
+        mock_notify.assert_has_calls([mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.START,
+                                      mock.ANY, node=mock.ANY),
+                                      mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.END,
+                                      mock.ANY, node=mock.ANY)])
         mock_sl.assert_not_called()
         mock_lg.assert_not_called()
         mock_ro.assert_called_once()
@@ -305,7 +332,10 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_cancel_error(self, mock_save, mock_rl, mock_glu,
+    @mock.patch('esi_leap.common.notification_utils'
+                '._emit_notification')
+    def test_cancel_error(self, mock_notify, mock_save,
+                          mock_rl, mock_glu,
                           mock_ro, mock_lg, mock_sl):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
@@ -316,6 +346,7 @@ class TestLeaseObject(base.DBTestCase):
 
         lease.cancel()
 
+        mock_notify.assert_not_called()
         mock_sl.assert_not_called()
         mock_lg.assert_not_called()
         mock_ro.assert_called_once()
@@ -330,7 +361,10 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_cancel_with_parent(self, mock_save, mock_rl, mock_glu,
+    @mock.patch('esi_leap.common.notification_utils'
+                '._emit_notification')
+    def test_cancel_with_parent(self, mock_notify, mock_save,
+                                mock_rl, mock_glu,
                                 mock_ro, mock_lg, mock_sl):
         lease = lease_obj.Lease(self.context,
                                 **self.test_lease_parent_lease_dict)
@@ -341,6 +375,14 @@ class TestLeaseObject(base.DBTestCase):
 
         lease.cancel()
 
+        mock_notify.assert_has_calls([mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.START,
+                                      mock.ANY, node=mock.ANY),
+                                      mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.END,
+                                      mock.ANY, node=mock.ANY)])
         mock_sl.assert_called_once()
         mock_lg.assert_called_once()
         mock_ro.assert_called_once()
@@ -353,7 +395,10 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_cancel_no_expire(self, mock_save, mock_rl, mock_glu,
+    @mock.patch('esi_leap.common.notification_utils'
+                '._emit_notification')
+    def test_cancel_no_expire(self, mock_notify, mock_save,
+                              mock_rl, mock_glu,
                               mock_ro):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
@@ -363,6 +408,14 @@ class TestLeaseObject(base.DBTestCase):
 
         lease.cancel()
 
+        mock_notify.assert_has_calls([mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.START,
+                                      mock.ANY, node=mock.ANY),
+                                      mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.END,
+                                      mock.ANY, node=mock.ANY)])
         mock_ro.assert_called_once()
         mock_glu.assert_called_once()
         mock_rl.assert_not_called()
@@ -496,3 +549,54 @@ class TestLeaseObject(base.DBTestCase):
         lease.resource_object()
         mock_gro.assert_called_once_with(lease.resource_type,
                                          lease.resource_uuid)
+
+
+class TestLeaseCRUDPayloads(base.DBTestCase):
+
+    def setUp(self):
+        super(TestLeaseCRUDPayloads, self).setUp()
+        self.lease = lease_obj.Lease(
+            id='12345',
+            name='test_lease',
+            start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
+            end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
+            fulfill_time=datetime.datetime(2016, 7, 16, 19, 21, 30),
+            expire_time=datetime.datetime(2016, 8, 16, 19, 21, 30),
+            uuid='13921c8d-ce11-4b6d-99ed-10e19d184e5f',
+            resource_type='test_node',
+            resource_uuid='111',
+            project_id='lesseeid',
+            owner_id='ownerid',
+            parent_lease_uuid=None,
+            offer_uuid=None,
+            properties=None,
+            status='created',
+        )
+        self.node = TestNode('test-node', '12345')
+
+    def test_lease_crud_payload(self):
+        payload = lease_obj.LeaseCRUDPayload(self.lease, self.node)
+        self.assertEqual(self.lease.id, payload.id)
+        self.assertEqual(self.lease.name, payload.name)
+        self.assertEqual(self.lease.start_time, payload.start_time)
+        self.assertEqual(self.lease.end_time, payload.end_time)
+        self.assertEqual(self.lease.fulfill_time, payload.fulfill_time)
+        self.assertEqual(self.lease.expire_time, payload.expire_time)
+        self.assertEqual(self.lease.uuid, payload.uuid)
+        self.assertEqual(self.lease.resource_type, payload.resource_type)
+        self.assertEqual(self.lease.resource_uuid, payload.resource_uuid)
+        self.assertEqual(self.lease.project_id, payload.project_id)
+        self.assertEqual(self.lease.owner_id, payload.owner_id)
+        self.assertEqual(self.lease.parent_lease_uuid,
+                         payload.parent_lease_uuid)
+        self.assertEqual(self.lease.offer_uuid, payload.offer_uuid)
+        self.assertEqual(self.lease.properties, payload.properties)
+        self.assertEqual(self.lease.status, payload.status)
+        self.assertEqual(self.node.node_name, payload.node_name)
+        self.assertEqual(self.node._uuid, payload.node_uuid)
+        self.assertEqual(self.node.node_power_state,
+                         payload.node_power_state)
+        self.assertEqual(self.node.node_provision_state,
+                         payload.node_provision_state),
+        self.assertEqual(self.node.node_properties,
+                         payload.node_properties)

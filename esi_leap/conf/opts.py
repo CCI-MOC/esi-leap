@@ -19,6 +19,7 @@ _opts = [
     ('ironic', esi_leap.conf.ironic.list_opts()),
     ('keystone', esi_leap.conf.keystone.list_opts()),
     ('pecan', esi_leap.conf.pecan.opts),
+    ('notification', esi_leap.conf.notification.opts),
 ]
 
 

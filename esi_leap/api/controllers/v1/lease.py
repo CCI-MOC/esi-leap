@@ -190,7 +190,7 @@ class LeasesController(rest.RestController):
             request, 'esi_leap:lease:get', lease_id,
             statuses.LEASE_CAN_DELETE)
 
-        lease.cancel()
+        lease.cancel(request)
 
     @staticmethod
     def _lease_get_all_authorize_filters(cdict,

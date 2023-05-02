@@ -67,6 +67,17 @@ class DummyNode(base.ResourceObjectInterface):
                                    err_msg='Error getting lessee project id',
                                    err_val=error.UNKNOWN['lessee_project_id'])
 
+    def get_node_power_state(self):
+        return self._get_node_attr('power_state', '',
+                                   err_msg='Error getting node power state',
+                                   err_val=error.UNKNOWN['power_state'])
+
+    def get_node_provision_state(self):
+        return self._get_node_attr('provision_state', '',
+                                   err_msg='Error getting'
+                                   'node provision state',
+                                   err_val=error.UNKNOWN['provision_state'])
+
     def set_lease(self, lease):
         node_dict = self._get_node()
         node_dict['lease_uuid'] = lease.uuid
