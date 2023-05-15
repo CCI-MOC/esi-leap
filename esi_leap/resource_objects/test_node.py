@@ -21,29 +21,29 @@ class TestNode(base.ResourceObjectInterface):
         self._uuid = uuid
         self._project_id = project_id
 
-    def get_resource_uuid(self):
+    def get_uuid(self):
         return self._uuid
 
-    def get_resource_name(self, resource_list=None):
+    def get_name(self, resource_list=None):
         return 'test-node-%s' % self._uuid
-
-    def get_lease_uuid(self):
-        return '12345'
-
-    def get_project_id(self):
-        return self._project_id
-
-    def get_node_config(self):
-        return {}
 
     def get_resource_class(self, resource_list=None):
         return 'fake'
 
+    def get_config(self):
+        return {}
+
+    def get_owner_project_id(self):
+        return self._project_id
+
+    def get_lease_uuid(self):
+        return '12345'
+
+    def get_lessee_project_id(self):
+        return self._project_id
+
     def set_lease(self, lease):
         return
 
-    def expire_lease(self, lease):
+    def remove_lease(self, lease):
         return
-
-    def resource_admin_project_id(self):
-        return self._project_id

@@ -21,17 +21,17 @@ from esi_leap.objects import offer as offer_obj
 
 
 def check_resource_admin(cdict, resource, project_id):
-    if project_id != resource.resource_admin_project_id():
+    if project_id != resource.get_owner_project_id():
         resource_policy_authorize('esi_leap:offer:offer_admin',
                                   cdict, cdict,
                                   resource.resource_type,
-                                  resource.get_resource_uuid())
+                                  resource.get_uuid())
 
 
 def check_resource_lease_admin(cdict, resource, project_id,
                                start_time, end_time):
     # check to see if project is current lessee
-    if project_id == resource.get_project_id():
+    if project_id == resource.get_lessee_project_id():
         parent_lease_uuid = resource.get_lease_uuid()
         if parent_lease_uuid is not None:
             parent_lease = lease_obj.Lease.get(parent_lease_uuid)
@@ -45,11 +45,9 @@ def check_resource_lease_admin(cdict, resource, project_id,
                 else:
                     raise exception.ResourceNoPermissionTime(
                         resource_type=resource.resource_type,
-                        resource_uuid=resource.get_resource_uuid(),
+                        resource_uuid=resource.get_uuid(),
                         start_time=start_time,
                         end_time=end_time)
-
-    return
 
 
 def get_offer(uuid_or_name, status_filters=[]):
@@ -147,14 +145,13 @@ def check_offer_lessee(cdict, offer):
 
 
 def offer_get_dict_with_added_info(offer, project_list=None, node_list=None):
-    availabilities = offer.get_availabilities()
     resource = offer.resource_object()
 
     o = offer.to_dict()
-    o['availabilities'] = availabilities
+    o['availabilities'] = offer.get_availabilities()
     o['project'] = keystone.get_project_name(offer.project_id, project_list)
     o['lessee'] = keystone.get_project_name(offer.lessee_id, project_list)
-    o['resource'] = resource.get_resource_name(node_list)
+    o['resource'] = resource.get_name(node_list)
     o['resource_class'] = resource.get_resource_class(node_list)
     return o
 
@@ -167,6 +164,6 @@ def lease_get_dict_with_added_info(lease, project_list=None, node_list=None):
                                                       project_list)
     lease_dict['owner'] = keystone.get_project_name(lease.owner_id,
                                                     project_list)
-    lease_dict['resource'] = resource.get_resource_name(node_list)
+    lease_dict['resource'] = resource.get_name(node_list)
     lease_dict['resource_class'] = resource.get_resource_class(node_list)
     return lease_dict

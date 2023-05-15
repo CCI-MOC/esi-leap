@@ -104,7 +104,7 @@ class LeasesController(rest.RestController):
                 resource_type = CONF.api.default_resource_type
 
             resource = get_resource_object(resource_type, resource_uuid)
-            resource_uuid = resource.get_resource_uuid()
+            resource_uuid = resource.get_uuid()
 
         filters = LeasesController._lease_get_all_authorize_filters(
             cdict, project_id=project_id, owner_id=owner_id,
@@ -153,7 +153,7 @@ class LeasesController(rest.RestController):
             lease_dict['resource_type'] = CONF.api.default_resource_type
         resource = get_resource_object(lease_dict['resource_type'],
                                        lease_dict['resource_uuid'])
-        lease_dict['resource_uuid'] = resource.get_resource_uuid()
+        lease_dict['resource_uuid'] = resource.get_uuid()
 
         if 'project_id' in lease_dict:
             lease_dict['project_id'] = keystone.get_project_uuid_from_ident(

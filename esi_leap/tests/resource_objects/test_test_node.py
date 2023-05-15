@@ -41,45 +41,36 @@ class TestTestNode(base.TestCase):
     def setUp(self):
         super(TestTestNode, self).setUp()
         self.fake_test_node = test_node.TestNode('1111', '123456')
-        self.fake_admin_project_id_1 = '123'
-        self.fake_admin_project_id_2 = '123456'
 
     def test_resource_type(self):
         resource_type = self.fake_test_node.resource_type
         self.assertEqual(resource_type, 'test_node')
 
-    def test_get_resource_uuid(self):
-        resource_uuid = self.fake_test_node.get_resource_uuid()
-        self.assertEqual(resource_uuid, '1111')
+    def test_get_uuid(self):
+        self.assertEqual(self.fake_test_node.get_uuid(), '1111')
 
-    def test_get_resource_name(self):
-        self.assertEqual('test-node-1111',
-                         self.fake_test_node.get_resource_name())
-
-    def test_get_lease_uuid(self):
-        lease_uuid = self.fake_test_node.get_lease_uuid()
-        self.assertEqual(lease_uuid, '12345')
-
-    def test_get_project_id(self):
-        project_id = self.fake_test_node.get_project_id()
-        self.assertEqual(project_id, '123456')
-
-    def test_get_node_config(self):
-        config = self.fake_test_node.get_node_config()
-        self.assertEqual(config, {})
+    def test_get_name(self):
+        self.assertEqual(self.fake_test_node.get_name(), 'test-node-1111')
 
     def test_get_resource_class(self):
-        resource_class = self.fake_test_node.get_resource_class()
-        self.assertEqual(resource_class, 'fake')
+        self.assertEqual(self.fake_test_node.get_resource_class(), 'fake')
+
+    def test_get_config(self):
+        self.assertEqual(self.fake_test_node.get_config(), {})
+
+    def test_get_owner_project_id(self):
+        self.assertEqual(self.fake_test_node.get_owner_project_id(), '123456')
+
+    def test_get_lease_uuid(self):
+        self.assertEqual(self.fake_test_node.get_lease_uuid(), '12345')
+
+    def test_get_lessee_project_id(self):
+        self.assertEqual(self.fake_test_node.get_lessee_project_id(), '123456')
 
     def test_set_lease(self):
         fake_lease = get_test_lease()
         self.assertEqual(self.fake_test_node.set_lease(fake_lease), None)
 
-    def test_expire_lease(self):
+    def test_remove_lease(self):
         fake_lease = get_test_lease()
-        self.assertEqual(self.fake_test_node.expire_lease(fake_lease), None)
-
-    def test_resource_admin_project_id(self):
-        self.assertEqual(self.fake_admin_project_id_2,
-                         self.fake_test_node.resource_admin_project_id())
+        self.assertEqual(self.fake_test_node.remove_lease(fake_lease), None)

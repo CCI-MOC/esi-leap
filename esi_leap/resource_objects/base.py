@@ -21,45 +21,45 @@ class ResourceObjectInterface(object, metaclass=abc.ABCMeta):
     resource_type = 'base'
 
     @abc.abstractmethod
-    def get_resource_uuid(self):
-        """Returns resource's uuid"""
+    def get_uuid(self):
+        """Return resource's uuid"""
 
     @abc.abstractmethod
-    def get_resource_name(self, resource_list):
-        """Returns resource's name"""
-
-    @abc.abstractmethod
-    def get_lease_uuid(self):
-        """Returns resource's associated lease, if any"""
-
-    @abc.abstractmethod
-    def get_project_id(self):
-        """Returns resource's associated lessee, if any"""
-
-    @abc.abstractmethod
-    def get_node_config(self):
-        """Returns resource's associated config, if any"""
+    def get_name(self, resource_list):
+        """Return resource's name, if any"""
 
     @abc.abstractmethod
     def get_resource_class(self, resource_list):
-        """Returns resource's associated class, if any"""
+        """Return resource's associated class, if any"""
+
+    @abc.abstractmethod
+    def get_config(self):
+        """Return resource's associated config, if any"""
+
+    @abc.abstractmethod
+    def get_owner_project_id(self):
+        """Return the project id of the resource's owner"""
+
+    @abc.abstractmethod
+    def get_lease_uuid(self):
+        """Return the uuid of the associated lease, if any"""
+
+    @abc.abstractmethod
+    def get_lessee_project_id(self):
+        """Return the project id of the associated lessee, if any"""
 
     @abc.abstractmethod
     def set_lease(self, lease):
-        """Set the lease on the node"""
+        """Associates a lease with the resource"""
 
     @abc.abstractmethod
-    def expire_lease(self, lease):
-        """Expire the lease on the node"""
-
-    @abc.abstractmethod
-    def resource_admin_project_id(self):
-        """Return project_id of resource admin"""
+    def remove_lease(self, lease):
+        """Disassociates a lease from the resource"""
 
     def verify_availability(self, start_time, end_time):
         self.dbapi.resource_verify_availability(
             self.resource_type,
-            self.get_resource_uuid(),
+            self.get_uuid(),
             start_time,
             end_time,
         )

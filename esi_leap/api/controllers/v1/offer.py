@@ -112,7 +112,7 @@ class OffersController(rest.RestController):
             if resource_type is None:
                 resource_type = CONF.api.default_resource_type
             resource = get_resource_object(resource_type, resource_uuid)
-            resource_uuid = resource.get_resource_uuid()
+            resource_uuid = resource.get_uuid()
 
         # either both are defined or both are None
         if bool(start_time) != bool(end_time):
@@ -204,7 +204,7 @@ class OffersController(rest.RestController):
             offer_dict['resource_type'] = CONF.api.default_resource_type
         resource = get_resource_object(offer_dict['resource_type'],
                                        offer_dict['resource_uuid'])
-        offer_dict['resource_uuid'] = resource.get_resource_uuid()
+        offer_dict['resource_uuid'] = resource.get_uuid()
 
         if 'lessee_id' in offer_dict:
             offer_dict['lessee_id'] = keystone.get_project_uuid_from_ident(

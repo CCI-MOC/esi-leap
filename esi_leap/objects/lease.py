@@ -127,7 +127,7 @@ class Lease(base.ESILEAPObject):
             try:
                 resource = self.resource_object()
                 if resource.get_lease_uuid() == self.uuid:
-                    resource.expire_lease(self)
+                    resource.remove_lease(self)
                     if self.parent_lease_uuid is not None:
                         parent_lease = Lease.get(self.parent_lease_uuid)
                         resource.set_lease(parent_lease)
@@ -191,7 +191,7 @@ class Lease(base.ESILEAPObject):
             try:
                 resource = self.resource_object()
                 if resource.get_lease_uuid() == self.uuid:
-                    resource.expire_lease(self)
+                    resource.remove_lease(self)
                     if self.parent_lease_uuid is not None:
                         parent_lease = Lease.get(self.parent_lease_uuid)
                         resource.set_lease(parent_lease)

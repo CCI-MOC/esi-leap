@@ -18,6 +18,7 @@ from esi_leap.common import exception
 from esi_leap.common import ironic
 import esi_leap.conf
 from esi_leap.resource_objects import base
+from esi_leap.resource_objects import error
 
 
 CONF = esi_leap.conf.CONF
@@ -45,37 +46,43 @@ class IronicNode(base.ResourceObjectInterface):
             self._node = None
             self._uuid = ident
 
-    def get_resource_uuid(self):
+    def get_uuid(self):
         return self._uuid
 
-    def get_resource_name(self, resource_list=None):
+    def get_name(self, resource_list=None):
         return self._get_node_attr('name', '',
                                    resource_list=resource_list,
                                    err_msg='Error getting resource name',
-                                   err_val='unknown')
-
-    def get_lease_uuid(self):
-        props = self._get_node_attr('properties', None,
-                                    err_msg='Error getting lease UUID',
-                                    err_val='unknown-lease-id')
-        return None if props is None else props.get('lease_uuid', None)
-
-    def get_project_id(self):
-        return self._get_node_attr('lessee', '',
-                                   err_msg='Error getting project ID',
-                                   err_val='unknown-project-id')
-
-    def get_node_config(self):
-        config = self._get_node_attr('properties', {},
-                                     err_msg='Error getting resource config')
-        config.pop('lease_uuid', None)
-        return config
+                                   err_val=error.UNKNOWN['name'])
 
     def get_resource_class(self, resource_list=None):
         return self._get_node_attr('resource_class', '',
                                    resource_list=resource_list,
                                    err_msg='Error getting resource class',
-                                   err_val='unknown-class')
+                                   err_val=error.UNKNOWN['resource_class'])
+
+    def get_config(self):
+        config = self._get_node_attr('properties', {},
+                                     err_msg='Error getting resource config',
+                                     err_val=error.UNKNOWN['config'])
+        config.pop('lease_uuid', None)
+        return config
+
+    def get_owner_project_id(self):
+        return self._get_node_attr('owner', '',
+                                   err_msg='Error getting owner project id',
+                                   err_val=error.UNKNOWN['owner_project_id'])
+
+    def get_lease_uuid(self):
+        props = self._get_node_attr('properties', None,
+                                    err_msg='Error getting lease UUID',
+                                    err_val=error.UNKNOWN['lease_uuid'])
+        return None if props is None else props.get('lease_uuid', None)
+
+    def get_lessee_project_id(self):
+        return self._get_node_attr('lessee', '',
+                                   err_msg='Error getting lessee project id',
+                                   err_val=error.UNKNOWN['lessee_project_id'])
 
     def set_lease(self, lease):
         patches = []
@@ -91,7 +98,7 @@ class IronicNode(base.ResourceObjectInterface):
         })
         get_ironic_client().node.update(self._uuid, patches)
 
-    def expire_lease(self, lease):
+    def remove_lease(self, lease):
         patches = []
         uuid = self.get_lease_uuid()
         if uuid != lease.uuid:
@@ -101,7 +108,7 @@ class IronicNode(base.ResourceObjectInterface):
                 'op': 'remove',
                 'path': '/properties/lease_uuid',
             })
-        if self.get_project_id():
+        if self.get_lessee_project_id():
             patches.append({
                 'op': 'remove',
                 'path': '/lessee',
@@ -111,12 +118,6 @@ class IronicNode(base.ResourceObjectInterface):
         state = self._get_node().provision_state
         if state == 'active':
             get_ironic_client().node.set_provision_state(self._uuid, 'deleted')
-
-    def resource_admin_project_id(self):
-        return self._get_node_attr('owner', '',
-                                   err_msg='Error getting resource admin '
-                                           'project id',
-                                   err_val='unknown-admin-id')
 
     def _get_node(self, resource_list=None):
         try:
