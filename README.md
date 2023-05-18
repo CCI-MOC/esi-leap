@@ -147,6 +147,26 @@ Once that's done, you can run the manager and API services:
     $ sudo esi-leap-api
 ```
 
+### Installation using Containerization
+
+By encapsulating the ESI Leap into a container, all the necessary dependencies, configurations and services are bundled into a single package.
+
+Please make sure to follow the instructions in the [Configuration](#configuration) section to generate the esi-leap.conf file.
+
+Make sure to follow the instructions in the [Create Openstack Service](#create-the-openstack-service) to create the OpenStack service and endpoint. 
+
+After that build the container image using the podman build command, as Containerfile is located in the current directory. The syntax is as follows:
+
+```
+    $ podman build -t <image-name> -f Containerfile . 
+```
+
+Once the container image is built, you can run it using the podman run command. The syntax is as follows:
+
+```
+    $ podman run --name <container-name> -p <host-port>:<container-port> -d -v <path-to-esi-leap.conf-file>:/etc/esi-leap <image-name>
+```
+
 
 ### Using Dummy Nodes
 
