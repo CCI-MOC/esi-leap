@@ -11,24 +11,45 @@
 #    under the License.
 
 import datetime
-from esi_leap.resource_objects import ironic_node
-from esi_leap.tests import base
+
 import mock
 from oslo_utils import uuidutils
+
+from esi_leap.resource_objects.base import ResourceObjectInterface
+from esi_leap.tests import base
+
+
+def bind_abstract_methods(cls):
+    # binds all undefined abstract methods to stub functions that do nothing
+    def wrapper(*args, **kwargs):
+        for method in cls.__abstractmethods__:
+            setattr(cls, method, lambda: None)
+        methods = set()
+        for name, value in cls.__dict__.items():
+            if getattr(value, "__isabstractmethod__", False):
+                methods.add(name)
+        cls.__abstractmethods__ = frozenset(methods)
+        return cls(*args, **kwargs)
+    return wrapper
+
+
+@bind_abstract_methods
+class ResourceObjectStub(ResourceObjectInterface):
+    def __init__(self, uuid):
+        self._uuid = uuid
+
+    def get_uuid(self):
+        return self._uuid
 
 
 class TestResourceObjectInterface(base.TestCase):
 
-    def setUp(self):
-        super(TestResourceObjectInterface, self).setUp()
-        self.base_time = datetime.datetime(2016, 7, 16, 19, 20, 30)
-
     @mock.patch('esi_leap.db.sqlalchemy.api.resource_verify_availability')
     def test_verify_availability_for_offer(self, mock_rva):
-        start = self.base_time
-        end = self.base_time + datetime.timedelta(days=10)
+        start = datetime.datetime(2016, 7, 16, 19, 20, 30)
+        end = start + datetime.timedelta(days=10)
         fake_uuid = uuidutils.generate_uuid()
-        test_node = ironic_node.IronicNode(fake_uuid)
+        test_node = ResourceObjectStub(fake_uuid)
 
         test_node.verify_availability(start, end)
-        mock_rva.assert_called_once_with('ironic_node', fake_uuid, start, end)
+        mock_rva.assert_called_once_with('base', fake_uuid, start, end)

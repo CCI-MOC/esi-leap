@@ -18,6 +18,7 @@ from oslo_log import log as logging
 from esi_leap.common import exception
 import esi_leap.conf
 from esi_leap.resource_objects import base
+from esi_leap.resource_objects import error
 
 
 CONF = esi_leap.conf.CONF
@@ -34,31 +35,37 @@ class DummyNode(base.ResourceObjectInterface):
         self._uuid = uuid
         self._path = os.path.join(DUMMY_NODE_DIR, uuid)
 
-    def get_resource_uuid(self):
+    def get_uuid(self):
         return self._uuid
 
-    def get_resource_name(self, resource_list=None):
+    def get_name(self, resource_list=None):
         return 'dummy-node-%s' % self._uuid
-
-    def get_lease_uuid(self):
-        return self._get_node_attr('lease_uuid', '',
-                                   err_msg='Error getting lease UUID',
-                                   err_val='unknown-lease-id')
-
-    def get_project_id(self):
-        return self._get_node_attr('project_id', '',
-                                   err_msg='Error getting project ID',
-                                   err_val='unknown-project-id')
-
-    def get_node_config(self):
-        return self._get_node_attr('server_config', {},
-                                   err_msg='Error getting resource config')
 
     def get_resource_class(self, resource_list=None):
         return self._get_node_attr('resource_class', '',
                                    resource_list=resource_list,
                                    err_msg='Error getting resource class',
-                                   err_val='unknown-class')
+                                   err_val=error.UNKNOWN['resource_class'])
+
+    def get_config(self):
+        return self._get_node_attr('server_config', {},
+                                   err_msg='Error getting resource config',
+                                   err_val=error.UNKNOWN['config'])
+
+    def get_owner_project_id(self):
+        return self._get_node_attr('project_owner_id', None,
+                                   err_msg='Error getting owner project id',
+                                   err_val=error.UNKNOWN['owner_project_id'])
+
+    def get_lease_uuid(self):
+        return self._get_node_attr('lease_uuid', '',
+                                   err_msg='Error getting lease UUID',
+                                   err_val=error.UNKNOWN['lease_uuid'])
+
+    def get_lessee_project_id(self):
+        return self._get_node_attr('project_id', '',
+                                   err_msg='Error getting lessee project id',
+                                   err_val=error.UNKNOWN['lessee_project_id'])
 
     def set_lease(self, lease):
         node_dict = self._get_node()
@@ -67,18 +74,12 @@ class DummyNode(base.ResourceObjectInterface):
         with open(self._path, 'w') as node_file:
             json.dump(node_dict, node_file)
 
-    def expire_lease(self, lease):
+    def remove_lease(self, lease):
         node_dict = self._get_node()
         node_dict.pop('lease_uuid', None)
         node_dict.pop('project_id', None)
         with open(self._path, 'w') as node_file:
             json.dump(node_dict, node_file)
-
-    def resource_admin_project_id(self):
-        return self._get_node_attr('project_owner_id', None,
-                                   err_msg='Error getting resource admin '
-                                           'project id',
-                                   err_val='unknown-admin-id')
 
     def _get_node(self):
         try:

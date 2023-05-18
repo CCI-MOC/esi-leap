@@ -279,9 +279,9 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.lease.Lease.get')
     @mock.patch('esi_leap.objects.lease.Lease.resource_object')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
-    @mock.patch('esi_leap.resource_objects.test_node.TestNode.expire_lease')
+    @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_cancel(self, mock_save, mock_expire_lease, mock_glu, mock_ro,
+    def test_cancel(self, mock_save, mock_rl, mock_glu, mock_ro,
                     mock_lg, mock_sl):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
@@ -295,7 +295,7 @@ class TestLeaseObject(base.DBTestCase):
         mock_lg.assert_not_called()
         mock_ro.assert_called_once()
         mock_glu.assert_called_once()
-        mock_expire_lease.assert_called_once()
+        mock_rl.assert_called_once()
         mock_save.assert_called_once()
         self.assertEqual(lease.status, statuses.DELETED)
 
@@ -303,16 +303,16 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.lease.Lease.get')
     @mock.patch('esi_leap.objects.lease.Lease.resource_object')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
-    @mock.patch('esi_leap.resource_objects.test_node.TestNode.expire_lease')
+    @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_cancel_error(self, mock_save, mock_expire_lease, mock_glu,
+    def test_cancel_error(self, mock_save, mock_rl, mock_glu,
                           mock_ro, mock_lg, mock_sl):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
 
         mock_ro.return_value = test_node
         mock_glu.return_value = lease.uuid
-        mock_expire_lease.side_effect = Exception('bad')
+        mock_rl.side_effect = Exception('bad')
 
         lease.cancel()
 
@@ -320,7 +320,7 @@ class TestLeaseObject(base.DBTestCase):
         mock_lg.assert_not_called()
         mock_ro.assert_called_once()
         mock_glu.assert_called_once()
-        mock_expire_lease.assert_called_once()
+        mock_rl.assert_called_once()
         mock_save.assert_called_once()
         self.assertEqual(lease.status, statuses.WAIT_CANCEL)
 
@@ -328,9 +328,9 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.lease.Lease.get')
     @mock.patch('esi_leap.objects.lease.Lease.resource_object')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
-    @mock.patch('esi_leap.resource_objects.test_node.TestNode.expire_lease')
+    @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_cancel_with_parent(self, mock_save, mock_expire_lease, mock_glu,
+    def test_cancel_with_parent(self, mock_save, mock_rl, mock_glu,
                                 mock_ro, mock_lg, mock_sl):
         lease = lease_obj.Lease(self.context,
                                 **self.test_lease_parent_lease_dict)
@@ -345,15 +345,15 @@ class TestLeaseObject(base.DBTestCase):
         mock_lg.assert_called_once()
         mock_ro.assert_called_once()
         mock_glu.assert_called_once()
-        mock_expire_lease.assert_called_once()
+        mock_rl.assert_called_once()
         mock_save.assert_called_once()
         self.assertEqual(lease.status, statuses.DELETED)
 
     @mock.patch('esi_leap.objects.lease.Lease.resource_object')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
-    @mock.patch('esi_leap.resource_objects.test_node.TestNode.expire_lease')
+    @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_cancel_no_expire(self, mock_save, mock_expire_lease, mock_glu,
+    def test_cancel_no_expire(self, mock_save, mock_rl, mock_glu,
                               mock_ro):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
@@ -365,7 +365,7 @@ class TestLeaseObject(base.DBTestCase):
 
         mock_ro.assert_called_once()
         mock_glu.assert_called_once()
-        mock_expire_lease.assert_not_called()
+        mock_rl.assert_not_called()
         mock_save.assert_called_once()
         self.assertEqual(lease.status, statuses.DELETED)
 
@@ -373,9 +373,9 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.lease.Lease.get')
     @mock.patch('esi_leap.objects.lease.Lease.resource_object')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
-    @mock.patch('esi_leap.resource_objects.test_node.TestNode.expire_lease')
+    @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_expire(self, mock_save, mock_expire_lease, mock_glu, mock_ro,
+    def test_expire(self, mock_save, mock_rl, mock_glu, mock_ro,
                     mock_lg, mock_sl):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
@@ -389,7 +389,7 @@ class TestLeaseObject(base.DBTestCase):
         mock_lg.assert_not_called()
         mock_ro.assert_called_once()
         mock_glu.assert_called_once()
-        mock_expire_lease.assert_called_once()
+        mock_rl.assert_called_once()
         mock_save.assert_called_once()
         self.assertEqual(lease.status, statuses.EXPIRED)
 
@@ -397,16 +397,16 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.lease.Lease.get')
     @mock.patch('esi_leap.objects.lease.Lease.resource_object')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
-    @mock.patch('esi_leap.resource_objects.test_node.TestNode.expire_lease')
+    @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_expire_error(self, mock_save, mock_expire_lease, mock_glu,
+    def test_expire_error(self, mock_save, mock_rl, mock_glu,
                           mock_ro, mock_lg, mock_sl):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
 
         mock_ro.return_value = test_node
         mock_glu.return_value = lease.uuid
-        mock_expire_lease.side_effect = Exception('bad')
+        mock_rl.side_effect = Exception('bad')
 
         lease.expire()
 
@@ -414,7 +414,7 @@ class TestLeaseObject(base.DBTestCase):
         mock_lg.assert_not_called()
         mock_ro.assert_called_once()
         mock_glu.assert_called_once()
-        mock_expire_lease.assert_called_once()
+        mock_rl.assert_called_once()
         mock_save.assert_called_once()
         self.assertEqual(lease.status, statuses.WAIT_EXPIRE)
 
@@ -422,9 +422,9 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.objects.lease.Lease.get')
     @mock.patch('esi_leap.objects.lease.Lease.resource_object')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
-    @mock.patch('esi_leap.resource_objects.test_node.TestNode.expire_lease')
+    @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_expire_with_parent(self, mock_save, mock_expire_lease, mock_glu,
+    def test_expire_with_parent(self, mock_save, mock_rl, mock_glu,
                                 mock_ro, mock_lg, mock_sl):
         lease = lease_obj.Lease(self.context,
                                 **self.test_lease_parent_lease_dict)
@@ -439,16 +439,15 @@ class TestLeaseObject(base.DBTestCase):
         mock_lg.assert_called_once()
         mock_ro.assert_called_once()
         mock_glu.assert_called_once()
-        mock_expire_lease.assert_called_once()
+        mock_rl.assert_called_once()
         mock_save.assert_called_once()
         self.assertEqual(lease.status, statuses.EXPIRED)
 
     @mock.patch('esi_leap.objects.lease.Lease.resource_object')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
-    @mock.patch('esi_leap.resource_objects.test_node.TestNode.expire_lease')
+    @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_expire_no_expire(self, mock_save, mock_expire_lease, mock_glu,
-                              mock_ro):
+    def test_expire_no_expire(self, mock_save, mock_rl, mock_glu, mock_ro):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
 
@@ -459,7 +458,7 @@ class TestLeaseObject(base.DBTestCase):
 
         mock_ro.assert_called_once()
         mock_glu.assert_called_once()
-        mock_expire_lease.assert_not_called()
+        mock_rl.assert_not_called()
         mock_save.assert_called_once()
         self.assertEqual(lease.status, statuses.EXPIRED)
 
@@ -467,9 +466,7 @@ class TestLeaseObject(base.DBTestCase):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         with mock.patch.object(self.db_api, 'lease_destroy',
                                autospec=True) as mock_lease_cancel:
-
             lease.destroy()
-
             mock_lease_cancel.assert_called_once_with(lease.uuid)
 
     def test_save(self):
