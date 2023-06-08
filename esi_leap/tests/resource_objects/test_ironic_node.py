@@ -34,6 +34,7 @@ class FakeIronicNode(object):
         self.provision_state = 'available'
         self.uuid = fake_uuid
         self.resource_class = 'baremetal'
+        self.power_state = 'off'
 
 
 class FakeLease(object):
@@ -125,6 +126,26 @@ class TestIronicNode(base.TestCase):
 
         self.assertEqual(test_ironic_node.get_lessee_project_id(),
                          fake_get_node.lessee)
+        mock_gn.assert_called_once()
+
+    @mock.patch('esi_leap.resource_objects.ironic_node.IronicNode._get_node')
+    def test_get_node_power_state(self, mock_gn):
+        fake_get_node = FakeIronicNode()
+        mock_gn.return_value = fake_get_node
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
+
+        self.assertEqual(test_ironic_node.get_node_power_state(),
+                         fake_get_node.power_state)
+        mock_gn.assert_called_once()
+
+    @mock.patch('esi_leap.resource_objects.ironic_node.IronicNode._get_node')
+    def test_get_node_provision_state(self, mock_gn):
+        fake_get_node = FakeIronicNode()
+        mock_gn.return_value = fake_get_node
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
+
+        self.assertEqual(test_ironic_node.get_node_provision_state(),
+                         fake_get_node.provision_state)
         mock_gn.assert_called_once()
 
     @mock.patch.object(ironic_node, 'get_ironic_client', autospec=True)

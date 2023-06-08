@@ -49,6 +49,14 @@ class ResourceObjectInterface(object, metaclass=abc.ABCMeta):
         """Return the project id of the associated lessee, if any"""
 
     @abc.abstractmethod
+    def get_node_provision_state(self, resource_list):
+        """Return resource's provision state, if any"""
+
+    @abc.abstractmethod
+    def get_node_power_state(self, resource_list):
+        """Return resource's power state, if any"""
+
+    @abc.abstractmethod
     def set_lease(self, lease):
         """Associates a lease with the resource"""
 

@@ -38,3 +38,35 @@ class TestFlexibleDictField(base.TestCase):
         # nullable
         self.field = fields.FlexibleDictField(nullable=True)
         self.assertEqual({}, self.field.coerce('obj', 'attr', None))
+
+
+# NotificationLevelField borrowed from Ironic
+class TestNotificationLevelField(base.TestCase):
+
+    def setUp(self):
+        super(TestNotificationLevelField, self).setUp()
+        self.field = fields.NotificationLevelField()
+
+    def test_coerce_good_value(self):
+        self.assertEqual(fields.NotificationLevel.WARNING,
+                         self.field.coerce('obj', 'attr', 'warning'))
+
+    def test_coerce_bad_value(self):
+        self.assertRaises(ValueError, self.field.coerce, 'obj', 'attr',
+                          'not_a_priority')
+
+
+# NotificationStatusField borrowed from Ironic
+class TestNotificationStatusField(base.TestCase):
+
+    def setUp(self):
+        super(TestNotificationStatusField, self).setUp()
+        self.field = fields.NotificationStatusField()
+
+    def test_coerce_good_value(self):
+        self.assertEqual(fields.NotificationStatus.START,
+                         self.field.coerce('obj', 'attr', 'start'))
+
+    def test_coerce_bad_value(self):
+        self.assertRaises(ValueError, self.field.coerce, 'obj', 'attr',
+                          'not_a_priority')

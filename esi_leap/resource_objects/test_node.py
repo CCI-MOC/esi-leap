@@ -42,6 +42,12 @@ class TestNode(base.ResourceObjectInterface):
     def get_lessee_project_id(self):
         return self._project_id
 
+    def get_node_power_state(self):
+        return 'Off'
+
+    def get_node_provision_state(self):
+        return 'available'
+
     def set_lease(self, lease):
         return
 

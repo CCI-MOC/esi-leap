@@ -57,3 +57,38 @@ class StringField(object_fields.StringField):
 
 class UUIDField(object_fields.UUIDField):
     pass
+
+
+class NotificationLevel(object_fields.Enum):
+    DEBUG = 'debug'
+    INFO = 'info'
+    WARNING = 'warning'
+    ERROR = 'error'
+    CRITICAL = 'critical'
+
+    ALL = (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+
+    def __init__(self):
+        super(NotificationLevel, self).__init__(
+            valid_values=NotificationLevel.ALL)
+
+
+class NotificationLevelField(object_fields.BaseEnumField):
+    AUTO_TYPE = NotificationLevel()
+
+
+class NotificationStatus(object_fields.Enum):
+    START = 'start'
+    END = 'end'
+    ERROR = 'error'
+    SUCCESS = 'success'
+
+    ALL = (START, END, ERROR, SUCCESS)
+
+    def __init__(self):
+        super(NotificationStatus, self).__init__(
+            valid_values=NotificationStatus.ALL)
+
+
+class NotificationStatusField(object_fields.BaseEnumField):
+    AUTO_TYPE = NotificationStatus()

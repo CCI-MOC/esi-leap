@@ -74,3 +74,10 @@ class TestTestNode(base.TestCase):
     def test_remove_lease(self):
         fake_lease = get_test_lease()
         self.assertEqual(self.fake_test_node.remove_lease(fake_lease), None)
+
+    def test_get_node_power_state(self):
+        self.assertEqual(self.fake_test_node.get_node_power_state(), 'Off')
+
+    def test_get_node_provision_state(self):
+        self.assertEqual(self.fake_test_node.get_node_provision_state(),
+                         'available')

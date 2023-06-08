@@ -16,6 +16,7 @@ from esi_leap.conf import dummy_node
 from esi_leap.conf import ironic
 from esi_leap.conf import keystone
 from esi_leap.conf import netconf
+from esi_leap.conf import notification
 from esi_leap.conf import pecan
 from oslo_config import cfg
 
@@ -28,4 +29,5 @@ dummy_node.register_opts(CONF)
 ironic.register_opts(CONF)
 keystone.register_opts(CONF)
 netconf.register_opts(CONF)
+notification.register_opts(CONF)
 pecan.register_opts(CONF)

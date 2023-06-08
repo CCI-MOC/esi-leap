@@ -149,3 +149,19 @@ class InvalidTimeRange(ESILeapException):
 class NodeNotFound(ESILeapException):
     msg_fmt = _('Encountered an error fetching info for node %(uuid)s '
                 '(%(resource_type)s): %(err)s')
+
+
+class NotificationPayloadError(ESILeapException):
+    _msg_fmt = _("Payload not populated when trying to send notification "
+                 "\"%(class_name)s\"")
+
+
+class NotificationSchemaObjectError(ESILeapException):
+    _msg_fmt = _("Expected object %(obj)s when populating notification payload"
+                 " but got object %(source)s")
+
+
+class NotificationSchemaKeyError(ESILeapException):
+    _msg_fmt = _("Object %(obj)s doesn't have the field \"%(field)s\" "
+                 "required for populating notification schema key "
+                 "\"%(key)s\"")

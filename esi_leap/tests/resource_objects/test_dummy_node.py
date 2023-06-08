@@ -40,6 +40,8 @@ class TestDummyNode(base.TestCase):
         'project_id': '654321',
         'lease_uuid': '001',
         'resource_class': 'fake',
+        'power_state': 'off',
+        'provision_state': 'enroll',
         'server_config': {
             'new attribute XYZ': 'new attribute XYZ',
             'cpu_type': 'Intel Xeon',
@@ -113,6 +115,20 @@ class TestDummyNode(base.TestCase):
         with mock.patch('builtins.open', mock_open) as mock_file_open:
             project_id = self.fake_dummy_node.get_lessee_project_id()
             self.assertEqual(project_id, '654321')
+            mock_file_open.assert_called_once()
+
+    def test_get_node_power_state(self):
+        mock_open = mock.mock_open(read_data=self.fake_read_data_1)
+        with mock.patch('builtins.open', mock_open) as mock_file_open:
+            power_state = self.fake_dummy_node.get_node_power_state()
+            self.assertEqual(power_state, 'off')
+            mock_file_open.assert_called_once()
+
+    def test_get_node_provision_state(self):
+        mock_open = mock.mock_open(read_data=self.fake_read_data_1)
+        with mock.patch('builtins.open', mock_open) as mock_file_open:
+            provision_state = self.fake_dummy_node.get_node_provision_state()
+            self.assertEqual(provision_state, 'enroll')
             mock_file_open.assert_called_once()
 
     def test_set_lease(self):
