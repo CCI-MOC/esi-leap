@@ -88,6 +88,7 @@ class Lease(Base):
     name = Column(String(35), nullable=True, unique=False)
     project_id = Column(String(255), nullable=False)
     owner_id = Column(String(255), nullable=False)
+    purpose = Column(String(255), nullable=True)
     resource_type = Column(String(36), nullable=False)
     resource_uuid = Column(String(36), nullable=False)
     start_time = Column(DateTime)

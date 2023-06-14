@@ -101,7 +101,8 @@ class TestLeasesController(test_api_base.APITestCase):
             'resource_type': 'test_node',
             'resource_uuid': '1234567890',
             'start_time': '2016-07-16T19:20:30',
-            'end_time': '2016-08-16T19:20:30'
+            'end_time': '2016-08-16T19:20:30',
+            'purpose': 'test_purpose'
         }
         return_data = data.copy()
         return_data['owner_id'] = self.context.project_id
