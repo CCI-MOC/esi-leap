@@ -573,6 +573,7 @@ class TestLeaseCRUDPayloads(base.DBTestCase):
             offer_uuid=None,
             properties=None,
             status='created',
+            purpose=None,
         )
         self.node = TestNode('test-node', '12345')
 
@@ -594,6 +595,7 @@ class TestLeaseCRUDPayloads(base.DBTestCase):
         self.assertEqual(self.lease.offer_uuid, payload.offer_uuid)
         self.assertEqual(self.lease.properties, payload.properties)
         self.assertEqual(self.lease.status, payload.status)
+        self.assertEqual(self.lease.purpose, payload.purpose)
         self.assertEqual(self.node.node_name, payload.node_name)
         self.assertEqual(self.node._uuid, payload.node_uuid)
         self.assertEqual(self.node.node_power_state,
