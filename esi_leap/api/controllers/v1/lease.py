@@ -53,6 +53,7 @@ class Lease(base.ESILEAPBase):
     end_time = wsme.wsattr(datetime.datetime)
     status = wsme.wsattr(wtypes.text, readonly=True)
     properties = {wtypes.text: types.jsontype}
+    purpose = wsme.wsattr(wtypes.text)
     offer_uuid = wsme.wsattr(wtypes.text, readonly=True)
     parent_lease_uuid = wsme.wsattr(wtypes.text, readonly=True)
 

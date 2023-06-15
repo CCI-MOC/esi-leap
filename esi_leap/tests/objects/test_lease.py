@@ -64,6 +64,7 @@ class TestLeaseObject(base.DBTestCase):
             'properties': {},
             'resource_type': 'dummy_node',
             'resource_uuid': '1718',
+            'purpose': 'test_purpose',
             'offer_uuid': None,
             'parent_lease_uuid': None,
             'created_at': None,
@@ -82,6 +83,7 @@ class TestLeaseObject(base.DBTestCase):
             'end_time': self.start_time + datetime.timedelta(days=10),
             'resource_type': 'dummy_node',
             'resource_uuid': '1718',
+            'purpose': 'test_purpose',
         }
         self.test_lease_create_offer_dict = self.test_lease_create_dict.copy()
         self.test_lease_create_offer_dict['offer_uuid'] = self.test_offer.uuid
