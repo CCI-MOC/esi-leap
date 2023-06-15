@@ -47,6 +47,7 @@ class NotifyTestCase(tests_base.TestCase):
             offer_uuid=None,
             properties=None,
             status='created',
+            purpose=None,
         )
         self.node = TestNode('test-node', '12345')
 
