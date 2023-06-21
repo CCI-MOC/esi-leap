@@ -208,25 +208,10 @@ class Lease(base.ESILEAPObject):
             LOG.info('Deleting lease %s', self.uuid)
             try:
                 resource = self.resource_object()
-                if resource.get_lease_uuid() == self.uuid:
-                    resource.remove_lease(self)
-                    if self.parent_lease_uuid is not None:
-                        parent_lease = Lease.get(self.parent_lease_uuid)
-                        resource.set_lease(parent_lease)
+                self.deactivate(context, resource)
+                self.status = statuses.DELETED
+                self.expire_time = datetime.datetime.now()
 
-                notify.emit_start_notification(context, self,
-                                               'delete', CRUD_NOTIFY_OBJ,
-                                               node=resource)
-                with notify.handle_error_notification(context,
-                                                      self,
-                                                      'delete',
-                                                      CRUD_NOTIFY_OBJ,
-                                                      node=resource):
-                    self.status = statuses.DELETED
-                    self.expire_time = datetime.datetime.now()
-                notify.emit_end_notification(context, self,
-                                             'delete', CRUD_NOTIFY_OBJ,
-                                             node=resource)
             except Exception as e:
                 LOG.info('Error canceling lease: %s: %s' %
                          (type(e).__name__, e))
@@ -251,9 +236,6 @@ class Lease(base.ESILEAPObject):
             LOG.info('Fulfilling lease %s', self.uuid)
             try:
                 resource = self.resource_object()
-                resource.set_lease(self)
-
-                # activate lease
                 notify.emit_start_notification(context, self,
                                                'fulfill',
                                                CRUD_NOTIFY_OBJ,
@@ -263,12 +245,16 @@ class Lease(base.ESILEAPObject):
                                                       'fulfill',
                                                       CRUD_NOTIFY_OBJ,
                                                       node=resource):
-                    self.status = statuses.ACTIVE
-                    self.fulfill_time = datetime.datetime.now()
+                    resource.set_lease(self)
+
                 notify.emit_end_notification(context, self,
                                              'fulfill',
                                              CRUD_NOTIFY_OBJ,
                                              node=resource)
+
+                self.status = statuses.ACTIVE
+                self.fulfill_time = datetime.datetime.now()
+
             except Exception as e:
                 LOG.info('Error fulfilling lease: %s: %s' %
                          (type(e).__name__, e))
@@ -295,15 +281,12 @@ class Lease(base.ESILEAPObject):
                         external=True):
             LOG.info('Expiring lease %s', self.uuid)
             try:
-                resource = self.resource_object()
-                if resource.get_lease_uuid() == self.uuid:
-                    resource.remove_lease(self)
-                    if self.parent_lease_uuid is not None:
-                        parent_lease = Lease.get(self.parent_lease_uuid)
-                        resource.set_lease(parent_lease)
                 # expire lease
+                resource = self.resource_object()
+                self.deactivate(context, resource)
                 self.status = statuses.EXPIRED
                 self.expire_time = datetime.datetime.now()
+
             except Exception as e:
                 LOG.info('Error expiring lease: %s: %s' %
                          (type(e).__name__, e))
@@ -317,3 +300,24 @@ class Lease(base.ESILEAPObject):
     def verify_child_availability(self, start_time, end_time):
         return self.dbapi.lease_verify_child_availability(
             self, start_time, end_time)
+
+    def deactivate(self, context, resource):
+        notify.emit_start_notification(context, self,
+                                       'delete', CRUD_NOTIFY_OBJ,
+                                       node=resource)
+
+        with notify.handle_error_notification(context,
+                                              self,
+                                              'delete',
+                                              CRUD_NOTIFY_OBJ,
+                                              node=resource):
+            if resource.get_lease_uuid() == self.uuid:
+                resource.remove_lease(self)
+
+                if self.parent_lease_uuid is not None:
+                    parent_lease = Lease.get(self.parent_lease_uuid)
+                    resource.set_lease(parent_lease)
+
+        notify.emit_end_notification(context, self,
+                                     'delete', CRUD_NOTIFY_OBJ,
+                                     node=resource)

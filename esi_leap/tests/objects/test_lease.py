@@ -287,7 +287,14 @@ class TestLeaseObject(base.DBTestCase):
 
         lease.fulfill()
 
-        mock_notify.assert_not_called()
+        mock_notify.assert_has_calls([mock.call(mock.ANY, mock.ANY, 'fulfill',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.START,
+                                      mock.ANY, node=mock.ANY),
+                                      mock.call(mock.ANY, mock.ANY, 'fulfill',
+                                      obj_fields.NotificationLevel.ERROR,
+                                      obj_fields.NotificationStatus.ERROR,
+                                      mock.ANY, node=mock.ANY)])
         mock_ro.assert_called_once()
         mock_set_lease.assert_called_once()
         mock_save.assert_called_once()
@@ -311,7 +318,6 @@ class TestLeaseObject(base.DBTestCase):
         mock_glu.return_value = lease.uuid
 
         lease.cancel()
-
         mock_notify.assert_has_calls([mock.call(mock.ANY, mock.ANY, 'delete',
                                       obj_fields.NotificationLevel.INFO,
                                       obj_fields.NotificationStatus.START,
@@ -348,7 +354,14 @@ class TestLeaseObject(base.DBTestCase):
 
         lease.cancel()
 
-        mock_notify.assert_not_called()
+        mock_notify.assert_has_calls([mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.START,
+                                      mock.ANY, node=mock.ANY),
+                                      mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.ERROR,
+                                      obj_fields.NotificationStatus.ERROR,
+                                      mock.ANY, node=mock.ANY)])
         mock_sl.assert_not_called()
         mock_lg.assert_not_called()
         mock_ro.assert_called_once()
@@ -430,7 +443,9 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_expire(self, mock_save, mock_rl, mock_glu, mock_ro,
+    @mock.patch('esi_leap.common.notification_utils'
+                '._emit_notification')
+    def test_expire(self, mock_notify, mock_save, mock_rl, mock_glu, mock_ro,
                     mock_lg, mock_sl):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
@@ -440,6 +455,14 @@ class TestLeaseObject(base.DBTestCase):
 
         lease.expire()
 
+        mock_notify.assert_has_calls([mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.START,
+                                      mock.ANY, node=mock.ANY),
+                                      mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.END,
+                                      mock.ANY, node=mock.ANY)])
         mock_sl.assert_not_called()
         mock_lg.assert_not_called()
         mock_ro.assert_called_once()
@@ -454,7 +477,9 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_expire_error(self, mock_save, mock_rl, mock_glu,
+    @mock.patch('esi_leap.common.notification_utils'
+                '._emit_notification')
+    def test_expire_error(self, mock_notify, mock_save, mock_rl, mock_glu,
                           mock_ro, mock_lg, mock_sl):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
@@ -465,6 +490,14 @@ class TestLeaseObject(base.DBTestCase):
 
         lease.expire()
 
+        mock_notify.assert_has_calls([mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.START,
+                                      mock.ANY, node=mock.ANY),
+                                      mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.ERROR,
+                                      obj_fields.NotificationStatus.ERROR,
+                                      mock.ANY, node=mock.ANY)])
         mock_sl.assert_not_called()
         mock_lg.assert_not_called()
         mock_ro.assert_called_once()
@@ -479,8 +512,10 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_expire_with_parent(self, mock_save, mock_rl, mock_glu,
-                                mock_ro, mock_lg, mock_sl):
+    @mock.patch('esi_leap.common.notification_utils'
+                '._emit_notification')
+    def test_expire_with_parent(self, mock_notify, mock_save, mock_rl,
+                                mock_glu, mock_ro, mock_lg, mock_sl):
         lease = lease_obj.Lease(self.context,
                                 **self.test_lease_parent_lease_dict)
         test_node = TestNode('test-node', '12345')
@@ -490,6 +525,14 @@ class TestLeaseObject(base.DBTestCase):
 
         lease.expire()
 
+        mock_notify.assert_has_calls([mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.START,
+                                      mock.ANY, node=mock.ANY),
+                                      mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.END,
+                                      mock.ANY, node=mock.ANY)])
         mock_sl.assert_called_once()
         mock_lg.assert_called_once()
         mock_ro.assert_called_once()
@@ -502,7 +545,10 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.get_lease_uuid')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.remove_lease')
     @mock.patch('esi_leap.objects.lease.Lease.save')
-    def test_expire_no_expire(self, mock_save, mock_rl, mock_glu, mock_ro):
+    @mock.patch('esi_leap.common.notification_utils'
+                '._emit_notification')
+    def test_expire_no_expire(self, mock_notify, mock_save, mock_rl,
+                              mock_glu, mock_ro):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
         test_node = TestNode('test-node', '12345')
 
@@ -511,6 +557,14 @@ class TestLeaseObject(base.DBTestCase):
 
         lease.expire()
 
+        mock_notify.assert_has_calls([mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.START,
+                                      mock.ANY, node=mock.ANY),
+                                      mock.call(mock.ANY, mock.ANY, 'delete',
+                                      obj_fields.NotificationLevel.INFO,
+                                      obj_fields.NotificationStatus.END,
+                                      mock.ANY, node=mock.ANY)])
         mock_ro.assert_called_once()
         mock_glu.assert_called_once()
         mock_rl.assert_not_called()
