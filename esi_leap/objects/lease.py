@@ -104,6 +104,18 @@ class LeaseCRUDPayload(notification.NotificationPayloadBase):
 
         self.populate_schema(lease=lease, node=node)
 
+    def get_event_dict(self, event_type):
+        event_dict = super().get_event_dict(event_type)
+        event_dict.update({
+            'object_type': 'lease',
+            'object_uuid': self.uuid,
+            'resource_type': self.resource_type,
+            'resource_uuid': self.resource_uuid,
+            'lessee_id': self.project_id,
+            'owner_id': self.owner_id,
+        })
+        return event_dict
+
 
 CRUD_NOTIFY_OBJ = {
     'lease': (LeaseCRUDNotification, LeaseCRUDPayload),

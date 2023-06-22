@@ -70,6 +70,7 @@ def _emit_notification(context, obj, action, level, status,
                                    "%(notification_method)s, payload method "
                                    "%(payload_method)s, error %(error)s"))
         payload = payload_method(obj, **extra_args)
+        event_type = "esi_leap.%s.%s.%s" % (resource, action, status)
         notification_method(
             publisher=notification.NotificationPublisher(
                 service='esi-leap-manager', host=CONF.host),
@@ -78,10 +79,10 @@ def _emit_notification(context, obj, action, level, status,
             level=level,
             payload=payload).emit(context)
         LOG.info("Emit esi_leap notification: host is %s "
-                 "event is esi_leap.%s.%s.%s ,"
+                 "event is %s ,"
                  "level is %s ,"
                  "notification method is %s",
-                 CONF.host, resource, action, status,
+                 CONF.host, event_type,
                  level, notification_method)
     except (exception.NotificationSchemaObjectError,
             exception.NotificationSchemaKeyError,

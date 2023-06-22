@@ -84,8 +84,9 @@ class TestNotificationBase(test_base.TestCase):
         self.fake_obj = self.TestObject(fake_field_1='fake1', fake_field_2=2)
 
     def _verify_notification(self, mock_notifier, mock_context,
-                             expected_event_type, expected_payload,
-                             expected_publisher, notif_level):
+                             mock_event_create, expected_event_type,
+                             expected_payload, expected_publisher,
+                             notif_level):
         mock_notifier.prepare.assert_called_once_with(
             publisher_id=expected_publisher)
         # Handler actually sending out the notification depends on the
@@ -98,9 +99,11 @@ class TestNotificationBase(test_base.TestCase):
         actual_payload = mock_notify.call_args[1]['payload']
         self.assertEqual(jsonutils.dumps(expected_payload, sort_keys=True),
                          jsonutils.dumps(actual_payload, sort_keys=True))
+        mock_event_create.assert_called_once()
 
+    @mock.patch('esi_leap.objects.event.Event.create')
     @mock.patch('esi_leap.common.rpc.VERSIONED_NOTIFIER')
-    def test_emit_notification(self, mock_notifier):
+    def test_emit_notification(self, mock_notifier, mock_event_create):
         self.config(notification_level='debug', group='notification')
         payload = self.TestNotificationPayload(an_extra_field='extra',
                                                an_optional_field=1)
@@ -121,6 +124,7 @@ class TestNotificationBase(test_base.TestCase):
         self._verify_notification(
             mock_notifier,
             mock_context,
+            mock_event_create,
             expected_event_type='esi_leap.test_object.test.start',
             expected_payload={
                 'esi_leap_object.name': 'TestNotificationPayload',
@@ -200,8 +204,10 @@ class TestNotificationBase(test_base.TestCase):
                           mock_context)
         self.assertFalse(mock_notifier.called)
 
+    @mock.patch('esi_leap.objects.event.Event.create')
     @mock.patch('esi_leap.common.rpc.VERSIONED_NOTIFIER')
-    def test_emit_notification_empty_schema(self, mock_notifier):
+    def test_emit_notification_empty_schema(self, mock_notifier,
+                                            mock_event_create):
         self.config(notification_level='debug', group='notification')
         payload = self.TestNotificationPayloadEmptySchema(fake_field='123')
         notif = self.TestNotificationEmptySchema(
@@ -220,6 +226,7 @@ class TestNotificationBase(test_base.TestCase):
         self._verify_notification(
             mock_notifier,
             mock_context,
+            mock_event_create,
             expected_event_type='esi_leap.test_object.test.error',
             expected_payload={
                 'esi_leap_object.name': 'TestNotificationPayloadEmptySchema',

@@ -10,12 +10,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from datetime import datetime
+
 from oslo_config import cfg
 from oslo_versionedobjects import base as versioned_objects_base
 
 from esi_leap.common import exception
 from esi_leap.common import rpc
 from esi_leap.objects import base
+from esi_leap.objects import event as event_obj
 from esi_leap.objects import fields
 from oslo_log import log as logging
 
@@ -116,6 +119,10 @@ class NotificationBase(base.ESILEAPObject):
         notify = getattr(notifier, self.level)
         notify(context, event_type=event_type, payload=payload)
 
+        event_dict = self.payload.get_event_dict(event_type)
+        event = event_obj.Event(**event_dict)
+        event.create()
+
 
 class NotificationPayloadBase(base.ESILEAPObject):
     """Base class for the payload of versioned notifications."""
@@ -163,6 +170,12 @@ class NotificationPayloadBase(base.ESILEAPObject):
                                                            field=field,
                                                            key=key)
         self.populated = True
+
+    def get_event_dict(self, event_type):
+        return {
+            'event_type': event_type,
+            'event_time': datetime.now(),
+        }
 
 
 @versioned_objects_base.VersionedObjectRegistry.register

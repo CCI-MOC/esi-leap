@@ -169,6 +169,42 @@ test_lease_6 = dict(
     status=statuses.EXPIRED,
 )
 
+test_event_1 = dict(
+    id=1,
+    event_type='fake:event:start',
+    event_time=now - datetime.timedelta(days=20),
+    object_type='lease',
+    object_uuid='11111',
+    resource_type='dummy_node',
+    resource_uuid='1111',
+    lessee_id='1e5533',
+    owner_id='0wn3r',
+)
+
+test_event_2 = dict(
+    id=2,
+    event_type='fake:event:end',
+    event_time=now - datetime.timedelta(days=10),
+    object_type='lease',
+    object_uuid='11111',
+    resource_type='dummy_node',
+    resource_uuid='1111',
+    lessee_id='1e5533',
+    owner_id='0wn3r',
+)
+
+test_event_3 = dict(
+    id=3,
+    event_type='fake:event:start',
+    event_time=now - datetime.timedelta(days=20),
+    object_type='lease',
+    object_uuid='22222',
+    resource_type='dummy_node',
+    resource_uuid='2222',
+    lessee_id='1e5533',
+    owner_id='0wn3r2',
+)
+
 
 class TestOfferAPI(base.DBTestCase):
 
@@ -774,3 +810,59 @@ class TestResourceVerifyAvailabilityAPI(base.DBTestCase):
         self.assertRaises(e.ResourceTimeConflict,
                           api.resource_verify_availability,
                           r_type, r_uuid, start, end)
+
+
+class TestEventAPI(base.DBTestCase):
+
+    def test_event_get_all(self):
+        api.event_create(test_event_1)
+        api.event_create(test_event_2)
+
+        events = api.event_get_all({})
+        event_ids = [event.to_dict()['id'] for event in events]
+
+        self.assertEqual(2, events.count())
+        self.assertIn(test_event_1['id'], event_ids)
+        self.assertIn(test_event_2['id'], event_ids)
+
+    def test_event_get_all_filter_by_last_event_time(self):
+        api.event_create(test_event_1)
+        api.event_create(test_event_2)
+        api.event_create(test_event_3)
+
+        events = api.event_get_all({'last_event_time':
+                                    test_event_1['event_time']})
+        event_ids = [event.to_dict()['id'] for event in events]
+
+        self.assertEqual(1, events.count())
+        self.assertIn(test_event_2['id'], event_ids)
+
+    def test_event_get_all_filter_by_last_event_id(self):
+        api.event_create(test_event_1)
+        api.event_create(test_event_2)
+        api.event_create(test_event_3)
+
+        events = api.event_get_all({'last_event_id': 1})
+        event_ids = [event.to_dict()['id'] for event in events]
+
+        self.assertEqual(2, events.count())
+        self.assertIn(test_event_2['id'], event_ids)
+        self.assertIn(test_event_3['id'], event_ids)
+
+    def test_event_get_all_filter_by_lessee_or_owner_id(self):
+        api.event_create(test_event_1)
+        api.event_create(test_event_2)
+        api.event_create(test_event_3)
+
+        events = api.event_get_all({'lessee_or_owner_id': '0wn3r'})
+        event_ids = [event.to_dict()['id'] for event in events]
+
+        self.assertEqual(2, events.count())
+        self.assertIn(test_event_1['id'], event_ids)
+        self.assertIn(test_event_2['id'], event_ids)
+
+    def test_lease_create(self):
+        event = api.event_create(test_event_1)
+        events = api.event_get_all({}).all()
+        assert len(events) == 1
+        assert events[0].to_dict() == event.to_dict()

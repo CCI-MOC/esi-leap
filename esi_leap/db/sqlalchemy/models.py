@@ -112,3 +112,26 @@ class Lease(Base):
         'Lease',
         backref=orm.backref('child_leases', remote_side=uuid),
     )
+
+
+class Event(Base):
+    """Represents an event."""
+
+    __tablename__ = 'events'
+    __table_args__ = (
+        Index('event_type_idx', 'event_type'),
+        Index('event_lessee_id_idx', 'lessee_id'),
+        Index('event_owner_id_idx', 'owner_id'),
+        Index('event_resource_idx', 'resource_type', 'resource_uuid'),
+        Index('event_time_idx', 'event_time'),
+    )
+
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    event_type = Column(String(36), nullable=False)
+    event_time = Column(DateTime, nullable=False)
+    object_type = Column(String(36), nullable=True)
+    object_uuid = Column(String(36), nullable=True)
+    resource_type = Column(String(36), nullable=True)
+    resource_uuid = Column(String(36), nullable=True)
+    lessee_id = Column(String(255), nullable=True)
+    owner_id = Column(String(255), nullable=True)

@@ -159,3 +159,13 @@ def resource_check_admin(resource_type, resource_uuid,
     return IMPL.resource_check_admin(
         resource_type, resource_uuid, start_time, end_time,
         default_admin_project_id, project_id)
+
+
+# Event
+@to_dict
+def event_get_all():
+    return IMPL.event_get_all()
+
+
+def event_create(values):
+    return IMPL.event_create(values)
