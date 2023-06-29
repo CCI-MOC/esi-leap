@@ -446,3 +446,37 @@ def resource_verify_availability(r_type, r_uuid, start, end):
         raise exception.ResourceTimeConflict(
             resource_uuid=r_uuid,
             resource_type=r_type)
+
+
+# Events
+
+def event_get_all(filters):
+    query = model_query(models.Event)
+
+    last_event_time = filters.pop('last_event_time', None)
+    last_event_id = filters.pop('last_event_id', None)
+    lessee_or_owner_id = filters.pop('lessee_or_owner_id', None)
+
+    query = query.filter_by(**filters)
+
+    if last_event_time:
+        query = query.filter(
+            last_event_time < models.Event.event_time)
+    if last_event_id:
+        query = query.filter(last_event_id < models.Event.id)
+    if lessee_or_owner_id:
+        query = query.filter(
+            (lessee_or_owner_id == models.Event.lessee_id) |
+            (lessee_or_owner_id == models.Event.owner_id))
+
+    return query
+
+
+def event_create(values):
+    event_ref = models.Event()
+    event_ref.update(values)
+
+    with _session_for_write() as session:
+        session.add(event_ref)
+        session.flush()
+        return event_ref
