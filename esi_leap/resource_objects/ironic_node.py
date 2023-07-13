@@ -65,7 +65,6 @@ class IronicNode(base.ResourceObjectInterface):
         config = self._get_node_attr('properties', {},
                                      err_msg='Error getting resource config',
                                      err_val=error.UNKNOWN['config'])
-        config.pop('lease_uuid', None)
         return config
 
     def get_owner_project_id(self):

@@ -94,7 +94,6 @@ class TestIronicNode(base.TestCase):
 
         config = test_ironic_node.get_config()
         expected_config = fake_get_node.properties
-        expected_config.pop('lease_uuid', None)
         self.assertEqual(config, expected_config)
         mock_gn.assert_called_once()
 
