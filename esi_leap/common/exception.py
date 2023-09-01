@@ -63,6 +63,7 @@ class LeaseNotActive(ESILeapException):
 
 
 class LeaseNotFound(ESILeapException):
+    code = http_client.NOT_FOUND
     msg_fmt = _('Lease with name or uuid %(lease_id)s not found.')
 
 
@@ -85,6 +86,7 @@ class OfferDuplicateName(ESILeapException):
 
 
 class OfferNotFound(ESILeapException):
+    code = http_client.NOT_FOUND
     msg_fmt = _('Offer with name or uuid %(offer_uuid)s not found.')
 
 
@@ -147,6 +149,7 @@ class InvalidTimeRange(ESILeapException):
 
 
 class NodeNotFound(ESILeapException):
+    code = http_client.NOT_FOUND
     msg_fmt = _('Encountered an error fetching info for node %(uuid)s '
                 '(%(resource_type)s): %(err)s')
 
