@@ -21,6 +21,8 @@ opts = [
     cfg.IntOpt('api_workers'),
     cfg.BoolOpt('enable_ssl_api', default=False),
     cfg.StrOpt('default_resource_type', default='ironic_node'),
+    cfg.IntOpt('max_lease_time', default=21),
+    cfg.IntOpt('default_lease_time', default=7),
 ]
 
 

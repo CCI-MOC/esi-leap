@@ -39,6 +39,12 @@ class ESILeapException(Exception):
         super(ESILeapException, self).__init__(message)
 
 
+class LeaseExceedMaxTimeRange(ESILeapException):
+    code = http_client.FORBIDDEN
+    msg_fmt = _('Attempted to create lease with an invalid '
+                'time range. The max time range is %(max_time)s days.')
+
+
 class HTTPForbidden(ESILeapException):
     code = http_client.FORBIDDEN
     msg_fmt = _('Access was denied to %(rule)s.')

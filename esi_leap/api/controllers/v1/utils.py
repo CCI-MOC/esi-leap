@@ -13,6 +13,8 @@
 from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 
+import datetime
+
 from esi_leap.common import exception
 from esi_leap.common import keystone
 from esi_leap.common import policy
@@ -167,3 +169,13 @@ def lease_get_dict_with_added_info(lease, project_list=None, node_list=None):
     lease_dict['resource'] = resource.get_name(node_list)
     lease_dict['resource_class'] = resource.get_resource_class(node_list)
     return lease_dict
+
+
+def check_lease_length(cdict, start_time, end_time, max_time):
+    if (end_time - start_time) > datetime.timedelta(days=max_time):
+        # Check if the current project is admin
+        # Only admin project can set a lease beyond the max length
+        try:
+            policy_authorize('esi_leap:lease:lease_admin', cdict, cdict)
+        except exception.HTTPForbidden:
+            raise exception.LeaseExceedMaxTimeRange(max_time=max_time)
