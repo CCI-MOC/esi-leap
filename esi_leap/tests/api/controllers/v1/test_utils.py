@@ -694,3 +694,48 @@ class TestLeaseGetDictWithAddedInfoUtils(testtools.TestCase):
         self.assertEqual(2, mock_gpn.call_count)
         mock_gn.assert_called_once()
         self.assertEqual(expected_output_dict, output_dict)
+
+
+class TestCheckLeaseLength(testtools.TestCase):
+    def setUp(self):
+        super(TestCheckLeaseLength, self).setUp()
+        self.max_time = 21
+        self.start_time = datetime.datetime(2016, 7, 16, 19, 20, 30)
+        self.end_time = datetime.datetime(2016, 8, 16, 19, 20, 30)
+        self.end_time_1 = datetime.datetime(2016, 7, 20, 19, 20, 30)
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
+    def test_check_lease_length_admin_exceed_max(self, mock_authorize):
+        utils.check_lease_length(admin_ctx.to_policy_values(),
+                                 self.start_time,
+                                 self.end_time,
+                                 self.max_time)
+
+        mock_authorize.assert_called_once_with('esi_leap:lease:lease_admin',
+                                               admin_ctx.to_policy_values(),
+                                               admin_ctx.to_policy_values())
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
+    def test_check_lease_length_exception(self, mock_authorize):
+        mock_authorize.side_effect = exception.HTTPForbidden(
+            'esi_leap:lease:lease_admin')
+
+        self.assertRaises(exception.LeaseExceedMaxTimeRange,
+                          utils.check_lease_length,
+                          lessee_ctx.to_policy_values(),
+                          self.start_time,
+                          self.end_time,
+                          self.max_time)
+
+        mock_authorize.assert_called_once_with('esi_leap:lease:lease_admin',
+                                               lessee_ctx.to_policy_values(),
+                                               lessee_ctx.to_policy_values())
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.policy_authorize')
+    def test_check_lease_length_non_admin_valid(self, mock_authorize):
+        utils.check_lease_length(lessee_ctx.to_policy_values(),
+                                 self.start_time,
+                                 self.end_time_1,
+                                 self.max_time)
+
+        assert not mock_authorize.called

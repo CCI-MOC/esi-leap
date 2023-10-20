@@ -164,7 +164,13 @@ class LeasesController(rest.RestController):
             lease_dict['start_time'] = datetime.datetime.now()
 
         if 'end_time' not in lease_dict:
-            lease_dict['end_time'] = datetime.datetime.max
+            lease_dict['end_time'] = lease_dict['start_time'] + \
+                datetime.timedelta(days=CONF.api.default_lease_time)
+        else:
+            utils.check_lease_length(cdict,
+                                     lease_dict['start_time'],
+                                     lease_dict['end_time'],
+                                     CONF.api.max_lease_time)
 
         try:
             utils.check_resource_admin(cdict, resource, request.project_id)
