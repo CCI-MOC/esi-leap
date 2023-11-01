@@ -21,6 +21,7 @@ class FakeProject(object):
     def __init__(self):
         self.id = 'uuid'
         self.name = 'name'
+        self.email = 'fake@fake'
 
 
 class KeystoneTestCase(base.TestCase):
@@ -90,3 +91,15 @@ class KeystoneTestCase(base.TestCase):
         project_name = keystone.get_project_name(None, project_list)
 
         self.assertEqual('', project_name)
+
+    @mock.patch.object(keystone, 'get_keystone_client', autospec=True)
+    def test_get_project_email_none(self, mock_keystone):
+        mock_keystone.return_value.projects.get.return_value = None
+        project_email = keystone.get_project_email(None)
+        self.assertEqual(None, project_email)
+
+    @mock.patch.object(keystone, 'get_keystone_client', autospec=True)
+    def test_get_project_email_exist(self, mock_keystone):
+        mock_keystone.return_value.projects.get.return_value = FakeProject()
+        project_email = keystone.get_project_email('uuid')
+        self.assertEqual('fake@fake', project_email)

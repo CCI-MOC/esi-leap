@@ -73,3 +73,8 @@ def get_project_name(project_id, project_list=None):
         return project.name if project else ''
     else:
         return ''
+
+
+def get_project_email(project_id):
+    project = get_keystone_client().projects.get(project_id)
+    return getattr(project, 'email', None) if project else None

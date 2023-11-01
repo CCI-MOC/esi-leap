@@ -10,7 +10,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
 
+from esi_leap.common import keystone
 from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.manager import utils
@@ -22,8 +24,14 @@ import oslo_messaging as messaging
 from oslo_service import service
 from oslo_utils import timeutils
 
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import smtplib
+
+
 CONF = esi_leap.conf.CONF
 EVENT_INTERVAL = 60
+EVENT_INTERVAL_LONG = 3600 * 24
 LOG = logging.getLogger(__name__)
 
 
@@ -52,6 +60,8 @@ class ManagerService(service.Service):
         self.tg.add_timer(EVENT_INTERVAL, self._expire_leases)
         LOG.info('Starting _cancel_leases periodic job')
         self.tg.add_timer(EVENT_INTERVAL, self._cancel_leases)
+        LOG.info('Starting _notify_lease_expire periodic job')
+        self.tg.add_timer(EVENT_INTERVAL_LONG, self._notify_lease_expire)
         LOG.info('Starting _expire_offers periodic job')
         self.tg.add_timer(EVENT_INTERVAL, self._expire_offers)
 
@@ -129,6 +139,67 @@ class ManagerService(service.Service):
                              (type(e).__name__, e))
                     offer.status = statuses.ERROR
                     offer.save()
+
+    def _notify_lease_expire(self):
+        LOG.info('Checking for leases expire soon')
+        leases = lease_obj.Lease.get_all(
+            {'status': [statuses.ACTIVE, statuses.CREATED,
+                        statuses.WAIT_EXPIRE, statuses.WAIT_FULFILL]},
+            self._context)
+        now = timeutils.utcnow()
+        for lease in leases:
+            if lease.end_time - now <= \
+                    datetime.timedelta(CONF.api.lease_warning_days):
+                try:
+                    LOG.info('Lease %s is expiring in %s day(s)' %
+                             (lease.uuid, CONF.api.lease_warning_days))
+                    if CONF.api.enable_email:
+                        to_email = keystone.get_project_email(lease.project_id)
+                        if not to_email:
+                            LOG.info('No email linked to project %s. '
+                                     'Not sending email notification',
+                                     lease.project_id)
+                        else:
+                            email_body = f"Hi project {lease.project_id}," \
+                                         f"\n\n" \
+                                         f"We would like to inform you that" \
+                                         f" your lease: {lease.uuid} " \
+                                         f"will expire on {lease.end_time}." \
+                                         f" To ensure " \
+                                         f"the continuity of your data, " \
+                                         f"please take the following steps:" \
+                                         f"\n\n" \
+                                         f"1. Save any important data" \
+                                         f" associated with this resource." \
+                                         f"\n" \
+                                         f"2. If you wish to" \
+                                         f" extend your lease," \
+                                         f" please contact ESI admin team." \
+                                         f"\n\n" \
+                                         f"Thank you!" \
+                                         f"\n\n" \
+                                         f"ESI Admin Team"
+                            self._send_email(to_email, email_body)
+                except Exception as e:
+                    LOG.info('Error sending lease expire '
+                             'email notification: %s: %s' %
+                             (type(e).__name__, e))
+
+    def _send_email(self, to_email, email_body):
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = CONF.api.email_sender
+            msg['To'] = to_email
+            msg['Subject'] = '[ESI]Lease expires soon'
+            msg.attach(MIMEText(email_body, 'plain'))
+            server = smtplib.SMTP(CONF.api.SMTP_server)
+            server.sendmail(CONF.api.email_sender, to_email,
+                            msg.as_string())
+            server.quit()
+            LOG.info("Email sent successfully to %s", to_email)
+        except Exception as e:
+            LOG.info('Email not sent: %s: %s' %
+                     (type(e).__name__, e))
 
 
 class ManagerEndpoint(object):

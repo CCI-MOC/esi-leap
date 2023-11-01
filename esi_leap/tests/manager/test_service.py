@@ -15,10 +15,14 @@ import mock
 from oslo_utils import uuidutils
 
 from esi_leap.common import statuses
+import esi_leap.conf
 from esi_leap.manager.service import ManagerService
 from esi_leap.objects import lease
 from esi_leap.objects import offer
 from esi_leap.tests import base
+
+
+CONF = esi_leap.conf.CONF
 
 
 class TestService(base.TestCase):
@@ -224,3 +228,53 @@ class TestService(base.TestCase):
         }, s._context)
         self.assertEqual(statuses.ERROR, error_offer.status)
         mock_save.assert_called_once()
+
+    @mock.patch('oslo_utils.timeutils.utcnow')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    @mock.patch('smtplib.SMTP')
+    @mock.patch('esi_leap.common.keystone.get_project_email')
+    def test__notify_lease_expire_email(self, mock_gpe, mock_smtp,
+                                        mock_ga, mock_utcnow):
+        CONF.set_override('enable_email', True, group='api')
+        mock_ga.return_value = [self.test_lease]
+        mock_utcnow.return_value = datetime.datetime(4000, 7, 15)
+        mock_gpe.return_value = 'fake@fake.com'
+
+        s = ManagerService()
+        s._notify_lease_expire()
+
+        mock_gpe.assert_called_once_with(self.test_lease.project_id)
+        mock_smtp.return_value.sendmail.assert_called_once()
+
+    @mock.patch('oslo_utils.timeutils.utcnow')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    @mock.patch('smtplib.SMTP')
+    @mock.patch('esi_leap.common.keystone.get_project_email')
+    def test__notify_lease_expire_no_email(self, mock_gpe, mock_smtp,
+                                           mock_ga, mock_utcnow):
+        CONF.set_override('enable_email', True, group='api')
+        mock_ga.return_value = [self.test_lease]
+        mock_utcnow.return_value = datetime.datetime(4000, 7, 15)
+        mock_gpe.return_value = ''
+
+        s = ManagerService()
+        s._notify_lease_expire()
+
+        mock_gpe.assert_called_once_with(self.test_lease.project_id)
+        assert not mock_smtp.return_value.sendmail.called
+
+    @mock.patch('oslo_utils.timeutils.utcnow')
+    @mock.patch('esi_leap.objects.lease.Lease.get_all')
+    @mock.patch('smtplib.SMTP')
+    @mock.patch('esi_leap.common.keystone.get_project_email')
+    def test__notify_lease_expire_disable_email(self, mock_gpe, mock_smtp,
+                                                mock_ga, mock_utcnow):
+        CONF.set_override('enable_email', False, group='api')
+        mock_ga.return_value = [self.test_lease]
+        mock_utcnow.return_value = datetime.datetime(4000, 7, 15)
+
+        s = ManagerService()
+        s._notify_lease_expire()
+
+        assert not mock_gpe.called
+        assert not mock_smtp.return_value.sendmail.called

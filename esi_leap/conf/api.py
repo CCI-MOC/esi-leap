@@ -23,6 +23,13 @@ opts = [
     cfg.StrOpt('default_resource_type', default='ironic_node'),
     cfg.IntOpt('max_lease_time', default=21),
     cfg.IntOpt('default_lease_time', default=7),
+    cfg.BoolOpt('enable_email', default=False),
+    cfg.StrOpt('SMTP_server', default='localhost'),
+    cfg.StrOpt('email_sender'),
+    cfg.IntOpt('lease_warning_days', default=1,
+               help=('the number of days before a lease expires '
+                     'when the lease user will receive an email notification '
+                     'if enable_email is set to True')),
 ]
 
 
