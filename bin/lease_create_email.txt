@@ -1,0 +1,12 @@
+Hi {project},
+
+We would like to inform you that your lease: {lease_uuid} has started. Below are the details of the lease:
+
+    - Lease Start Time: {start_time}
+    - Lease End Time: {end_time}
+    - Node Name: {node_name}
+    - Node UUID: {node_uuid}
+
+Best Regards,
+
+ESI Admin Team
