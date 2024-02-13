@@ -272,7 +272,8 @@ class OffersController(rest.RestController):
             lease_dict['start_time'] = datetime.datetime.now()
 
         if 'end_time' not in lease_dict:
-            q = offer.get_first_availability(lease_dict['start_time'])
+            q = offer.get_next_lease_start_time(
+                lease_dict['start_time'])
             if q is None:
                 lease_dict['end_time'] = offer.end_time
             else:

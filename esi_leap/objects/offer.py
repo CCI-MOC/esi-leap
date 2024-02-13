@@ -113,8 +113,9 @@ class Offer(base.ESILEAPObject):
 
         return avails
 
-    def get_first_availability(self, start):
-        return self.dbapi.offer_get_first_availability(self.uuid, start)
+    def get_next_lease_start_time(self, start):
+        return self.dbapi.offer_get_next_lease_start_time(
+            self.uuid, start)
 
     def create(self, context=None):
         updates = self.obj_get_changes()
