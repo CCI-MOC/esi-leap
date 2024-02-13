@@ -169,6 +169,20 @@ test_lease_6 = dict(
     status=statuses.EXPIRED,
 )
 
+test_lease_7 = dict(
+    uuid='77777',
+    project_id='1e5533_2',
+    owner_id='0wn3r_2',
+    name='l1',
+    resource_uuid='1111',
+    resource_type='dummy_node',
+    purpose='test_purpose',
+    start_time=now - datetime.timedelta(days=10),
+    end_time=now + datetime.timedelta(days=10),
+    properties={},
+    status=statuses.ACTIVE,
+)
+
 test_event_1 = dict(
     id=1,
     event_type='fake:event:start',
@@ -340,15 +354,18 @@ class TestOfferAPI(base.DBTestCase):
                          [(now + datetime.timedelta(days=50),
                           now + datetime.timedelta(days=60))])
 
-    def test_offer_get_first_availability(self):
+    def test_offer_get_next_lease_start_time(self):
         o1 = api.offer_create(test_offer_1)
-        self.assertEqual(api.offer_get_first_availability
+        self.assertEqual(api.offer_get_next_lease_start_time
                          (o1.uuid, o1.start_time,), None)
         test_lease_3['offer_uuid'] = o1.uuid
         api.lease_create(test_lease_3)
-        self.assertEqual(api.offer_get_first_availability(o1.uuid,
-                                                          o1.start_time),
-                         (now + datetime.timedelta(days=50),))
+        test_lease_7['offer_uuid'] = o1.uuid
+        api.lease_create(test_lease_7)
+        self.assertEqual(
+            api.offer_get_next_lease_start_time(
+                o1.uuid, o1.start_time),
+            (now + datetime.timedelta(days=50),))
 
     def test_offer_get_by_uuid(self):
         o1 = api.offer_create(test_offer_1)

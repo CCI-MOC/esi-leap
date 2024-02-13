@@ -92,9 +92,9 @@ def offer_get_conflict_times(offer_ref):
     return IMPL.offer_get_conflict_times(offer_ref)
 
 
-def offer_get_first_availability(offer_uuid, start, end):
-    return IMPL.offer_get_first_availability(
-        offer_uuid, start, end)
+def offer_get_next_lease_start_time(offer_uuid, start):
+    return IMPL.offer_get_next_lease_start_time(
+        offer_uuid, start)
 
 
 def offer_verify_availability(offer_ref, start, end):

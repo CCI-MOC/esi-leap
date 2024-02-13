@@ -169,7 +169,7 @@ def offer_get_conflict_times(offer_ref):
                ).all()
 
 
-def offer_get_first_availability(offer_uuid, start):
+def offer_get_next_lease_start_time(offer_uuid, start):
     l_query = model_query(models.Lease)
 
     return l_query.with_entities(
@@ -179,7 +179,8 @@ def offer_get_first_availability(offer_uuid, start):
                (models.Lease.status == statuses.ACTIVE)
                ).\
         order_by(models.Lease.start_time).\
-        filter(models.Lease.end_time >= start).first()
+        filter((models.Lease.end_time >= start) &
+               (models.Lease.start_time >= start)).first()
 
 
 def offer_verify_availability(offer_ref, start, end):
