@@ -16,4 +16,5 @@ setuptools.setup(
     setup_requires=['pbr>=2.0.0'],
     long_description=long_description,
     long_description_content_type='text/markdown',
+    package_data={'esi_leap': ['templates/*']},
     pbr=True)
