@@ -46,6 +46,7 @@ class Lease(base.ESILEAPBase):
     resource_type = wsme.wsattr(wtypes.text)
     resource_uuid = wsme.wsattr(wtypes.text)
     resource_class = wsme.wsattr(wtypes.text)
+    resource_properties = {wtypes.text: types.jsontype}
     resource = wsme.wsattr(wtypes.text, readonly=True)
     start_time = wsme.wsattr(datetime.datetime)
     fulfill_time = wsme.wsattr(datetime.datetime, readonly=True)
@@ -62,7 +63,8 @@ class Lease(base.ESILEAPBase):
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
-        for attr in ('project', 'owner', 'resource', 'resource_class'):
+        for attr in ('project', 'owner', 'resource', 'resource_class',
+                     'resource_properties'):
             setattr(self, attr, kwargs.get(attr, wtypes.Unset))
 
 

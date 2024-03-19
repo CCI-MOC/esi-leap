@@ -14,7 +14,7 @@ UNKNOWN = {
     'uuid': 'unknown-uuid',
     'name': 'unknown-name',
     'resource_class': 'unknown-class',
-    'config': {},
+    'properties': {},
     'owner_project_id': 'unknown-owner',
     'lease_uuid': 'unknown-lease',
     'lessee_project_id': 'unknown-lessee',

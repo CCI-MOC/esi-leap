@@ -30,7 +30,7 @@ class TestNode(base.ResourceObjectInterface):
     def get_resource_class(self, resource_list=None):
         return 'fake'
 
-    def get_config(self):
+    def get_properties(self, resource_list=None):
         return {}
 
     def get_owner_project_id(self):

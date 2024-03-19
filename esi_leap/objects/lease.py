@@ -100,9 +100,9 @@ class LeaseCRUDPayload(notification.NotificationPayloadBase):
         setattr(node, 'node_name', node.get_name())
         setattr(node, 'node_provision_state', node.get_node_provision_state())
         setattr(node, 'node_power_state', node.get_node_power_state())
-        node_config = node.get_config().copy()
-        node_config.pop('lease_uuid', None)
-        setattr(node, 'node_properties', node_config)
+        node_properties = node.get_properties().copy()
+        node_properties.pop('lease_uuid', None)
+        setattr(node, 'node_properties', node_properties)
 
         self.populate_schema(lease=lease, node=node)
 

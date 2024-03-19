@@ -642,6 +642,7 @@ class TestOfferGetDictWithAddedInfoUtils(testtools.TestCase):
             'resource_type': o.resource_type,
             'resource_uuid': o.resource_uuid,
             'resource_class': 'fake',
+            'resource_properties': {},
             'resource': 'test-node-1234567890',
             'name': o.name,
             'project_id': o.project_id,
@@ -689,6 +690,7 @@ class TestLeaseGetDictWithAddedInfoUtils(testtools.TestCase):
         expected_output_dict['project'] = 'project-name'
         expected_output_dict['owner'] = 'project-name'
         expected_output_dict['resource_class'] = 'fake'
+        expected_output_dict['resource_properties'] = {}
 
         mock_gro.assert_called_once()
         self.assertEqual(2, mock_gpn.call_count)

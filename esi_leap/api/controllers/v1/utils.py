@@ -155,6 +155,7 @@ def offer_get_dict_with_added_info(offer, project_list=None, node_list=None):
     o['lessee'] = keystone.get_project_name(offer.lessee_id, project_list)
     o['resource'] = resource.get_name(node_list)
     o['resource_class'] = resource.get_resource_class(node_list)
+    o['resource_properties'] = resource.get_properties(node_list)
     return o
 
 
@@ -168,6 +169,7 @@ def lease_get_dict_with_added_info(lease, project_list=None, node_list=None):
                                                     project_list)
     lease_dict['resource'] = resource.get_name(node_list)
     lease_dict['resource_class'] = resource.get_resource_class(node_list)
+    lease_dict['resource_properties'] = resource.get_properties(node_list)
     return lease_dict
 
 

@@ -48,6 +48,7 @@ class Offer(base.ESILEAPBase):
     resource_uuid = wsme.wsattr(wtypes.text, mandatory=True)
     resource = wsme.wsattr(wtypes.text, readonly=True)
     resource_class = wsme.wsattr(wtypes.text)
+    resource_properties = {wtypes.text: types.jsontype}
     start_time = wsme.wsattr(datetime.datetime)
     end_time = wsme.wsattr(datetime.datetime)
     status = wsme.wsattr(wtypes.text, readonly=True)
@@ -62,7 +63,8 @@ class Offer(base.ESILEAPBase):
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
         for attr in ('availabilities', 'project', 'lessee',
-                     'resource', 'resource_class'):
+                     'resource', 'resource_class',
+                     'resource_properties'):
             setattr(self, attr, kwargs.get(attr, wtypes.Unset))
 
 

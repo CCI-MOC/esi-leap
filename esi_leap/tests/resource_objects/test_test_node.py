@@ -55,8 +55,8 @@ class TestTestNode(base.TestCase):
     def test_get_resource_class(self):
         self.assertEqual(self.fake_test_node.get_resource_class(), 'fake')
 
-    def test_get_config(self):
-        self.assertEqual(self.fake_test_node.get_config(), {})
+    def test_get_properties(self):
+        self.assertEqual(self.fake_test_node.get_properties(), {})
 
     def test_get_owner_project_id(self):
         self.assertEqual(self.fake_test_node.get_owner_project_id(), '123456')

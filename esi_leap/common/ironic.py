@@ -53,3 +53,11 @@ def get_node(node_uuid, node_list=None):
     else:
         node = next((n for n in node_list if n.uuid == node_uuid), None)
     return node
+
+
+def get_condensed_properties(properties, traits):
+    cp = properties.copy()
+    cp.pop('lease_uuid', None)
+    cp.pop('capabilities', None)
+    cp['traits'] = traits
+    return cp
