@@ -20,10 +20,12 @@ class FakeIronicNode(object):
         self.name = 'fake-node'
         self.owner = 'fake-project-uuid'
         self.uuid = 'fake-uuid'
-        self.properties = {'lease_uuid': 'fake-lease-uuid'}
+        self.properties = {'lease_uuid': 'fake-lease-uuid', 'cpu': '40'}
+        self.traits = ['trait1', 'trait2']
         self.lessee = 'fake-project-uuid'
         self.maintenance = False
         self.provision_state = 'active'
+        self.resource_class = 'baremetal'
 
 
 class FakeProject(object):
@@ -61,3 +63,5 @@ class TestNodesController(test_api_base.APITestCase):
         self.assertEqual(data['nodes'][0]['owner'], 'fake-project')
         self.assertEqual(data['nodes'][0]['lease_uuid'], 'fake-lease-uuid')
         self.assertEqual(data['nodes'][0]['lessee'], 'fake-project')
+        self.assertEqual(data['nodes'][0]['properties'], {
+            'cpu': '40', 'traits': ['trait1', 'trait2']})

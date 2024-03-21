@@ -47,10 +47,10 @@ class DummyNode(base.ResourceObjectInterface):
                                    err_msg='Error getting resource class',
                                    err_val=error.UNKNOWN['resource_class'])
 
-    def get_config(self):
-        return self._get_node_attr('server_config', {},
-                                   err_msg='Error getting resource config',
-                                   err_val=error.UNKNOWN['config'])
+    def get_properties(self, resource_list=None):
+        return self._get_node_attr('properties', {},
+                                   err_msg='Error getting resource properties',
+                                   err_val=error.UNKNOWN['properties'])
 
     def get_owner_project_id(self):
         return self._get_node_attr('project_owner_id', None,

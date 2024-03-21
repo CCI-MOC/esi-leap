@@ -33,8 +33,8 @@ class ResourceObjectInterface(object, metaclass=abc.ABCMeta):
         """Return resource's associated class, if any"""
 
     @abc.abstractmethod
-    def get_config(self):
-        """Return resource's associated config, if any"""
+    def get_properties(self, resource_list):
+        """Return resource's associated properties, if any"""
 
     @abc.abstractmethod
     def get_owner_project_id(self):

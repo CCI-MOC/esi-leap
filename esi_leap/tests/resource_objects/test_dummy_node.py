@@ -42,7 +42,7 @@ class TestDummyNode(base.TestCase):
         'resource_class': 'fake',
         'power_state': 'off',
         'provision_state': 'enroll',
-        'server_config': {
+        'properties': {
             'new attribute XYZ': 'new attribute XYZ',
             'cpu_type': 'Intel Xeon',
             'cores': 16,
@@ -55,7 +55,7 @@ class TestDummyNode(base.TestCase):
     test_node_2 = {
         'project_owner_id': '123456',
         'resource_class': 'fake',
-        'server_config': {
+        'properties': {
             'new attribute XYZ': 'new attribute XYZ',
             'cpu_type': 'Intel Xeon',
             'cores': 16,
@@ -89,11 +89,11 @@ class TestDummyNode(base.TestCase):
                              self.test_node_1['resource_class'])
             mock_file_open.assert_called_once()
 
-    def test_get_config(self):
+    def test_get_properties(self):
         mock_open = mock.mock_open(read_data=self.fake_read_data_1)
         with mock.patch('builtins.open', mock_open) as mock_file_open:
-            config = self.fake_dummy_node.get_config()
-            self.assertEqual(config, self.test_node_1['server_config'])
+            properties = self.fake_dummy_node.get_properties()
+            self.assertEqual(properties, self.test_node_1['properties'])
             mock_file_open.assert_called_once()
 
     def test_get_owner_project_id(self):

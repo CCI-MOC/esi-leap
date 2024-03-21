@@ -48,3 +48,20 @@ class IronicTestCase(base.TestCase):
         node = ironic.get_node('uuid2', node_list)
 
         self.assertEqual(None, node)
+
+    def test_get_condensed_properties(self):
+        properties = {
+            'lease_uuid': '12345',
+            'capabilities': 'magic',
+            'cpu': '40',
+            'local_gb': '1000'
+        }
+        traits = ['trait1', 'trait2']
+        cp = ironic.get_condensed_properties(
+            properties, traits)
+
+        self.assertEqual(cp, {
+            'cpu': '40',
+            'local_gb': '1000',
+            'traits': ['trait1', 'trait2']
+        })
