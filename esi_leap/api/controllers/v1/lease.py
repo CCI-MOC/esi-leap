@@ -191,6 +191,25 @@ class LeasesController(rest.RestController):
         lease.create(request)
         return Lease(**utils.lease_get_dict_with_added_info(lease))
 
+    @wsme_pecan.wsexpose(Lease, wtypes.text, body={wtypes.text: wtypes.text})
+    def patch(self, lease_uuid, patch=None):
+        request = pecan.request.context
+
+        lease = utils.check_lease_policy_and_retrieve(
+            request, 'esi_leap:lease:update', lease_uuid)
+
+        # check that patch has acceptable fields; only end_time for now
+        patch_keys = patch.keys()
+        if not('end_time' in patch_keys and len(patch_keys) == 1):
+            raise exception.LeaseInvalidPatch()
+
+        new_end_time = datetime.datetime.strptime(
+            patch['end_time'], '%Y-%m-%dT%H:%M:%S')
+        updates = {'end_time': new_end_time}
+        lease.update(updates, request)
+
+        return Lease(**utils.lease_get_dict_with_added_info(lease))
+
     @wsme_pecan.wsexpose(Lease, wtypes.text)
     def delete(self, lease_id):
         request = pecan.request.context

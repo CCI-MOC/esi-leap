@@ -119,131 +119,124 @@ class TestLeaseObject(base.DBTestCase):
             self.assertIsInstance(leases[0], lease_obj.Lease)
             self.assertEqual(self.context, leases[0]._context)
 
-    @mock.patch('esi_leap.db.sqlalchemy.api.resource_verify_availability')
-    @mock.patch('esi_leap.db.sqlalchemy.api.offer_verify_availability')
-    @mock.patch('esi_leap.objects.offer.Offer.get')
+    @mock.patch('esi_leap.objects.lease.Lease.verify_time_range')
     @mock.patch('esi_leap.db.sqlalchemy.api.lease_create')
-    def test_create(self, mock_lc, mock_og, mock_ova, mock_rva):
+    def test_create(self, mock_lc, mock_vtr):
         lease = lease_obj.Lease(self.context, **self.test_lease_create_dict)
         mock_lc.return_value = self.test_lease_dict
 
         lease.create()
 
         mock_lc.assert_called_once_with(self.test_lease_create_dict)
-        mock_og.assert_not_called
-        mock_ova.assert_not_called
-        mock_rva.assert_called_once_with(lease.resource_type,
-                                         lease.resource_uuid,
-                                         lease.start_time,
-                                         lease.end_time)
+        mock_vtr.assert_called_once_with(
+            lease.start_time, lease.end_time,
+            None, None,
+            lease.resource_type, lease.resource_uuid)
 
-    @mock.patch('esi_leap.db.sqlalchemy.api.resource_verify_availability')
-    @mock.patch('esi_leap.db.sqlalchemy.api.offer_verify_availability')
-    @mock.patch('esi_leap.objects.offer.Offer.get')
-    @mock.patch('esi_leap.db.sqlalchemy.api.lease_create')
-    def test_create_with_offer(self, mock_lc, mock_og, mock_ova, mock_rva):
+    def test_create_conflict(self):
         lease = lease_obj.Lease(self.context,
                                 **self.test_lease_create_offer_dict)
-        mock_lc.return_value = self.test_lease_offer_dict
-        mock_og.return_value = self.test_offer
-
-        lease.create()
-
-        mock_lc.assert_called_once_with(self.test_lease_create_offer_dict)
-        mock_og.assert_called_once_with(lease.offer_uuid)
-        mock_ova.assert_called_once_with(self.test_offer,
-                                         lease.start_time,
-                                         lease.end_time)
-        mock_rva.assert_not_called
-
-    @mock.patch('esi_leap.db.sqlalchemy.api.lease_verify_child_availability')
-    @mock.patch('esi_leap.objects.lease.Lease.get')
-    @mock.patch('esi_leap.db.sqlalchemy.api.lease_create')
-    def test_create_with_parent_lease(self, mock_lc, mock_lg, mock_lvca):
-        lease = lease_obj.Lease(self.context,
-                                **self.test_lease_create_parent_lease_dict)
-        mock_lc.return_value = self.test_lease_offer_dict
-        mock_lg.return_value = self.test_parent_lease
-
-        lease.create()
-
-        mock_lc.assert_called_once_with(
-            self.test_lease_create_parent_lease_dict)
-        mock_lg.assert_called_once_with('parent-lease-uuid')
-        mock_lvca.assert_called_once_with(self.test_parent_lease,
-                                          lease.start_time,
-                                          lease.end_time)
-
-    @mock.patch('esi_leap.db.sqlalchemy.api.lease_verify_child_availability')
-    @mock.patch('esi_leap.objects.lease.Lease.get')
-    @mock.patch('esi_leap.db.sqlalchemy.api.lease_create')
-    def test_create_with_parent_lease_expired(self, mock_lc, mock_lg,
-                                              mock_lvca):
-        lease = lease_obj.Lease(self.context,
-                                **self.test_lease_create_parent_lease_dict)
-        mock_lg.return_value = self.test_parent_lease_expired
-
-        self.assertRaises(exception.LeaseNotActive, lease.create)
-
-        mock_lc.assert_not_called()
-        mock_lg.assert_called_once_with('parent-lease-uuid')
-        mock_lvca.assert_not_called()
-
-    def test_create_invalid_time(self):
-        bad_lease = {
-            'id': 30,
-            'name': 'bad-lease',
-            'uuid': '534653c9-880d-4c2d-6d6d-44444444444',
-            'project_id': 'le55ee_2',
-            'owner_id': 'ownerid',
-            'resource_type': 'dummy_node',
-            'resource_uuid': '1111',
-            'start_time': self.start_time + datetime.timedelta(days=30),
-            'end_time': self.start_time + datetime.timedelta(days=20),
-            'fulfill_time': self.start_time + datetime.timedelta(days=35),
-            'expire_time': self.start_time + datetime.timedelta(days=40),
-        }
-
-        lease = lease_obj.Lease(self.context, **bad_lease)
-
-        self.assertRaises(exception.InvalidTimeRange, lease.create)
-
-    def test_create_concurrent_offer_conflict(self):
-        lease = lease_obj.Lease(self.context,
-                                **self.test_lease_create_offer_dict)
-
         lease2 = lease_obj.Lease(self.context,
                                  **self.test_lease_create_offer_dict)
-
         lease2.id = 28
 
         with mock.patch.object(self.db_api, 'lease_create',
                                autospec=True) as mock_lease_create:
-            with mock.patch.object(offer_obj.Offer, 'get',
-                                   autospec=True) as mock_offer_get:
-                with mock.patch.object(self.db_api,
-                                       'offer_verify_availability',
-                                       autospec=True) as mock_ovca:
+            with mock.patch.object(lease_obj.Lease, 'verify_time_range',
+                                   autospec=True) as mock_vtr:
+                def update_mock(context):
+                    mock_vtr.side_effect = Exception('bad')
 
-                    mock_offer_get.return_value = self.test_offer
+                mock_lease_create.side_effect = update_mock
 
-                    def update_mock(updates):
-                        mock_ovca.side_effect = Exception('bad')
+                thread = threading.Thread(target=lease.create)
+                thread2 = threading.Thread(target=lease2.create)
 
-                    mock_lease_create.side_effect = update_mock
+                thread.start()
+                thread2.start()
 
-                    thread = threading.Thread(target=lease.create)
-                    thread2 = threading.Thread(target=lease2.create)
+                thread.join()
+                thread2.join()
 
-                    thread.start()
-                    thread2.start()
+                assert mock_vtr.call_count == 2
+                mock_lease_create.assert_called_once()
 
-                    thread.join()
-                    thread2.join()
+    @mock.patch('esi_leap.objects.lease.Lease.save')
+    @mock.patch('esi_leap.objects.lease.Lease.verify_time_range')
+    def test_update(self, mock_vtr, mock_save):
+        lease = lease_obj.Lease(self.context, **self.test_lease_dict)
+        end_time = lease.end_time
+        new_end_time = end_time + datetime.timedelta(days=10)
+        updates = {
+            'end_time': new_end_time
+        }
+        lease.update(updates)
 
-                    assert mock_offer_get.call_count == 2
-                    assert mock_ovca.call_count == 2
-                    mock_lease_create.assert_called_once()
+        mock_vtr.assert_called_once_with(
+            end_time, new_end_time,
+            lease.offer_uuid, lease.parent_lease_uuid,
+            lease.resource_type, lease.resource_uuid)
+        mock_save.assert_called_once
+
+    @mock.patch('esi_leap.objects.lease.Lease.save')
+    @mock.patch('esi_leap.objects.lease.Lease.verify_time_range')
+    def test_update_no_end_time(self, mock_vtr, mock_save):
+        lease = lease_obj.Lease(self.context, **self.test_lease_dict)
+        updates = {
+            'name': 'foo'
+        }
+        lease.update(updates)
+
+        mock_vtr.assert_not_called
+        mock_save.assert_not_called
+
+    @mock.patch('esi_leap.objects.lease.Lease.save')
+    @mock.patch('esi_leap.objects.lease.Lease.verify_time_range')
+    def test_update_invalid_end_time(self, mock_vtr, mock_save):
+        lease = lease_obj.Lease(self.context, **self.test_lease_dict)
+        end_time = lease.end_time
+        new_end_time = end_time - datetime.timedelta(days=10)
+        updates = {
+            'end_time': new_end_time
+        }
+
+        self.assertRaises(exception.InvalidTimeRange,
+                          lease.update, updates)
+        mock_vtr.assert_not_called
+        mock_save.assert_not_called
+
+    def test_update_conflict(self):
+        lease = lease_obj.Lease(self.context,
+                                **self.test_lease_dict)
+        lease2 = lease_obj.Lease(self.context,
+                                 **self.test_lease_dict)
+        lease2.id = 28
+        lease_updates = {
+            'end_time': lease.end_time + datetime.timedelta(days=10)
+        }
+
+        with mock.patch.object(lease_obj.Lease, 'save',
+                               autospec=True) as mock_save:
+            with mock.patch.object(lease_obj.Lease, 'verify_time_range',
+                                   autospec=True) as mock_vtr:
+                def update_mock(updates, context):
+                    mock_vtr.side_effect = Exception('bad')
+
+                mock_save.side_effect = update_mock
+
+                thread = threading.Thread(
+                    target=lease.update, args=[lease_updates])
+                thread2 = threading.Thread(
+                    target=lease2.update, args=[lease_updates])
+
+                thread.start()
+                thread2.start()
+
+                thread.join()
+                thread2.join()
+
+                assert mock_vtr.call_count == 2
+                mock_save.assert_called_once()
 
     @mock.patch('esi_leap.objects.lease.Lease.resource_object')
     @mock.patch('esi_leap.resource_objects.test_node.TestNode.set_lease')
@@ -605,6 +598,95 @@ class TestLeaseObject(base.DBTestCase):
         lease.resource_object()
         mock_gro.assert_called_once_with(lease.resource_type,
                                          lease.resource_uuid)
+
+    @mock.patch('esi_leap.db.sqlalchemy.api.resource_verify_availability')
+    @mock.patch('esi_leap.db.sqlalchemy.api.offer_verify_availability')
+    @mock.patch('esi_leap.objects.offer.Offer.get')
+    def test_verify_time_range(self, mock_og, mock_ova, mock_rva):
+        lease = lease_obj.Lease(self.context, **self.test_lease_create_dict)
+        lease.verify_time_range(lease.start_time, lease.end_time,
+                                None, None,
+                                lease.resource_type, lease.resource_uuid)
+
+        mock_og.assert_not_called
+        mock_ova.assert_not_called
+        mock_rva.assert_called_once_with(lease.resource_type,
+                                         lease.resource_uuid,
+                                         lease.start_time,
+                                         lease.end_time)
+
+    @mock.patch('esi_leap.db.sqlalchemy.api.resource_verify_availability')
+    @mock.patch('esi_leap.db.sqlalchemy.api.offer_verify_availability')
+    @mock.patch('esi_leap.objects.offer.Offer.get')
+    def test_verify_time_range_with_offer(self, mock_og, mock_ova, mock_rva):
+        lease = lease_obj.Lease(self.context,
+                                **self.test_lease_create_offer_dict)
+        mock_og.return_value = self.test_offer
+        lease.verify_time_range(lease.start_time, lease.end_time,
+                                lease.offer_uuid, None,
+                                lease.resource_type, lease.resource_uuid)
+
+        mock_og.assert_called_once_with(lease.offer_uuid)
+        mock_ova.assert_called_once_with(self.test_offer,
+                                         lease.start_time,
+                                         lease.end_time)
+        mock_rva.assert_not_called
+
+    @mock.patch('esi_leap.db.sqlalchemy.api.lease_verify_child_availability')
+    @mock.patch('esi_leap.objects.lease.Lease.get')
+    def test_verify_time_range_with_parent_lease(self, mock_lg, mock_lvca):
+        lease = lease_obj.Lease(self.context,
+                                **self.test_lease_create_parent_lease_dict)
+        mock_lg.return_value = self.test_parent_lease
+        lease.verify_time_range(lease.start_time, lease.end_time,
+                                None, lease.parent_lease_uuid,
+                                lease.resource_type, lease.resource_uuid)
+
+        mock_lg.assert_called_once_with('parent-lease-uuid')
+        mock_lvca.assert_called_once_with(self.test_parent_lease,
+                                          lease.start_time,
+                                          lease.end_time)
+
+    @mock.patch('esi_leap.db.sqlalchemy.api.lease_verify_child_availability')
+    @mock.patch('esi_leap.objects.lease.Lease.get')
+    def test_verify_time_range_with_parent_lease_expired(
+            self, mock_lg, mock_lvca):
+        lease = lease_obj.Lease(self.context,
+                                **self.test_lease_create_parent_lease_dict)
+        mock_lg.return_value = self.test_parent_lease_expired
+
+        self.assertRaises(exception.LeaseNotActive,
+                          lease.verify_time_range,
+                          lease.start_time, lease.end_time,
+                          None, lease.parent_lease_uuid,
+                          lease.resource_type, lease.resource_uuid)
+
+        mock_lg.assert_called_once_with('parent-lease-uuid')
+        mock_lvca.assert_not_called()
+
+    def test_verify_time_range_invalid_time(self):
+        bad_lease = {
+            'id': 30,
+            'name': 'bad-lease',
+            'uuid': '534653c9-880d-4c2d-6d6d-44444444444',
+            'project_id': 'le55ee_2',
+            'owner_id': 'ownerid',
+            'resource_type': 'dummy_node',
+            'resource_uuid': '1111',
+            'start_time': self.start_time + datetime.timedelta(days=30),
+            'end_time': self.start_time + datetime.timedelta(days=20),
+            'fulfill_time': self.start_time + datetime.timedelta(days=35),
+            'expire_time': self.start_time + datetime.timedelta(days=40),
+        }
+
+        lease = lease_obj.Lease(self.context, **bad_lease)
+
+        self.assertRaises(exception.InvalidTimeRange,
+                          lease.verify_time_range,
+                          bad_lease['start_time'], bad_lease['end_time'],
+                          None, None,
+                          bad_lease['resource_type'],
+                          bad_lease['resource_uuid'])
 
 
 class TestLeaseCRUDPayloads(base.DBTestCase):

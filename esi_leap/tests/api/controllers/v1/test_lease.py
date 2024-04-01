@@ -276,6 +276,72 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_create.assert_not_called()
         self.assertEqual(http_client.FORBIDDEN, request.status_int)
 
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
+    @mock.patch('esi_leap.objects.lease.Lease.update')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_lease_policy_and_retrieve')
+    def test_patch(self, mock_clpar, mock_lease_update, mock_lgdwai):
+        mock_clpar.return_value = self.test_lease
+
+        data = {
+            'end_time': '2016-09-16T19:20:30'
+        }
+        request = self.patch_json(
+            "/leases/%s" % self.test_lease.uuid, data)
+
+        mock_clpar.assert_called_once_with(self.context,
+                                           'esi_leap:lease:update',
+                                           self.test_lease.uuid)
+        mock_lease_update.assert_called_once()
+        mock_lgdwai.assert_called_once()
+        self.assertEqual(http_client.OK, request.status_int)
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
+    @mock.patch('esi_leap.objects.lease.Lease.update')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_lease_policy_and_retrieve')
+    def test_patch_no_end_time(self, mock_clpar, mock_lease_update,
+                               mock_lgdwai):
+        mock_clpar.return_value = self.test_lease
+
+        data = {
+            'name': 'foo'
+        }
+        request = self.patch_json(
+            "/leases/%s" % self.test_lease.uuid, data, expect_errors=True)
+
+        mock_clpar.assert_called_once_with(self.context,
+                                           'esi_leap:lease:update',
+                                           self.test_lease.uuid)
+        mock_lease_update.assert_not_called()
+        mock_lgdwai.assert_not_called()
+        self.assertEqual(http_client.INTERNAL_SERVER_ERROR, request.status_int)
+
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'lease_get_dict_with_added_info')
+    @mock.patch('esi_leap.objects.lease.Lease.update')
+    @mock.patch('esi_leap.api.controllers.v1.utils.'
+                'check_lease_policy_and_retrieve')
+    def test_patch_end_time_and_more(self, mock_clpar, mock_lease_update,
+                                     mock_lgdwai):
+        mock_clpar.return_value = self.test_lease
+
+        data = {
+            'end_time': '2016-09-16T19:20:30',
+            'name': 'foo'
+        }
+        request = self.patch_json(
+            "/leases/%s" % self.test_lease.uuid, data, expect_errors=True)
+
+        mock_clpar.assert_called_once_with(self.context,
+                                           'esi_leap:lease:update',
+                                           self.test_lease.uuid)
+        mock_lease_update.assert_not_called()
+        mock_lgdwai.assert_not_called()
+        self.assertEqual(http_client.INTERNAL_SERVER_ERROR, request.status_int)
+
     @mock.patch('esi_leap.common.ironic.get_node_list')
     @mock.patch('esi_leap.common.keystone.get_project_list')
     @mock.patch('esi_leap.api.controllers.v1.utils.'
