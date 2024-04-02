@@ -55,6 +55,11 @@ lease_policies = [
         'Create lease',
         [{'path': '/leases', 'method': 'POST'}]),
     policy.DocumentedRuleDefault(
+        'esi_leap:lease:update',
+        'rule:is_admin',
+        'Update lease',
+        [{'path': '/leases/{lease_ident}', 'method': 'PATCH'}]),
+    policy.DocumentedRuleDefault(
         'esi_leap:lease:get',
         'rule:is_admin or rule:is_lease_owner or rule:is_lease_lessee',
         'Retrieve a single lease',

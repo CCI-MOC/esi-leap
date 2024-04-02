@@ -45,6 +45,10 @@ class LeaseExceedMaxTimeRange(ESILeapException):
                 'time range. The max time range is %(max_time)s days.')
 
 
+class LeaseInvalidPatch(ESILeapException):
+    msg_fmt = _('Only the end_time field may be updated')
+
+
 class HTTPForbidden(ESILeapException):
     code = http_client.FORBIDDEN
     msg_fmt = _('Access was denied to %(rule)s.')

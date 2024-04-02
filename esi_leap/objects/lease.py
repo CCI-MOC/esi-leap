@@ -160,47 +160,48 @@ class Lease(base.ESILEAPObject):
 
     def create(self, context=None):
         updates = self.obj_get_changes()
-
-        with utils.lock(utils.get_resource_lock_name(updates['resource_type'],
-                                                     updates['resource_uuid']),
+        resource_type = updates['resource_type']
+        resource_uuid = updates['resource_uuid']
+        start_time = updates['start_time']
+        end_time = updates['end_time']
+        with utils.lock(utils.get_resource_lock_name(resource_type,
+                                                     resource_uuid),
                         external=True):
-            if updates['start_time'] >= updates['end_time']:
-                raise exception.InvalidTimeRange(
-                    resource='lease',
-                    start_time=str(updates['start_time']),
-                    end_time=str(updates['end_time'])
-                    )
-
-            # check availability
-            if 'offer_uuid' in updates:
-                # lease is being created from an offer
-                related_offer = offer_obj.Offer.get(updates['offer_uuid'])
-
-                if related_offer.status != statuses.AVAILABLE:
-                    raise exception.OfferNotAvailable(
-                        offer_uuid=related_offer.uuid,
-                        status=related_offer.status)
-
-                related_offer.verify_availability(updates['start_time'],
-                                                  updates['end_time'])
-            elif 'parent_lease_uuid' in updates:
-                # lease is a child of an existing lease
-                parent_lease = Lease.get(updates['parent_lease_uuid'])
-
-                if parent_lease.status != statuses.ACTIVE:
-                    raise exception.LeaseNotActive(
-                        updates['parent_lease_uuid'])
-
-                parent_lease.verify_child_availability(updates['start_time'],
-                                                       updates['end_time'])
-            else:
-                ro = get_resource_object(updates['resource_type'],
-                                         updates['resource_uuid'])
-                ro.verify_availability(updates['start_time'],
-                                       updates['end_time'])
+            self.verify_time_range(
+                start_time, end_time,
+                updates.get('offer_uuid', None),
+                updates.get('parent_lease_uuid', None),
+                resource_type, resource_uuid)
 
             db_lease = self.dbapi.lease_create(updates)
             self._from_db_object(context, self, db_lease)
+
+    def update(self, updates, context=None):
+        # only allow updates to end_time right now
+        if 'end_time' not in updates:
+            return
+        new_end_time = updates['end_time']
+        with utils.lock(utils.get_resource_lock_name(self.resource_type,
+                                                     self.resource_uuid),
+                        external=True):
+            if self.start_time >= new_end_time:
+                raise exception.InvalidTimeRange(
+                    resource='lease',
+                    start_time=str(self.start_time),
+                    end_time=str(new_end_time)
+                    )
+
+            # only need to check availabilities if new end time is greater
+            # than previous end time
+            if new_end_time > self.end_time:
+                self.verify_time_range(
+                    self.end_time, new_end_time,
+                    self.offer_uuid, self.parent_lease_uuid,
+                    self.resource_type, self.resource_uuid)
+
+            # lease is available in new range; set and save
+            self.end_time = new_end_time
+            self.save(context)
 
     def cancel(self, context=None):
         leases = Lease.get_all(
@@ -335,3 +336,38 @@ class Lease(base.ESILEAPObject):
         notify.emit_end_notification(context, self,
                                      'delete', CRUD_NOTIFY_OBJ,
                                      node=resource)
+
+    @staticmethod
+    def verify_time_range(start_time, end_time,
+                          offer_uuid, parent_lease_uuid,
+                          resource_type, resource_uuid):
+        if start_time >= end_time:
+            raise exception.InvalidTimeRange(
+                resource='lease',
+                start_time=str(start_time),
+                end_time=str(end_time)
+            )
+
+        # check availability
+        if offer_uuid:
+            # lease is related to an offer
+            related_offer = offer_obj.Offer.get(offer_uuid)
+            if related_offer.status != statuses.AVAILABLE:
+                raise exception.OfferNotAvailable(
+                    offer_uuid=related_offer.uuid,
+                    status=related_offer.status)
+            related_offer.verify_availability(start_time,
+                                              end_time)
+        elif parent_lease_uuid:
+            # lease is a child of an existing lease
+            parent_lease = Lease.get(parent_lease_uuid)
+            if parent_lease.status != statuses.ACTIVE:
+                raise exception.LeaseNotActive(
+                    parent_lease_uuid)
+            parent_lease.verify_child_availability(start_time,
+                                                   end_time)
+        else:
+            ro = get_resource_object(resource_type,
+                                     resource_uuid)
+            ro.verify_availability(start_time, end_time)
+        return
