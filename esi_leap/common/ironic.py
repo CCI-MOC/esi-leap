@@ -55,9 +55,8 @@ def get_node(node_uuid, node_list=None):
     return node
 
 
-def get_condensed_properties(properties, traits):
+def get_condensed_properties(properties):
     cp = properties.copy()
     cp.pop('lease_uuid', None)
     cp.pop('capabilities', None)
-    cp['traits'] = traits
     return cp

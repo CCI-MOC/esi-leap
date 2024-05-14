@@ -66,9 +66,7 @@ class IronicNode(base.ResourceObjectInterface):
             'properties', {}, resource_list=resource_list,
             err_msg='Error getting resource properties',
             err_val=error.UNKNOWN['properties'])
-        traits = self._get_node_attr(
-            'traits', [], resource_list=resource_list)
-        return ironic.get_condensed_properties(properties, traits)
+        return ironic.get_condensed_properties(properties)
 
     def get_owner_project_id(self):
         return self._get_node_attr('owner', '',

@@ -108,7 +108,7 @@ class NodesController(rest.RestController):
                      provision_state=node.provision_state,
                      resource_class=node.resource_class,
                      properties=ironic.get_condensed_properties(
-                         node.properties, node.traits),
+                         node.properties),
                      maintenance=str(node.maintenance),
                      owner=keystone.get_project_name(node.owner, project_list),
                      lessee=keystone.get_project_name(node.lessee,

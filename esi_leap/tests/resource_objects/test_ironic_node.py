@@ -32,7 +32,6 @@ class FakeIronicNode(object):
         self.name = 'fake-node'
         self.properties = {'lease_uuid': '001', 'cpu': '40'}
         self.provision_state = 'available'
-        self.traits = ['trait1', 'trait2']
         self.uuid = fake_uuid
         self.resource_class = 'baremetal'
         self.power_state = 'off'
@@ -94,12 +93,9 @@ class TestIronicNode(base.TestCase):
         test_ironic_node = ironic_node.IronicNode(fake_uuid)
 
         properties = test_ironic_node.get_properties()
-        expected_properties = {
-            'cpu': '40',
-            'traits': ['trait1', 'trait2']
-        }
+        expected_properties = {'cpu': '40'}
         self.assertEqual(properties, expected_properties)
-        assert mock_gn.call_count == 2
+        mock_gn.assert_called_once()
 
     @mock.patch('esi_leap.resource_objects.ironic_node.IronicNode._get_node')
     def test_get_owner_project_id(self, mock_gn):

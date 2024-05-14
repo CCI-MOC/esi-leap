@@ -56,12 +56,10 @@ class IronicTestCase(base.TestCase):
             'cpu': '40',
             'local_gb': '1000'
         }
-        traits = ['trait1', 'trait2']
         cp = ironic.get_condensed_properties(
-            properties, traits)
+            properties)
 
         self.assertEqual(cp, {
             'cpu': '40',
-            'local_gb': '1000',
-            'traits': ['trait1', 'trait2']
+            'local_gb': '1000'
         })
