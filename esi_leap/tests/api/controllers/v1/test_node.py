@@ -64,4 +64,59 @@ class TestNodesController(test_api_base.APITestCase):
         self.assertEqual(data['nodes'][0]['lease_uuid'], 'fake-lease-uuid')
         self.assertEqual(data['nodes'][0]['lessee'], 'fake-project')
         self.assertEqual(data['nodes'][0]['properties'], {
-            'cpu': '40', 'traits': ['trait1', 'trait2']})
+            'cpu': '40'})
+
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
+    def test_get_all_resource_class_filter(self, mock_gpl, mock_gnl):
+        fake_node = FakeIronicNode()
+        fake_project = FakeProject()
+        mock_gnl.return_value = [fake_node]
+        mock_gpl.return_value = [fake_project]
+
+        data = self.get_json('/nodes?resource_class=baremetal')
+
+        mock_gnl.assert_called_once_with(self.context, resource_class='baremetal')
+        mock_gpl.assert_called_once()
+
+        self.assertEqual(data['nodes'][0]['resource_class'], 'baremetal')
+
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
+    @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
+    def test_get_all_owner_filter(
+        self, mock_get_project_uuid, mock_gpl, mock_gnl):
+
+        fake_node = FakeIronicNode()
+        fake_project = FakeProject()
+        mock_gnl.return_value = [fake_node]
+        mock_gpl.return_value = [fake_project]
+
+        mock_get_project_uuid.return_value = fake_project.id
+
+        data = self.get_json('/nodes?owner=fake-project')
+
+        mock_gnl.assert_called_once_with(self.context, owner=fake_project.id)
+        mock_get_project_uuid.assert_called_once_with('fake-project')
+
+        self.assertEqual(data['nodes'][0]['owner'], fake_project.name)
+
+    @mock.patch('esi_leap.common.ironic.get_node_list')
+    @mock.patch('esi_leap.common.keystone.get_project_list')
+    @mock.patch('esi_leap.common.keystone.get_project_uuid_from_ident')
+    def test_get_all_lesse_filter(
+        self, mock_get_project_uuid, mock_gpl, mock_gnl):
+
+        fake_node = FakeIronicNode()
+        fake_project = FakeProject()
+        mock_gnl.return_value = [fake_node]
+        mock_gpl.return_value = [fake_project]
+
+        mock_get_project_uuid.return_value = fake_project.id
+
+        data = self.get_json('/nodes?lessee=fake-project')
+
+        mock_gnl.assert_called_once_with(self.context, lessee=fake_project.id)
+        mock_get_project_uuid.assert_called_once_with('fake-project')
+
+        self.assertEqual(data['nodes'][0]['lessee'], 'fake-project')
