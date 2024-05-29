@@ -43,8 +43,9 @@ def get_ironic_client(context=None):
     return cli
 
 
-def get_node_list(context=None):
-    return get_ironic_client(context).node.list(detail=True)
+def get_node_list(context=None, **filter_args):
+    client = get_ironic_client(context)
+    return client.node.list(detail=True, **filter_args)
 
 
 def get_node(node_uuid, node_list=None):

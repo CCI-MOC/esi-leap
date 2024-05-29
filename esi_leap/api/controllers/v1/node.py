@@ -64,15 +64,31 @@ class NodeCollection(types.Collection):
 
 class NodesController(rest.RestController):
 
-    @wsme_pecan.wsexpose(NodeCollection)
-    def get_all(self):
+    @wsme_pecan.wsexpose(NodeCollection, wtypes.text,
+                         wtypes.text, wtypes.text)
+    def get_all(self, resource_class=None, owner=None,
+                lessee=None):
         context = pecan.request.context
+
+        if owner is not None:
+            owner = keystone.get_project_uuid_from_ident(owner)
+        if lessee is not None:
+            lessee = keystone.get_project_uuid_from_ident(lessee)
+
+        filter_args = {
+            'resource_class': resource_class,
+            'owner': owner,
+            'lessee': lessee
+        }
 
         nodes = None
         project_list = None
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            f1 = executor.submit(ironic.get_node_list, context)
+            filter_args = {
+                k: v for k, v in filter_args.items() if v is not None
+            }
+            f1 = executor.submit(ironic.get_node_list, context, **filter_args)
             f2 = executor.submit(keystone.get_project_list)
             nodes = f1.result()
             project_list = f2.result()
