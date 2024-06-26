@@ -1,0 +1,10 @@
+[run]
+branch = True
+
+[report]
+ignore_errors = True
+omit =
+  esi_leap/tests/*
+
+[html]
+directory = coverage_html_report
