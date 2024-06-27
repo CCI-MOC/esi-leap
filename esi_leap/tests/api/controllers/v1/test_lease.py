@@ -59,7 +59,7 @@ class TestLeasesController(test_api_base.APITestCase):
             resource_uuid="111",
             project_id="lesseeid",
             owner_id="ownerid",
-            parent_lease_uuid="parent-lease-uuid",
+            parent_lease_uuid=uuidutils.generate_uuid(),
         )
 
     def test_empty(self):

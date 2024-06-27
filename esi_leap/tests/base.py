@@ -60,6 +60,15 @@ class TestCase(base.BaseTestCase):
                 auth_token=None, project_id="12345", is_admin=True, overwrite=False
             )
 
+    def catch_exception(self, func, exc=Exception):
+        def wrapper(*args, **kwargs):
+            try:
+                func(*args, **kwargs)
+            except exc:
+                pass
+
+        return wrapper
+
 
 class DBTestCase(TestCase):
     def setUp(self):

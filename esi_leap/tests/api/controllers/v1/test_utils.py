@@ -328,7 +328,7 @@ class TestCheckResourceLeaseAdminUtils(testtools.TestCase):
             uuid=uuidutils.generate_uuid(),
             start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
             end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
-            parent_lease_uuid="parent-lease-uuid",
+            parent_lease_uuid=uuidutils.generate_uuid(),
         )
 
     @mock.patch("esi_leap.objects.lease.Lease.get")

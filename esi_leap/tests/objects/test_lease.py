@@ -29,6 +29,8 @@ class TestLeaseObject(base.DBTestCase):
     def setUp(self):
         super(TestLeaseObject, self).setUp()
 
+        parent_lease_uuid = uuidutils.generate_uuid()
+
         self.start_time = datetime.datetime(2016, 7, 16, 19, 20, 30)
         self.test_offer = offer_obj.Offer(
             id=27,
@@ -72,7 +74,7 @@ class TestLeaseObject(base.DBTestCase):
         self.test_lease_offer_dict = self.test_lease_dict.copy()
         self.test_lease_offer_dict["offer_uuid"] = self.test_offer.uuid
         self.test_lease_parent_lease_dict = self.test_lease_dict.copy()
-        self.test_lease_parent_lease_dict["parent_lease_uuid"] = "parent-lease-uuid"
+        self.test_lease_parent_lease_dict["parent_lease_uuid"] = parent_lease_uuid
         self.test_lease_create_dict = {
             "name": "lease_create",
             "project_id": "le55ee",
@@ -87,7 +89,7 @@ class TestLeaseObject(base.DBTestCase):
         self.test_lease_create_offer_dict["offer_uuid"] = self.test_offer.uuid
         self.test_lease_create_parent_lease_dict = self.test_lease_create_dict.copy()
         self.test_lease_create_parent_lease_dict["parent_lease_uuid"] = (
-            "parent-lease-uuid"
+            parent_lease_uuid
         )
 
         self.config(lock_path=tempfile.mkdtemp(), group="oslo_concurrency")
@@ -155,8 +157,8 @@ class TestLeaseObject(base.DBTestCase):
 
                 mock_lease_create.side_effect = update_mock
 
-                thread = threading.Thread(target=lease.create)
-                thread2 = threading.Thread(target=lease2.create)
+                thread = threading.Thread(target=self.catch_exception(lease.create))
+                thread2 = threading.Thread(target=self.catch_exception(lease2.create))
 
                 thread.start()
                 thread2.start()
@@ -224,8 +226,12 @@ class TestLeaseObject(base.DBTestCase):
 
                 mock_save.side_effect = update_mock
 
-                thread = threading.Thread(target=lease.update, args=[lease_updates])
-                thread2 = threading.Thread(target=lease2.update, args=[lease_updates])
+                thread = threading.Thread(
+                    target=self.catch_exception(lease.update), args=[lease_updates]
+                )
+                thread2 = threading.Thread(
+                    target=self.catch_exception(lease2.update), args=[lease_updates]
+                )
 
                 thread.start()
                 thread2.start()
@@ -242,7 +248,7 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch("esi_leap.common.notification_utils" "._emit_notification")
     def test_fulfill(self, mock_notify, mock_save, mock_set_lease, mock_ro):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
-        test_node = TestNode("test-node", "12345")
+        test_node = TestNode(uuidutils.generate_uuid(), "12345")
 
         mock_ro.return_value = test_node
 
@@ -281,7 +287,7 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch("esi_leap.common.notification_utils" "._emit_notification")
     def test_fulfill_error(self, mock_notify, mock_save, mock_set_lease, mock_ro):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
-        test_node = TestNode("test-node", "12345")
+        test_node = TestNode(uuidutils.generate_uuid(), "12345")
 
         mock_ro.return_value = test_node
         mock_set_lease.side_effect = Exception("bad")
@@ -326,7 +332,7 @@ class TestLeaseObject(base.DBTestCase):
         self, mock_notify, mock_save, mock_rl, mock_glu, mock_ro, mock_lg, mock_sl
     ):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
-        test_node = TestNode("test-node", "12345")
+        test_node = TestNode(uuidutils.generate_uuid(), "12345")
 
         mock_ro.return_value = test_node
         mock_glu.return_value = lease.uuid
@@ -373,7 +379,7 @@ class TestLeaseObject(base.DBTestCase):
         self, mock_notify, mock_save, mock_rl, mock_glu, mock_ro, mock_lg, mock_sl
     ):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
-        test_node = TestNode("test-node", "12345")
+        test_node = TestNode(uuidutils.generate_uuid(), "12345")
 
         mock_ro.return_value = test_node
         mock_glu.return_value = lease.uuid
@@ -422,7 +428,7 @@ class TestLeaseObject(base.DBTestCase):
         self, mock_notify, mock_save, mock_rl, mock_glu, mock_ro, mock_lg, mock_sl
     ):
         lease = lease_obj.Lease(self.context, **self.test_lease_parent_lease_dict)
-        test_node = TestNode("test-node", "12345")
+        test_node = TestNode(uuidutils.generate_uuid(), "12345")
 
         mock_ro.return_value = test_node
         mock_glu.return_value = lease.uuid
@@ -466,7 +472,7 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch("esi_leap.common.notification_utils" "._emit_notification")
     def test_cancel_no_expire(self, mock_notify, mock_save, mock_rl, mock_glu, mock_ro):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
-        test_node = TestNode("test-node", "12345")
+        test_node = TestNode(uuidutils.generate_uuid(), "12345")
 
         mock_ro.return_value = test_node
         mock_glu.return_value = "some-other-lease-uuid"
@@ -512,7 +518,7 @@ class TestLeaseObject(base.DBTestCase):
         self, mock_notify, mock_save, mock_rl, mock_glu, mock_ro, mock_lg, mock_sl
     ):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
-        test_node = TestNode("test-node", "12345")
+        test_node = TestNode(uuidutils.generate_uuid(), "12345")
 
         mock_ro.return_value = test_node
         mock_glu.return_value = lease.uuid
@@ -560,7 +566,7 @@ class TestLeaseObject(base.DBTestCase):
         self, mock_notify, mock_save, mock_rl, mock_glu, mock_ro, mock_lg, mock_sl
     ):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
-        test_node = TestNode("test-node", "12345")
+        test_node = TestNode(uuidutils.generate_uuid(), "12345")
 
         mock_ro.return_value = test_node
         mock_glu.return_value = lease.uuid
@@ -609,7 +615,7 @@ class TestLeaseObject(base.DBTestCase):
         self, mock_notify, mock_save, mock_rl, mock_glu, mock_ro, mock_lg, mock_sl
     ):
         lease = lease_obj.Lease(self.context, **self.test_lease_parent_lease_dict)
-        test_node = TestNode("test-node", "12345")
+        test_node = TestNode(uuidutils.generate_uuid(), "12345")
 
         mock_ro.return_value = test_node
         mock_glu.return_value = lease.uuid
@@ -653,7 +659,7 @@ class TestLeaseObject(base.DBTestCase):
     @mock.patch("esi_leap.common.notification_utils" "._emit_notification")
     def test_expire_no_expire(self, mock_notify, mock_save, mock_rl, mock_glu, mock_ro):
         lease = lease_obj.Lease(self.context, **self.test_lease_dict)
-        test_node = TestNode("test-node", "12345")
+        test_node = TestNode(uuidutils.generate_uuid(), "12345")
 
         mock_ro.return_value = test_node
         mock_glu.return_value = "some-other-lease-uuid"
@@ -780,7 +786,7 @@ class TestLeaseObject(base.DBTestCase):
             lease.resource_uuid,
         )
 
-        mock_lg.assert_called_once_with("parent-lease-uuid")
+        mock_lg.assert_called_once_with(lease.parent_lease_uuid)
         mock_lvca.assert_called_once_with(
             self.test_parent_lease, lease.start_time, lease.end_time
         )
@@ -804,14 +810,14 @@ class TestLeaseObject(base.DBTestCase):
             lease.resource_uuid,
         )
 
-        mock_lg.assert_called_once_with("parent-lease-uuid")
+        mock_lg.assert_called_once_with(lease.parent_lease_uuid)
         mock_lvca.assert_not_called()
 
     def test_verify_time_range_invalid_time(self):
         bad_lease = {
             "id": 30,
             "name": "bad-lease",
-            "uuid": "534653c9-880d-4c2d-6d6d-44444444444",
+            "uuid": uuidutils.generate_uuid(),
             "project_id": "le55ee_2",
             "owner_id": "ownerid",
             "resource_type": "dummy_node",
@@ -857,7 +863,7 @@ class TestLeaseCRUDPayloads(base.DBTestCase):
             status="created",
             purpose=None,
         )
-        self.node = TestNode("test-node", "12345")
+        self.node = TestNode(uuidutils.generate_uuid(), "12345")
 
     def test_lease_crud_payload(self):
         payload = lease_obj.LeaseCRUDPayload(self.lease, self.node)
