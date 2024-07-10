@@ -16,7 +16,7 @@ from oslo_utils import uuidutils
 import datetime
 
 from esi_leap.common import exception
-from esi_leap.common import keystone
+from esi_leap.common import idp
 from esi_leap.common import policy
 from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
@@ -148,7 +148,7 @@ def check_offer_lessee(cdict, offer):
     if offer.lessee_id is None or offer.project_id == project_id:
         return
 
-    if offer.lessee_id not in keystone.get_parent_project_id_tree(project_id):
+    if offer.lessee_id not in idp.get_parent_project_id_tree(project_id):
         resource_policy_authorize(
             "esi_leap:offer:offer_admin", cdict, cdict, "offer", offer.uuid
         )
@@ -159,8 +159,8 @@ def offer_get_dict_with_added_info(offer, project_list=None, node_list=None):
 
     o = offer.to_dict()
     o["availabilities"] = offer.get_availabilities()
-    o["project"] = keystone.get_project_name(offer.project_id, project_list)
-    o["lessee"] = keystone.get_project_name(offer.lessee_id, project_list)
+    o["project"] = idp.get_project_name(offer.project_id, project_list)
+    o["lessee"] = idp.get_project_name(offer.lessee_id, project_list)
     o["resource"] = resource.get_name(node_list)
     o["resource_class"] = resource.get_resource_class(node_list)
     o["resource_properties"] = resource.get_properties(node_list)
@@ -171,8 +171,8 @@ def lease_get_dict_with_added_info(lease, project_list=None, node_list=None):
     resource = lease.resource_object()
 
     lease_dict = lease.to_dict()
-    lease_dict["project"] = keystone.get_project_name(lease.project_id, project_list)
-    lease_dict["owner"] = keystone.get_project_name(lease.owner_id, project_list)
+    lease_dict["project"] = idp.get_project_name(lease.project_id, project_list)
+    lease_dict["owner"] = idp.get_project_name(lease.owner_id, project_list)
     lease_dict["resource"] = resource.get_name(node_list)
     lease_dict["resource_class"] = resource.get_resource_class(node_list)
     lease_dict["resource_properties"] = resource.get_properties(node_list)

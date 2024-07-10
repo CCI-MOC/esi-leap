@@ -26,7 +26,7 @@ from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import constants
 from esi_leap.common import exception
 from esi_leap.common import ironic
-from esi_leap.common import keystone
+from esi_leap.common import idp
 from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.objects import lease as lease_obj
@@ -120,10 +120,10 @@ class LeasesController(rest.RestController):
         cdict = request.to_policy_values()
 
         if project_id is not None:
-            project_id = keystone.get_project_uuid_from_ident(project_id)
+            project_id = idp.get_project_uuid_from_ident(project_id)
 
         if owner_id is not None:
-            owner_id = keystone.get_project_uuid_from_ident(owner_id)
+            owner_id = idp.get_project_uuid_from_ident(owner_id)
 
         if resource_uuid is not None:
             if resource_type is None:
@@ -156,7 +156,7 @@ class LeasesController(rest.RestController):
 
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 f1 = executor.submit(ironic.get_node_list)
-                f2 = executor.submit(keystone.get_project_list)
+                f2 = executor.submit(idp.get_project_list)
                 node_list = f1.result()
                 project_list = f2.result()
 
@@ -196,7 +196,7 @@ class LeasesController(rest.RestController):
         lease_dict["resource_uuid"] = resource.get_uuid()
 
         if "project_id" in lease_dict:
-            lease_dict["project_id"] = keystone.get_project_uuid_from_ident(
+            lease_dict["project_id"] = idp.get_project_uuid_from_ident(
                 lease_dict["project_id"]
             )
 

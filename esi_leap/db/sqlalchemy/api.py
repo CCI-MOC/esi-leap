@@ -23,7 +23,7 @@ from sqlalchemy import or_
 
 from esi_leap.common import constants
 from esi_leap.common import exception
-from esi_leap.common import keystone
+from esi_leap.common import idp
 from esi_leap.common import statuses
 from esi_leap.db.sqlalchemy import models
 
@@ -129,7 +129,7 @@ def offer_get_all(filters):
         query = query.filter((models.Offer.status.in_(status)))
 
     if lessee_id:
-        lessee_id_list = keystone.get_parent_project_id_tree(lessee_id)
+        lessee_id_list = idp.get_parent_project_id_tree(lessee_id)
         query = query.filter(
             or_(
                 models.Offer.project_id == lessee_id,

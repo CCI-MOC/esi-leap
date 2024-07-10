@@ -26,7 +26,7 @@ from esi_leap.api.controllers.v1 import lease
 from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
 from esi_leap.common import ironic
-from esi_leap.common import keystone
+from esi_leap.common import idp
 from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.objects import lease as lease_obj
@@ -124,7 +124,7 @@ class OffersController(rest.RestController):
         utils.policy_authorize("esi_leap:offer:get_all", cdict, cdict)
 
         if project_id is not None:
-            project_id = keystone.get_project_uuid_from_ident(project_id)
+            project_id = idp.get_project_uuid_from_ident(project_id)
 
         if resource_uuid is not None:
             if resource_type is None:
@@ -193,7 +193,7 @@ class OffersController(rest.RestController):
             node_list = None
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 f1 = executor.submit(ironic.get_node_list)
-                f2 = executor.submit(keystone.get_project_list)
+                f2 = executor.submit(idp.get_project_list)
                 node_list = f1.result()
                 project_list = f2.result()
 
@@ -231,7 +231,7 @@ class OffersController(rest.RestController):
         offer_dict["resource_uuid"] = resource.get_uuid()
 
         if "lessee_id" in offer_dict:
-            offer_dict["lessee_id"] = keystone.get_project_uuid_from_ident(
+            offer_dict["lessee_id"] = idp.get_project_uuid_from_ident(
                 offer_dict["lessee_id"]
             )
 
