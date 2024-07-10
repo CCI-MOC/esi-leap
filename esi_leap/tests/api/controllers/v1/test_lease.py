@@ -25,6 +25,7 @@ from esi_leap.objects import lease as lease_obj
 from esi_leap.resource_objects.ironic_node import IronicNode
 from esi_leap.resource_objects.fake_node import FakeNode
 from esi_leap.tests.api import base as test_api_base
+from esi_leap.conf import CONF
 
 
 class TestLeasesController(test_api_base.APITestCase):
@@ -68,7 +69,9 @@ class TestLeasesController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.objects.lease.Lease.get_all")
     def test_one(self, mock_ga, mock_lgdwai, mock_gpl, mock_gnl):
         mock_ga.return_value = [self.test_lease]
@@ -83,7 +86,9 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_gnl.assert_called_once()
         mock_lgdwai.assert_called_once()
 
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.api.controllers.v1.lease.get_resource_object")
     @mock.patch("esi_leap.common.idp.get_project_uuid_from_ident")
     @mock.patch("oslo_utils.uuidutils.generate_uuid")
@@ -131,7 +136,9 @@ class TestLeasesController(test_api_base.APITestCase):
         self.assertEqual(return_data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
 
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.api.controllers.v1.lease.get_resource_object")
     @mock.patch("esi_leap.common.idp.get_project_uuid_from_ident")
     @mock.patch("oslo_utils.uuidutils.generate_uuid")
@@ -178,7 +185,9 @@ class TestLeasesController(test_api_base.APITestCase):
         self.assertEqual(return_data, request.json)
         self.assertEqual(http_client.CREATED, request.status_int)
 
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.api.controllers.v1.utils." "check_resource_lease_admin")
     @mock.patch("esi_leap.api.controllers.v1.lease.get_resource_object")
     @mock.patch("esi_leap.common.idp.get_project_uuid_from_ident")
@@ -281,7 +290,9 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_create.assert_not_called()
         self.assertEqual(http_client.FORBIDDEN, request.status_int)
 
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.objects.lease.Lease.update")
     @mock.patch("esi_leap.api.controllers.v1.utils." "check_lease_policy_and_retrieve")
     def test_patch(self, mock_clpar, mock_lease_update, mock_lgdwai):
@@ -297,7 +308,9 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_lgdwai.assert_called_once()
         self.assertEqual(http_client.OK, request.status_int)
 
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.objects.lease.Lease.update")
     @mock.patch("esi_leap.api.controllers.v1.utils." "check_lease_policy_and_retrieve")
     def test_patch_no_end_time(self, mock_clpar, mock_lease_update, mock_lgdwai):
@@ -315,7 +328,9 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_lgdwai.assert_not_called()
         self.assertEqual(http_client.INTERNAL_SERVER_ERROR, request.status_int)
 
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.objects.lease.Lease.update")
     @mock.patch("esi_leap.api.controllers.v1.utils." "check_lease_policy_and_retrieve")
     def test_patch_end_time_and_more(self, mock_clpar, mock_lease_update, mock_lgdwai):
@@ -335,7 +350,9 @@ class TestLeasesController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch(
         "esi_leap.api.controllers.v1.lease.LeasesController."
         "_lease_get_all_authorize_filters"
@@ -369,7 +386,9 @@ class TestLeasesController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.common.idp.get_project_uuid_from_ident")
     @mock.patch(
         "esi_leap.api.controllers.v1.lease.LeasesController."
@@ -405,7 +424,9 @@ class TestLeasesController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.common.idp.get_project_uuid_from_ident")
     @mock.patch(
         "esi_leap.api.controllers.v1.lease.LeasesController."
@@ -443,7 +464,9 @@ class TestLeasesController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.api.controllers.v1.lease.get_resource_object")
     @mock.patch(
         "esi_leap.api.controllers.v1.lease.LeasesController."
@@ -481,7 +504,9 @@ class TestLeasesController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch(
         "esi_leap.api.controllers.v1.lease.LeasesController."
         "_lease_get_all_authorize_filters"
@@ -547,7 +572,9 @@ class TestLeasesController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.api.controllers.v1.lease.get_resource_object")
     @mock.patch(
         "esi_leap.api.controllers.v1.lease.LeasesController."
@@ -604,6 +631,7 @@ class TestLeaseControllersGetAllFilters(testtools.TestCase):
     def setUp(self):
         super(TestLeaseControllersGetAllFilters, self).setUp()
 
+        CONF.set_override("auth_enable", True, group="pecan")
         self.admin_ctx = ctx.RequestContext(project_id="adminid", roles=["admin"])
         self.owner_ctx = ctx.RequestContext(project_id="ownerid", roles=["owner"])
         self.lessee_ctx = ctx.RequestContext(project_id="lesseeid", roles=["lessee"])

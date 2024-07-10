@@ -19,6 +19,8 @@ from oslo_utils import uuidutils
 import testtools
 
 from esi_leap.api.controllers.v1 import utils
+from esi_leap.api.controllers.v1 import lease as lease_controller
+from esi_leap.api.controllers.v1 import offer as offer_controller
 from esi_leap.common import exception
 from esi_leap.common import policy
 from esi_leap.common import statuses
@@ -650,7 +652,7 @@ class TestOfferGetDictWithAddedInfoUtils(testtools.TestCase):
             lessee_id=None,
         )
 
-        o_dict = utils.offer_get_dict_with_added_info(o)
+        o_dict = offer_controller.OffersController._offer_get_dict_with_added_info(o)
 
         expected_offer_dict = {
             "resource_type": o.resource_type,
@@ -696,7 +698,9 @@ class TestLeaseGetDictWithAddedInfoUtils(testtools.TestCase):
         mock_gpn.return_value = "project-name"
         mock_gn.return_value = "resource-name"
 
-        output_dict = utils.lease_get_dict_with_added_info(self.test_lease)
+        output_dict = lease_controller.LeasesController._lease_get_dict_with_added_info(
+            self.test_lease
+        )
 
         expected_output_dict = self.test_lease.to_dict()
         expected_output_dict["resource"] = "resource-name"

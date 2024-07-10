@@ -154,31 +154,6 @@ def check_offer_lessee(cdict, offer):
         )
 
 
-def offer_get_dict_with_added_info(offer, project_list=None, node_list=None):
-    resource = offer.resource_object()
-
-    o = offer.to_dict()
-    o["availabilities"] = offer.get_availabilities()
-    o["project"] = idp.get_project_name(offer.project_id, project_list)
-    o["lessee"] = idp.get_project_name(offer.lessee_id, project_list)
-    o["resource"] = resource.get_name(node_list)
-    o["resource_class"] = resource.get_resource_class(node_list)
-    o["resource_properties"] = resource.get_properties(node_list)
-    return o
-
-
-def lease_get_dict_with_added_info(lease, project_list=None, node_list=None):
-    resource = lease.resource_object()
-
-    lease_dict = lease.to_dict()
-    lease_dict["project"] = idp.get_project_name(lease.project_id, project_list)
-    lease_dict["owner"] = idp.get_project_name(lease.owner_id, project_list)
-    lease_dict["resource"] = resource.get_name(node_list)
-    lease_dict["resource_class"] = resource.get_resource_class(node_list)
-    lease_dict["resource_properties"] = resource.get_properties(node_list)
-    return lease_dict
-
-
 def check_lease_length(cdict, start_time, end_time, max_time):
     if (end_time - start_time) > datetime.timedelta(days=max_time):
         # Check if the current project is admin

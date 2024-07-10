@@ -120,7 +120,9 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch("oslo_utils.uuidutils.generate_uuid")
     @mock.patch("esi_leap.api.controllers.v1.utils.check_resource_admin")
     @mock.patch("esi_leap.objects.offer.Offer.create")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     def test_post(
         self, mock_ogdwai, mock_create, mock_cra, mock_generate_uuid, mock_gro
     ):
@@ -160,7 +162,9 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch("oslo_utils.uuidutils.generate_uuid")
     @mock.patch("esi_leap.api.controllers.v1.utils.check_resource_admin")
     @mock.patch("esi_leap.objects.offer.Offer.create")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     def test_post_default_resource_type(
         self, mock_ogdwai, mock_create, mock_cra, mock_generate_uuid, mock_gro
     ):
@@ -200,7 +204,9 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch("oslo_utils.uuidutils.generate_uuid")
     @mock.patch("esi_leap.api.controllers.v1.utils.check_resource_admin")
     @mock.patch("esi_leap.objects.offer.Offer.create")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     def test_post_lessee(
         self,
         mock_ogdwai,
@@ -250,7 +256,9 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch("oslo_utils.uuidutils.generate_uuid")
     @mock.patch("esi_leap.api.controllers.v1.utils.check_resource_admin")
     @mock.patch("esi_leap.objects.offer.Offer.create")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     def test_post_non_admin_parent_lease(
         self,
         mock_ogdwai,
@@ -310,7 +318,9 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch("oslo_utils.uuidutils.generate_uuid")
     @mock.patch("esi_leap.api.controllers.v1.utils.check_resource_admin")
     @mock.patch("esi_leap.objects.offer.Offer.create")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     def test_post_non_admin_no_parent_lease(
         self,
         mock_ogdwai,
@@ -361,7 +371,9 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.objects.offer.Offer.get_all")
     def test_get_nofilters(self, mock_get_all, mock_ogdwai, mock_gpl, mock_gnl):
         mock_get_all.return_value = [self.test_offer, self.test_offer_2]
@@ -390,7 +402,9 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.objects.offer.Offer.get_all")
     def test_get_any_status(self, mock_get_all, mock_ogdwai, mock_gpl, mock_gnl):
         mock_get_all.return_value = [self.test_offer, self.test_offer_2]
@@ -419,7 +433,9 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.objects.offer.Offer.get_all")
     def test_get_status_filter(self, mock_get_all, mock_ogdwai, mock_gpl, mock_gnl):
         mock_get_all.return_value = [self.test_offer, self.test_offer_2]
@@ -449,7 +465,9 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
     @mock.patch("esi_leap.common.idp.get_project_uuid_from_ident")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.objects.offer.Offer.get_all")
     def test_get_project_filter(
         self, mock_get_all, mock_ogdwai, mock_gpufi, mock_gpl, mock_gnl
@@ -486,7 +504,9 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
     @mock.patch("esi_leap.api.controllers.v1.offer.get_resource_object")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.objects.offer.Offer.get_all")
     def test_get_resource_filter(
         self, mock_get_all, mock_ogdwai, mock_gro, mock_gpl, mock_gnl
@@ -525,7 +545,9 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.objects.offer.Offer.get_all")
     def test_get_resource_class_filter(
         self, mock_get_all, mock_ogdwai, mock_gpl, mock_gnl
@@ -560,7 +582,9 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
     @mock.patch("esi_leap.api.controllers.v1.offer.get_resource_object")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.objects.offer.Offer.get_all")
     def test_get_resource_filter_default_resource_type(
         self, mock_get_all, mock_ogdwai, mock_gro, mock_gpl, mock_gnl
@@ -597,7 +621,9 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.idp.get_project_list")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     @mock.patch("esi_leap.objects.offer.Offer.get_all")
     @mock.patch("esi_leap.api.controllers.v1.utils.policy_authorize")
     def test_get_lessee_filter(
@@ -636,7 +662,9 @@ class TestOffersController(test_api_base.APITestCase):
 
     @mock.patch("esi_leap.api.controllers.v1.utils.check_offer_lessee")
     @mock.patch("esi_leap.api.controllers.v1.utils." "check_offer_policy_and_retrieve")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "offer_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.offer.OffersController._offer_get_dict_with_added_info"
+    )
     def test_get_one(self, mock_ogdwai, mock_copar, mock_col):
         mock_copar.return_value = self.test_offer
         mock_ogdwai.return_value = self.test_offer.to_dict()
@@ -654,7 +682,9 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch("esi_leap.objects.lease.Lease.create")
     @mock.patch("esi_leap.api.controllers.v1.utils.check_offer_lessee")
     @mock.patch("esi_leap.api.controllers.v1.utils." "check_offer_policy_and_retrieve")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     def test_claim(self, mock_lgdwai, mock_copar, mock_col, mock_lease_create):
         lease_uuid = uuidutils.generate_uuid()
 
@@ -685,7 +715,9 @@ class TestOffersController(test_api_base.APITestCase):
     @mock.patch("esi_leap.objects.lease.Lease.create")
     @mock.patch("esi_leap.api.controllers.v1.utils.check_offer_lessee")
     @mock.patch("esi_leap.api.controllers.v1.utils." "check_offer_policy_and_retrieve")
-    @mock.patch("esi_leap.api.controllers.v1.utils." "lease_get_dict_with_added_info")
+    @mock.patch(
+        "esi_leap.api.controllers.v1.lease.LeasesController._lease_get_dict_with_added_info"
+    )
     def test_claim_parent_lease(
         self, mock_lgdwai, mock_copar, mock_col, mock_lease_create
     ):

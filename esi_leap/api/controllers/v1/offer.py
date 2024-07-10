@@ -91,7 +91,7 @@ class OffersController(rest.RestController):
         )
         utils.check_offer_lessee(cdict, offer)
 
-        o = utils.offer_get_dict_with_added_info(offer)
+        o = self._offer_get_dict_with_added_info(offer)
 
         return Offer(**o)
 
@@ -199,7 +199,7 @@ class OffersController(rest.RestController):
 
             offers_with_added_info = [
                 Offer(
-                    **utils.offer_get_dict_with_added_info(o, project_list, node_list)
+                    **self._offer_get_dict_with_added_info(o, project_list, node_list)
                 )
                 for o in offers
             ]
@@ -263,7 +263,7 @@ class OffersController(rest.RestController):
 
         o = offer_obj.Offer(**offer_dict)
         o.create()
-        return Offer(**utils.offer_get_dict_with_added_info(o))
+        return Offer(**self._offer_get_dict_with_added_info(o))
 
     @wsme_pecan.wsexpose(Offer, wtypes.text)
     def delete(self, offer_id):
@@ -321,4 +321,19 @@ class OffersController(rest.RestController):
 
         new_lease = lease_obj.Lease(**lease_dict)
         new_lease.create(request)
-        return lease.Lease(**utils.lease_get_dict_with_added_info(new_lease))
+        return lease.Lease(
+            **lease.LeasesController._lease_get_dict_with_added_info(new_lease)
+        )
+
+    @staticmethod
+    def _offer_get_dict_with_added_info(offer, project_list=None, node_list=None):
+        resource = offer.resource_object()
+
+        o = offer.to_dict()
+        o["availabilities"] = offer.get_availabilities()
+        o["project"] = idp.get_project_name(offer.project_id, project_list)
+        o["lessee"] = idp.get_project_name(offer.lessee_id, project_list)
+        o["resource"] = resource.get_name(node_list)
+        o["resource_class"] = resource.get_resource_class(node_list)
+        o["resource_properties"] = resource.get_properties(node_list)
+        return o
