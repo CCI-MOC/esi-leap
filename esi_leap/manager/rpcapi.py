@@ -28,5 +28,5 @@ class ManagerRPCAPI(object):
 
     def __init__(self):
         self._client = messaging.RPCClient(
-            target=utils.get_target(),
-            transport=messaging.get_rpc_transport(CONF))
+            target=utils.get_target(), transport=messaging.get_rpc_transport(CONF)
+        )

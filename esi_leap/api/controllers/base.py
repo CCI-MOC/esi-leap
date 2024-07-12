@@ -15,7 +15,6 @@ from wsme import types as wtypes
 
 
 class ESILEAPBase(wtypes.Base):
-
     def to_dict(self):
         esi_leap_dict = {}
         if self.fields:

@@ -25,7 +25,7 @@ LOG = logging.getLogger(__name__)
 
 
 def _alembic_config():
-    path = os.path.join(os.path.dirname(__file__), 'alembic.ini')
+    path = os.path.join(os.path.dirname(__file__), "alembic.ini")
     config = alembic_config.Config(path)
     return config
 
@@ -49,10 +49,10 @@ def upgrade(revision, config=None):
     :param version: Desired database version
     :type version: string
     """
-    revision = revision or 'head'
+    revision = revision or "head"
     config = config or _alembic_config()
 
-    alembic.command.upgrade(config, revision or 'head')
+    alembic.command.upgrade(config, revision or "head")
 
 
 def downgrade(revision, config=None):
@@ -61,7 +61,7 @@ def downgrade(revision, config=None):
     :param version: Desired database version
     :type version: string
     """
-    revision = revision or 'base'
+    revision = revision or "base"
     config = config or _alembic_config()
     return alembic.command.downgrade(config, revision)
 
@@ -89,8 +89,7 @@ def revision(message=None, autogenerate=False, config=None):
     :type autogenerate: bool
     """
     config = config or _alembic_config()
-    return alembic.command.revision(config, message=message,
-                                    autogenerate=autogenerate)
+    return alembic.command.revision(config, message=message, autogenerate=autogenerate)
 
 
 def create_schema(config=None, engine=None):
@@ -101,4 +100,4 @@ def create_schema(config=None, engine=None):
     if engine is None:
         engine = enginefacade.writer.get_engine()
     models.Base.metadata.create_all(engine)
-    stamp('head', config=config)
+    stamp("head", config=config)

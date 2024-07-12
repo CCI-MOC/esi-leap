@@ -24,21 +24,24 @@ _cached_ironic_client = None
 
 
 def get_ironic_client(context=None):
-    session = ks_loading.load_session_from_conf_options(CONF, 'ironic')
-    service_auth = ks_loading.load_auth_from_conf_options(CONF, 'ironic')
+    session = ks_loading.load_session_from_conf_options(CONF, "ironic")
+    service_auth = ks_loading.load_auth_from_conf_options(CONF, "ironic")
 
     # use user context if provided
     user_auth = None
     if context:
         endpoint = ks_loading.load_adapter_from_conf_options(
-            CONF, 'ironic', session=session, auth=service_auth).get_endpoint()
+            CONF, "ironic", session=session, auth=service_auth
+        ).get_endpoint()
         user_auth = service_token.ServiceTokenAuthWrapper(
             user_auth=token_endpoint.Token(endpoint, context.auth_token),
-            service_auth=service_auth)
+            service_auth=service_auth,
+        )
     sess = ks_loading.load_session_from_conf_options(
-        CONF, 'ironic', auth=user_auth or service_auth)
+        CONF, "ironic", auth=user_auth or service_auth
+    )
 
-    kwargs = {'os_ironic_api_version': '1.65'}
+    kwargs = {"os_ironic_api_version": "1.65"}
     cli = ironic_client.get_client(1, session=sess, **kwargs)
     return cli
 
@@ -58,6 +61,6 @@ def get_node(node_uuid, node_list=None):
 
 def get_condensed_properties(properties):
     cp = properties.copy()
-    cp.pop('lease_uuid', None)
-    cp.pop('capabilities', None)
+    cp.pop("lease_uuid", None)
+    cp.pop("capabilities", None)
     return cp

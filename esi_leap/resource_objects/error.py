@@ -11,13 +11,13 @@
 #    under the License.
 
 UNKNOWN = {
-    'uuid': 'unknown-uuid',
-    'name': 'unknown-name',
-    'resource_class': 'unknown-class',
-    'properties': {},
-    'owner_project_id': 'unknown-owner',
-    'lease_uuid': 'unknown-lease',
-    'lessee_project_id': 'unknown-lessee',
-    'provision_state': 'unknown-provision-state',
-    'power_state': 'unknown-power-state'
+    "uuid": "unknown-uuid",
+    "name": "unknown-name",
+    "resource_class": "unknown-class",
+    "properties": {},
+    "owner_project_id": "unknown-owner",
+    "lease_uuid": "unknown-lease",
+    "lessee_project_id": "unknown-lessee",
+    "provision_state": "unknown-provision-state",
+    "power_state": "unknown-power-state",
 }

@@ -23,7 +23,7 @@ from oslo_config import cfg
 CONF = cfg.CONF
 
 
-CONF.register_group(cfg.OptGroup(name='database'))
+CONF.register_group(cfg.OptGroup(name="database"))
 api.register_opts(CONF)
 dummy_node.register_opts(CONF)
 ironic.register_opts(CONF)

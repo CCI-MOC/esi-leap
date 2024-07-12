@@ -15,26 +15,35 @@ from oslo_config import cfg
 
 # borrowed from Ironic
 opts = [
-    cfg.StrOpt('notification_level',
-               choices=[('debug', _('"debug" level')),
-                        ('info', _('"info" level')),
-                        ('warning', _('"warning" level')),
-                        ('error', _('"error" level')),
-                        ('critical', _('"critical" level'))],
-               help=_('Specifies the minimum level for which to send '
-                      'notifications. If not set, no notifications will '
-                      'be sent.')),
+    cfg.StrOpt(
+        "notification_level",
+        choices=[
+            ("debug", _('"debug" level')),
+            ("info", _('"info" level')),
+            ("warning", _('"warning" level')),
+            ("error", _('"error" level')),
+            ("critical", _('"critical" level')),
+        ],
+        help=_(
+            "Specifies the minimum level for which to send "
+            "notifications. If not set, no notifications will "
+            "be sent."
+        ),
+    ),
     cfg.ListOpt(
-        'versioned_notifications_topics',
-        default=['esi_leap_versioned_notifications'],
-        help=_('Specifies the topics for '
-               'the versioned notifications issued by esi-leap.')),
+        "versioned_notifications_topics",
+        default=["esi_leap_versioned_notifications"],
+        help=_(
+            "Specifies the topics for "
+            "the versioned notifications issued by esi-leap."
+        ),
+    ),
 ]
 
 
-notification_group = cfg.OptGroup('notification', title='Notification Options')
+notification_group = cfg.OptGroup("notification", title="Notification Options")
 
 
 def register_opts(conf):
     conf.register_opts(opts, group=notification_group)
-    conf.set_default('notification_level', 'info', group=notification_group)
+    conf.set_default("notification_level", "info", group=notification_group)

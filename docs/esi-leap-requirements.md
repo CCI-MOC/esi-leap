@@ -89,7 +89,7 @@ An offer response has the following fields:
   * deleted: an offer is no longer available for leasing. An offer is set to deleted when it is manually revoked by a user before its end_time has passed.
 * "properties" is the baremetal properties of an offer.
 * "availabilities" is a list of [start, end] datetime pairings representing a continuous time range in which an offer is available for leasing.
-   * "availabilities" is not kept in the schema and is computed when retrieving an offer. 
+   * "availabilities" is not kept in the schema and is computed when retrieving an offer.
 * "created_at", "updated_at", and "id" are only used in the schema and cannot be read or set.
 
 
@@ -164,11 +164,11 @@ A lease response has the following fields:
 
 
 ### Manager Service
-An ESI-Leap manager has periodic jobs to manage offers and leases. 
+An ESI-Leap manager has periodic jobs to manage offers and leases.
 * expire offers: out-of-date offers, i.e, the current timestamp > offer's end_time, will be updated with an 'EXPIRED' status.
-* fulfill leases: if a lease's start_time <= the current timestamp and is not expired, the manager service will fulfill the resources in the leases and update the status of the leases to 'active'. 
+* fulfill leases: if a lease's start_time <= the current timestamp and is not expired, the manager service will fulfill the resources in the leases and update the status of the leases to 'active'.
 * expire leases: same as 'expire offers', ESI-Leap will expire leases based on timestamp.
-* update offers: after the manager fulfills and expires leases, it will update the relevant offers' status. The offers in a fulfilled lease should be unavailable to others. Likewise, when a lease expires, offers in the lease should be updated and be available again. 
+* update offers: after the manager fulfills and expires leases, it will update the relevant offers' status. The offers in a fulfilled lease should be unavailable to others. Likewise, when a lease expires, offers in the lease should be updated and be available again.
 
 ## Reporting API
 ESI-Leap admin queries this API to learn about the usage of nodes given a period. The admin enters a date range to get all leases' information within that range. The results could be like this:

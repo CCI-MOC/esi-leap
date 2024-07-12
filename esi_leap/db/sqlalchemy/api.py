@@ -112,16 +112,15 @@ def offer_get_by_name(name):
 
 
 def offer_get_all(filters):
-
     query = model_query(models.Offer)
 
-    lessee_id = filters.pop('lessee_id', None)
-    start = filters.pop('start_time', None)
-    end = filters.pop('end_time', None)
-    time_filter_type = filters.pop('time_filter_type', None)
-    a_start = filters.pop('available_start_time', None)
-    status = filters.pop('status', None)
-    a_end = filters.pop('available_end_time', None)
+    lessee_id = filters.pop("lessee_id", None)
+    start = filters.pop("start_time", None)
+    end = filters.pop("end_time", None)
+    time_filter_type = filters.pop("time_filter_type", None)
+    a_start = filters.pop("available_start_time", None)
+    status = filters.pop("status", None)
+    a_end = filters.pop("available_end_time", None)
 
     query = query.filter_by(**filters)
 
@@ -130,20 +129,24 @@ def offer_get_all(filters):
 
     if lessee_id:
         lessee_id_list = keystone.get_parent_project_id_tree(lessee_id)
-        query = query.filter(or_(models.Offer.project_id == lessee_id,
-                                 models.Offer.lessee_id.__eq__(None),
-                                 models.Offer.lessee_id.in_(lessee_id_list)))
+        query = query.filter(
+            or_(
+                models.Offer.project_id == lessee_id,
+                models.Offer.lessee_id.__eq__(None),
+                models.Offer.lessee_id.in_(lessee_id_list),
+            )
+        )
 
     if start and end:
         if time_filter_type == constants.WITHIN_TIME_FILTER:
-            query = query.filter(((start <= models.Offer.start_time) &
-                                  (end >= models.Offer.start_time)) |
-
-                                 ((start <= models.Offer.end_time) &
-                                  (end >= models.Offer.end_time)))
+            query = query.filter(
+                ((start <= models.Offer.start_time) & (end >= models.Offer.start_time))
+                | ((start <= models.Offer.end_time) & (end >= models.Offer.end_time))
+            )
         else:
-            query = query.filter((start >= models.Offer.start_time) &
-                                 (end <= models.Offer.end_time))
+            query = query.filter(
+                (start >= models.Offer.start_time) & (end <= models.Offer.end_time)
+            )
 
     if a_start and a_end:
         for o in query:
@@ -156,55 +159,59 @@ def offer_get_all(filters):
 
 
 def offer_get_conflict_times(offer_ref):
-
     l_query = model_query(models.Lease)
 
-    return l_query.with_entities(
-        models.Lease.start_time, models.Lease.end_time).\
-        join(models.Offer, models.Offer.uuid == models.Lease.offer_uuid).\
-        order_by(models.Lease.start_time).\
-        filter(models.Lease.offer_uuid == offer_ref.uuid,
-               (models.Lease.status != statuses.EXPIRED) &
-               (models.Lease.status != statuses.DELETED)
-               ).all()
+    return (
+        l_query.with_entities(models.Lease.start_time, models.Lease.end_time)
+        .join(models.Offer, models.Offer.uuid == models.Lease.offer_uuid)
+        .order_by(models.Lease.start_time)
+        .filter(
+            models.Lease.offer_uuid == offer_ref.uuid,
+            (models.Lease.status != statuses.EXPIRED)
+            & (models.Lease.status != statuses.DELETED),
+        )
+        .all()
+    )
 
 
 def offer_get_next_lease_start_time(offer_uuid, start):
     l_query = model_query(models.Lease)
 
-    return l_query.with_entities(
-        models.Lease.start_time).\
-        filter(models.Lease.offer_uuid == offer_uuid,
-               (models.Lease.status == statuses.CREATED) |
-               (models.Lease.status == statuses.ACTIVE)
-               ).\
-        order_by(models.Lease.start_time).\
-        filter((models.Lease.end_time >= start) &
-               (models.Lease.start_time >= start)).first()
+    return (
+        l_query.with_entities(models.Lease.start_time)
+        .filter(
+            models.Lease.offer_uuid == offer_uuid,
+            (models.Lease.status == statuses.CREATED)
+            | (models.Lease.status == statuses.ACTIVE),
+        )
+        .order_by(models.Lease.start_time)
+        .filter((models.Lease.end_time >= start) & (models.Lease.start_time >= start))
+        .first()
+    )
 
 
 def offer_verify_availability(offer_ref, start, end):
-
     if start < offer_ref.start_time or end > offer_ref.end_time:
-        raise exception.OfferNoTimeAvailabilities(offer_uuid=offer_ref.uuid,
-                                                  start_time=start,
-                                                  end_time=end)
+        raise exception.OfferNoTimeAvailabilities(
+            offer_uuid=offer_ref.uuid, start_time=start, end_time=end
+        )
 
     l_query = model_query(models.Lease)
 
     leases = l_query.with_entities(
-        models.Lease.start_time, models.Lease.end_time).\
-        filter((models.Lease.offer_uuid == offer_ref.uuid),
-               (models.Lease.status == statuses.CREATED) |
-               (models.Lease.status == statuses.ACTIVE)
-               )
+        models.Lease.start_time, models.Lease.end_time
+    ).filter(
+        (models.Lease.offer_uuid == offer_ref.uuid),
+        (models.Lease.status == statuses.CREATED)
+        | (models.Lease.status == statuses.ACTIVE),
+    )
     leases = add_lease_conflict_filter(leases, start, end)
     conflict = leases.first()
 
     if conflict:
-        raise exception.OfferNoTimeAvailabilities(offer_uuid=offer_ref.uuid,
-                                                  start_time=start,
-                                                  end_time=end)
+        raise exception.OfferNoTimeAvailabilities(
+            offer_uuid=offer_ref.uuid, start_time=start, end_time=end
+        )
 
 
 def offer_create(values):
@@ -218,25 +225,23 @@ def offer_create(values):
 
 
 def offer_update(offer_uuid, values):
-
     with _session_for_write() as session:
-
         query = model_query(models.Offer)
         offer_ref = query.filter_by(uuid=offer_uuid).one_or_none()
 
-        values.pop('uuid', None)
-        values.pop('project_id', None)
+        values.pop("uuid", None)
+        values.pop("project_id", None)
 
-        start = values.get('start_time', None)
-        end = values.get('end_time', None)
+        start = values.get("start_time", None)
+        end = values.get("end_time", None)
         if start is None:
             start = offer_ref.start_time
         if end is None:
             end = offer_ref.end_time
         if start >= end:
-            raise exception.InvalidTimeRange(resource='an offer',
-                                             start_time=str(start),
-                                             end_time=str(end))
+            raise exception.InvalidTimeRange(
+                resource="an offer", start_time=str(start), end_time=str(end)
+            )
 
         offer_ref.update(values)
         session.flush()
@@ -256,16 +261,13 @@ def offer_destroy(offer_uuid):
 
 
 def add_offer_conflict_filter(query, start, end):
-    return query.filter((
-        ((start >= models.Offer.start_time) &
-         (start < models.Offer.end_time)) |
-
-        ((end > models.Offer.start_time) &
-         (end <= models.Offer.end_time)) |
-
-        ((start <= models.Offer.start_time) &
-         (end >= models.Offer.end_time))
-    ))
+    return query.filter(
+        (
+            ((start >= models.Offer.start_time) & (start < models.Offer.end_time))
+            | ((end > models.Offer.start_time) & (end <= models.Offer.end_time))
+            | ((start <= models.Offer.start_time) & (end >= models.Offer.end_time))
+        )
+    )
 
 
 # Leases
@@ -284,11 +286,11 @@ def lease_get_by_name(name):
 def lease_get_all(filters):
     query = model_query(models.Lease)
 
-    start = filters.pop('start_time', None)
-    end = filters.pop('end_time', None)
-    time_filter_type = filters.pop('time_filter_type', None)
-    status = filters.pop('status', None)
-    project_or_owner_id = filters.pop('project_or_owner_id', None)
+    start = filters.pop("start_time", None)
+    end = filters.pop("end_time", None)
+    time_filter_type = filters.pop("time_filter_type", None)
+    status = filters.pop("status", None)
+    project_or_owner_id = filters.pop("project_or_owner_id", None)
 
     query = query.filter_by(**filters)
 
@@ -297,23 +299,22 @@ def lease_get_all(filters):
 
     if start and end:
         if time_filter_type == constants.WITHIN_TIME_FILTER:
-            query = query.filter(((start <= models.Lease.start_time) &
-                                  (end >= models.Lease.start_time)) |
-
-                                 ((start <= models.Lease.end_time) &
-                                  (end >= models.Lease.end_time)) |
-
-                                 ((start >= models.Lease.start_time) &
-                                  (end <= models.Lease.end_time)))
+            query = query.filter(
+                ((start <= models.Lease.start_time) & (end >= models.Lease.start_time))
+                | ((start <= models.Lease.end_time) & (end >= models.Lease.end_time))
+                | ((start >= models.Lease.start_time) & (end <= models.Lease.end_time))
+            )
 
         else:
-            query = query.filter((start >= models.Lease.start_time) &
-                                 (end <= models.Lease.end_time))
+            query = query.filter(
+                (start >= models.Lease.start_time) & (end <= models.Lease.end_time)
+            )
 
     if project_or_owner_id:
         query = query.filter(
-            (project_or_owner_id == models.Lease.project_id) |
-            (project_or_owner_id == models.Lease.owner_id))
+            (project_or_owner_id == models.Lease.project_id)
+            | (project_or_owner_id == models.Lease.owner_id)
+        )
 
     return query
 
@@ -333,19 +334,19 @@ def lease_update(lease_uuid, values):
         query = model_query(models.Lease)
         lease_ref = query.filter_by(uuid=lease_uuid).one_or_none()
 
-        values.pop('uuid', None)
-        values.pop('project_id', None)
+        values.pop("uuid", None)
+        values.pop("project_id", None)
 
-        start = values.get('start_time', None)
-        end = values.get('end_time', None)
+        start = values.get("start_time", None)
+        end = values.get("end_time", None)
         if start is None:
             start = lease_ref.start_time
         if end is None:
             end = lease_ref.end_time
         if start >= end:
-            raise exception.InvalidTimeRange(resource='a lease',
-                                             start_time=str(start),
-                                             end_time=str(end))
+            raise exception.InvalidTimeRange(
+                resource="a lease", start_time=str(start), end_time=str(end)
+            )
 
         lease_ref.update(values)
         session.flush()
@@ -354,7 +355,6 @@ def lease_update(lease_uuid, values):
 
 def lease_destroy(lease_uuid):
     with _session_for_write() as session:
-
         query = model_query(models.Lease)
         lease_ref = query.filter_by(uuid=lease_uuid).one_or_none()
 
@@ -366,52 +366,52 @@ def lease_destroy(lease_uuid):
 
 def lease_verify_child_availability(lease_ref, start, end):
     if start < lease_ref.start_time or end > lease_ref.end_time:
-        raise exception.LeaseNoTimeAvailabilities(lease_uuid=lease_ref.uuid,
-                                                  start_time=start,
-                                                  end_time=end)
+        raise exception.LeaseNoTimeAvailabilities(
+            lease_uuid=lease_ref.uuid, start_time=start, end_time=end
+        )
 
     # check lease conflicts
     l_query = model_query(models.Lease)
     leases = l_query.with_entities(
-        models.Lease.start_time, models.Lease.end_time).\
-        filter((models.Lease.parent_lease_uuid == lease_ref.uuid),
-               (models.Lease.status == statuses.CREATED) |
-               (models.Lease.status == statuses.ACTIVE)
-               )
+        models.Lease.start_time, models.Lease.end_time
+    ).filter(
+        (models.Lease.parent_lease_uuid == lease_ref.uuid),
+        (models.Lease.status == statuses.CREATED)
+        | (models.Lease.status == statuses.ACTIVE),
+    )
     leases = add_lease_conflict_filter(leases, start, end)
     lease_conflict = leases.first()
 
     if lease_conflict:
-        raise exception.LeaseNoTimeAvailabilities(lease_uuid=lease_ref.uuid,
-                                                  start_time=start,
-                                                  end_time=end)
+        raise exception.LeaseNoTimeAvailabilities(
+            lease_uuid=lease_ref.uuid, start_time=start, end_time=end
+        )
 
     # check offer conflicts
     o_query = model_query(models.Offer)
     offers = o_query.with_entities(
-        models.Offer.start_time, models.Offer.end_time).\
-        filter((models.Offer.parent_lease_uuid == lease_ref.uuid),
-               (models.Offer.status == statuses.AVAILABLE))
+        models.Offer.start_time, models.Offer.end_time
+    ).filter(
+        (models.Offer.parent_lease_uuid == lease_ref.uuid),
+        (models.Offer.status == statuses.AVAILABLE),
+    )
     offers = add_offer_conflict_filter(offers, start, end)
     offer_conflict = offers.first()
 
     if offer_conflict:
-        raise exception.LeaseNoTimeAvailabilities(lease_uuid=lease_ref.uuid,
-                                                  start_time=start,
-                                                  end_time=end)
+        raise exception.LeaseNoTimeAvailabilities(
+            lease_uuid=lease_ref.uuid, start_time=start, end_time=end
+        )
 
 
 def add_lease_conflict_filter(query, start, end):
-    return query.filter((
-        ((start >= models.Lease.start_time) &
-         (start < models.Lease.end_time)) |
-
-        ((end > models.Lease.start_time) &
-         (end <= models.Lease.end_time)) |
-
-        ((start <= models.Lease.start_time) &
-         (end >= models.Lease.end_time))
-    ))
+    return query.filter(
+        (
+            ((start >= models.Lease.start_time) & (start < models.Lease.end_time))
+            | ((end > models.Lease.start_time) & (end <= models.Lease.end_time))
+            | ((start <= models.Lease.start_time) & (end >= models.Lease.end_time))
+        )
+    )
 
 
 # Resources
@@ -420,55 +420,56 @@ def resource_verify_availability(r_type, r_uuid, start, end):
     o_query = model_query(models.Offer)
 
     offers = o_query.with_entities(
-        models.Offer.start_time, models.Offer.end_time).\
-        filter((models.Offer.resource_uuid == r_uuid),
-               (models.Offer.resource_type == r_type),
-               (models.Offer.status == statuses.AVAILABLE))
+        models.Offer.start_time, models.Offer.end_time
+    ).filter(
+        (models.Offer.resource_uuid == r_uuid),
+        (models.Offer.resource_type == r_type),
+        (models.Offer.status == statuses.AVAILABLE),
+    )
     offers = add_offer_conflict_filter(offers, start, end)
     offer_conflict = offers.first()
 
     if offer_conflict:
-        raise exception.ResourceTimeConflict(
-            resource_uuid=r_uuid,
-            resource_type=r_type)
+        raise exception.ResourceTimeConflict(resource_uuid=r_uuid, resource_type=r_type)
 
     # check conflict with leases
     l_query = model_query(models.Lease)
 
     leases = l_query.with_entities(
-        models.Lease.start_time, models.Lease.end_time).\
-        filter((models.Lease.resource_uuid == r_uuid),
-               (models.Lease.resource_type == r_type),
-               (models.Lease.status.in_([statuses.CREATED, statuses.ACTIVE])))
+        models.Lease.start_time, models.Lease.end_time
+    ).filter(
+        (models.Lease.resource_uuid == r_uuid),
+        (models.Lease.resource_type == r_type),
+        (models.Lease.status.in_([statuses.CREATED, statuses.ACTIVE])),
+    )
     leases = add_lease_conflict_filter(leases, start, end)
     lease_conflict = leases.first()
 
     if lease_conflict:
-        raise exception.ResourceTimeConflict(
-            resource_uuid=r_uuid,
-            resource_type=r_type)
+        raise exception.ResourceTimeConflict(resource_uuid=r_uuid, resource_type=r_type)
 
 
 # Events
 
+
 def event_get_all(filters):
     query = model_query(models.Event)
 
-    last_event_time = filters.pop('last_event_time', None)
-    last_event_id = filters.pop('last_event_id', None)
-    lessee_or_owner_id = filters.pop('lessee_or_owner_id', None)
+    last_event_time = filters.pop("last_event_time", None)
+    last_event_id = filters.pop("last_event_id", None)
+    lessee_or_owner_id = filters.pop("lessee_or_owner_id", None)
 
     query = query.filter_by(**filters)
 
     if last_event_time:
-        query = query.filter(
-            last_event_time < models.Event.event_time)
+        query = query.filter(last_event_time < models.Event.event_time)
     if last_event_id:
         query = query.filter(last_event_id < models.Event.id)
     if lessee_or_owner_id:
         query = query.filter(
-            (lessee_or_owner_id == models.Event.lessee_id) |
-            (lessee_or_owner_id == models.Event.owner_id))
+            (lessee_or_owner_id == models.Event.lessee_id)
+            | (lessee_or_owner_id == models.Event.owner_id)
+        )
 
     return query
 

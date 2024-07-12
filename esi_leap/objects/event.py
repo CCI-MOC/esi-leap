@@ -27,15 +27,15 @@ class Event(base.ESILEAPObject):
     dbapi = dbapi.get_instance()
 
     fields = {
-        'id': fields.IntegerField(),
-        'event_type': fields.StringField(),
-        'event_time': fields.DateTimeField(),
-        'object_type': fields.StringField(nullable=True),
-        'object_uuid': fields.StringField(nullable=True),
-        'resource_type': fields.StringField(nullable=True),
-        'resource_uuid': fields.StringField(nullable=True),
-        'lessee_id': fields.StringField(nullable=True),
-        'owner_id': fields.StringField(nullable=True),
+        "id": fields.IntegerField(),
+        "event_type": fields.StringField(),
+        "event_time": fields.DateTimeField(),
+        "object_type": fields.StringField(nullable=True),
+        "object_uuid": fields.StringField(nullable=True),
+        "resource_type": fields.StringField(nullable=True),
+        "resource_uuid": fields.StringField(nullable=True),
+        "lessee_id": fields.StringField(nullable=True),
+        "owner_id": fields.StringField(nullable=True),
     }
 
     @classmethod
@@ -46,6 +46,6 @@ class Event(base.ESILEAPObject):
     def create(self, context=None):
         updates = self.obj_get_changes()
 
-        LOG.info('Creating event')
+        LOG.info("Creating event")
         db_event = self.dbapi.event_create(updates)
         self._from_db_object(context, self, db_event)

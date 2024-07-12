@@ -24,14 +24,16 @@ from esi_leap.objects import offer as offer_obj
 
 def check_resource_admin(cdict, resource, project_id):
     if project_id != resource.get_owner_project_id():
-        resource_policy_authorize('esi_leap:offer:offer_admin',
-                                  cdict, cdict,
-                                  resource.resource_type,
-                                  resource.get_uuid())
+        resource_policy_authorize(
+            "esi_leap:offer:offer_admin",
+            cdict,
+            cdict,
+            resource.resource_type,
+            resource.get_uuid(),
+        )
 
 
-def check_resource_lease_admin(cdict, resource, project_id,
-                               start_time, end_time):
+def check_resource_lease_admin(cdict, resource, project_id, start_time, end_time):
     # check to see if project is current lessee
     if project_id == resource.get_lessee_project_id():
         parent_lease_uuid = resource.get_lease_uuid()
@@ -41,15 +43,17 @@ def check_resource_lease_admin(cdict, resource, project_id,
             # don't allow sub-sub-leases
             if parent_lease.parent_lease_uuid is None:
                 # check if offer is within start and end time bounds
-                if ((start_time >= parent_lease.start_time) and
-                        (end_time <= parent_lease.end_time)):
+                if (start_time >= parent_lease.start_time) and (
+                    end_time <= parent_lease.end_time
+                ):
                     return parent_lease_uuid
                 else:
                     raise exception.ResourceNoPermissionTime(
                         resource_type=resource.resource_type,
                         resource_uuid=resource.get_uuid(),
                         start_time=start_time,
-                        end_time=end_time)
+                        end_time=end_time,
+                    )
 
 
 def get_offer(uuid_or_name, status_filters=[]):
@@ -60,8 +64,9 @@ def get_offer(uuid_or_name, status_filters=[]):
         else:
             raise exception.OfferNotFound(offer_uuid=uuid_or_name)
     else:
-        offers = offer_obj.Offer.get_all({'name': uuid_or_name,
-                                          'status': status_filters})
+        offers = offer_obj.Offer.get_all(
+            {"name": uuid_or_name, "status": status_filters}
+        )
 
         if len(offers) != 1:
             if len(offers) == 0:
@@ -80,8 +85,9 @@ def get_lease(uuid_or_name, status_filters=[]):
         else:
             raise exception.LeaseNotFound(lease_id=uuid_or_name)
     else:
-        leases = lease_obj.Lease.get_all({'name': uuid_or_name,
-                                          'status': status_filters})
+        leases = lease_obj.Lease.get_all(
+            {"name": uuid_or_name, "status": status_filters}
+        )
 
         if len(leases) != 1:
             if len(leases) == 0:
@@ -99,42 +105,44 @@ def policy_authorize(policy_name, target, creds):
         raise exception.HTTPForbidden(rule=policy_name)
 
 
-def resource_policy_authorize(policy_name, target, creds,
-                              resource_type, resource):
+def resource_policy_authorize(policy_name, target, creds, resource_type, resource):
     try:
         policy_authorize(policy_name, target, creds)
     except exception.HTTPForbidden:
-        raise exception.HTTPResourceForbidden(resource_type=resource_type,
-                                              resource=resource)
+        raise exception.HTTPResourceForbidden(
+            resource_type=resource_type, resource=resource
+        )
 
 
-def check_lease_policy_and_retrieve(request, policy_name, lease_ident,
-                                    status_filters=[]):
+def check_lease_policy_and_retrieve(
+    request, policy_name, lease_ident, status_filters=[]
+):
     lease = get_lease(lease_ident, status_filters)
 
     cdict = request.to_policy_values()
     target = dict(cdict)
-    target['lease.owner_id'] = lease.owner_id
-    target['lease.project_id'] = lease.project_id
+    target["lease.owner_id"] = lease.owner_id
+    target["lease.project_id"] = lease.project_id
 
-    resource_policy_authorize(policy_name, target, cdict, 'lease', lease.uuid)
+    resource_policy_authorize(policy_name, target, cdict, "lease", lease.uuid)
     return lease
 
 
-def check_offer_policy_and_retrieve(request, policy_name, offer_ident,
-                                    status_filters=[]):
+def check_offer_policy_and_retrieve(
+    request, policy_name, offer_ident, status_filters=[]
+):
     offer = get_offer(offer_ident, status_filters)
 
     cdict = request.to_policy_values()
     target = dict(cdict)
-    target['offer.project_id'] = offer.project_id
+    target["offer.project_id"] = offer.project_id
 
-    resource_policy_authorize(policy_name, target, cdict, 'offer', offer.uuid)
+    resource_policy_authorize(policy_name, target, cdict, "offer", offer.uuid)
     return offer
 
 
 def check_offer_lessee(cdict, offer):
-    project_id = cdict['project_id']
+    project_id = cdict["project_id"]
 
     # pass if offer has no lessee limitation or project_id created the offer
     if offer.lessee_id is None or offer.project_id == project_id:
@@ -142,20 +150,20 @@ def check_offer_lessee(cdict, offer):
 
     if offer.lessee_id not in keystone.get_parent_project_id_tree(project_id):
         resource_policy_authorize(
-            'esi_leap:offer:offer_admin',
-            cdict, cdict, 'offer', offer.uuid)
+            "esi_leap:offer:offer_admin", cdict, cdict, "offer", offer.uuid
+        )
 
 
 def offer_get_dict_with_added_info(offer, project_list=None, node_list=None):
     resource = offer.resource_object()
 
     o = offer.to_dict()
-    o['availabilities'] = offer.get_availabilities()
-    o['project'] = keystone.get_project_name(offer.project_id, project_list)
-    o['lessee'] = keystone.get_project_name(offer.lessee_id, project_list)
-    o['resource'] = resource.get_name(node_list)
-    o['resource_class'] = resource.get_resource_class(node_list)
-    o['resource_properties'] = resource.get_properties(node_list)
+    o["availabilities"] = offer.get_availabilities()
+    o["project"] = keystone.get_project_name(offer.project_id, project_list)
+    o["lessee"] = keystone.get_project_name(offer.lessee_id, project_list)
+    o["resource"] = resource.get_name(node_list)
+    o["resource_class"] = resource.get_resource_class(node_list)
+    o["resource_properties"] = resource.get_properties(node_list)
     return o
 
 
@@ -163,13 +171,11 @@ def lease_get_dict_with_added_info(lease, project_list=None, node_list=None):
     resource = lease.resource_object()
 
     lease_dict = lease.to_dict()
-    lease_dict['project'] = keystone.get_project_name(lease.project_id,
-                                                      project_list)
-    lease_dict['owner'] = keystone.get_project_name(lease.owner_id,
-                                                    project_list)
-    lease_dict['resource'] = resource.get_name(node_list)
-    lease_dict['resource_class'] = resource.get_resource_class(node_list)
-    lease_dict['resource_properties'] = resource.get_properties(node_list)
+    lease_dict["project"] = keystone.get_project_name(lease.project_id, project_list)
+    lease_dict["owner"] = keystone.get_project_name(lease.owner_id, project_list)
+    lease_dict["resource"] = resource.get_name(node_list)
+    lease_dict["resource_class"] = resource.get_resource_class(node_list)
+    lease_dict["resource_properties"] = resource.get_properties(node_list)
     return lease_dict
 
 
@@ -178,6 +184,6 @@ def check_lease_length(cdict, start_time, end_time, max_time):
         # Check if the current project is admin
         # Only admin project can set a lease beyond the max length
         try:
-            policy_authorize('esi_leap:lease:lease_admin', cdict, cdict)
+            policy_authorize("esi_leap:lease:lease_admin", cdict, cdict)
         except exception.HTTPForbidden:
             raise exception.LeaseExceedMaxTimeRange(max_time=max_time)

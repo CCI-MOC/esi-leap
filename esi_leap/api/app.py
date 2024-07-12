@@ -32,11 +32,11 @@ class ContextHook(hooks.PecanHook):
 
 def get_pecan_config():
     cfg_dict = {
-        'app': {
-            'root': CONF.pecan.root,
-            'modules': CONF.pecan.modules,
-            'debug': CONF.pecan.debug,
-            'auth_enable': CONF.pecan.auth_enable
+        "app": {
+            "root": CONF.pecan.root,
+            "modules": CONF.pecan.modules,
+            "debug": CONF.pecan.debug,
+            "auth_enable": CONF.pecan.auth_enable,
         }
     }
 
@@ -54,7 +54,7 @@ def setup_app(config=None):
         hooks=lambda: [ContextHook()],
         debug=CONF.pecan.debug,
         static_root=config.app.static_root if CONF.pecan.debug else None,
-        force_canonical=getattr(config.app, 'force_canonical', True),
+        force_canonical=getattr(config.app, "force_canonical", True),
     )
 
     if CONF.pecan.auth_enable:

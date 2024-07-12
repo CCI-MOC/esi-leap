@@ -25,7 +25,7 @@ CONF = esi_leap.conf.CONF
 def main():
     esi_leap_service.prepare_service(sys.argv)
     # Build and start the WSGI app
-    launcher = service.ProcessLauncher(CONF, restart_method='mutate')
-    server = wsgi_service.WSGIService('esi_leap_api')
+    launcher = service.ProcessLauncher(CONF, restart_method="mutate")
+    server = wsgi_service.WSGIService("esi_leap_api")
     launcher.launch_service(server, workers=server.workers)
     launcher.wait()

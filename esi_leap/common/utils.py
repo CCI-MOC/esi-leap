@@ -12,9 +12,9 @@
 
 from oslo_concurrency import lockutils
 
-_prefix = 'esileap'
+_prefix = "esileap"
 lock = lockutils.lock_with_prefix(_prefix)
 
 
 def get_resource_lock_name(resource_type, resource_uuid):
-    return resource_type + '-' + resource_uuid
+    return resource_type + "-" + resource_uuid

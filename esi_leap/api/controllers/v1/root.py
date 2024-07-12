@@ -21,25 +21,23 @@ from esi_leap.api.controllers.v1 import offer
 
 
 class Controller(rest.RestController):
-
     leases = lease.LeasesController()
     offers = offer.OffersController()
     nodes = node.NodesController()
     events = event.EventsController()
 
-    @pecan.expose(content_type='application/json')
+    @pecan.expose(content_type="application/json")
     def index(self):
         pecan.response.status_code = 300
-        pecan.response.content_type = 'application/json'
+        pecan.response.content_type = "application/json"
         versions = {
-            'versions': [
+            "versions": [
                 {
-                    'id': 'v1.0',
-                    'status': 'CURRENT',
-                    'links': [{
-                        'href': '{0}/v1'.format(pecan.request.host_url),
-                        'rel': 'self'
-                    }]
+                    "id": "v1.0",
+                    "status": "CURRENT",
+                    "links": [
+                        {"href": "{0}/v1".format(pecan.request.host_url), "rel": "self"}
+                    ],
                 }
             ]
         }

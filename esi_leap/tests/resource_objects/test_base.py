@@ -30,6 +30,7 @@ def bind_abstract_methods(cls):
                 methods.add(name)
         cls.__abstractmethods__ = frozenset(methods)
         return cls(*args, **kwargs)
+
     return wrapper
 
 
@@ -43,8 +44,7 @@ class ResourceObjectStub(ResourceObjectInterface):
 
 
 class TestResourceObjectInterface(base.TestCase):
-
-    @mock.patch('esi_leap.db.sqlalchemy.api.resource_verify_availability')
+    @mock.patch("esi_leap.db.sqlalchemy.api.resource_verify_availability")
     def test_verify_availability_for_offer(self, mock_rva):
         start = datetime.datetime(2016, 7, 16, 19, 20, 30)
         end = start + datetime.timedelta(days=10)
@@ -52,4 +52,4 @@ class TestResourceObjectInterface(base.TestCase):
         test_node = ResourceObjectStub(fake_uuid)
 
         test_node.verify_availability(start, end)
-        mock_rva.assert_called_once_with('base', fake_uuid, start, end)
+        mock_rva.assert_called_once_with("base", fake_uuid, start, end)

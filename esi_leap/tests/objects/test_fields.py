@@ -16,57 +16,60 @@ from esi_leap.tests import base
 
 # FlexibleDict borrowed from Ironic
 class TestFlexibleDictField(base.TestCase):
-
     def setUp(self):
         super(TestFlexibleDictField, self).setUp()
         self.field = fields.FlexibleDictField()
 
     def test_coerce(self):
-        d = {'foo_1': 'bar', 'foo_2': 2, 'foo_3': [], 'foo_4': {}}
-        self.assertEqual(d, self.field.coerce('obj', 'attr', d))
-        self.assertEqual({'foo': 'bar'},
-                         self.field.coerce('obj', 'attr', '{"foo": "bar"}'))
+        d = {"foo_1": "bar", "foo_2": 2, "foo_3": [], "foo_4": {}}
+        self.assertEqual(d, self.field.coerce("obj", "attr", d))
+        self.assertEqual(
+            {"foo": "bar"}, self.field.coerce("obj", "attr", '{"foo": "bar"}')
+        )
 
     def test_coerce_bad_values(self):
-        self.assertRaises(TypeError, self.field.coerce, 'obj', 'attr', 123)
-        self.assertRaises(TypeError, self.field.coerce, 'obj', 'attr', True)
+        self.assertRaises(TypeError, self.field.coerce, "obj", "attr", 123)
+        self.assertRaises(TypeError, self.field.coerce, "obj", "attr", True)
 
     def test_coerce_nullable_translation(self):
         # non-nullable
-        self.assertRaises(ValueError, self.field.coerce, 'obj', 'attr', None)
+        self.assertRaises(ValueError, self.field.coerce, "obj", "attr", None)
 
         # nullable
         self.field = fields.FlexibleDictField(nullable=True)
-        self.assertEqual({}, self.field.coerce('obj', 'attr', None))
+        self.assertEqual({}, self.field.coerce("obj", "attr", None))
 
 
 # NotificationLevelField borrowed from Ironic
 class TestNotificationLevelField(base.TestCase):
-
     def setUp(self):
         super(TestNotificationLevelField, self).setUp()
         self.field = fields.NotificationLevelField()
 
     def test_coerce_good_value(self):
-        self.assertEqual(fields.NotificationLevel.WARNING,
-                         self.field.coerce('obj', 'attr', 'warning'))
+        self.assertEqual(
+            fields.NotificationLevel.WARNING,
+            self.field.coerce("obj", "attr", "warning"),
+        )
 
     def test_coerce_bad_value(self):
-        self.assertRaises(ValueError, self.field.coerce, 'obj', 'attr',
-                          'not_a_priority')
+        self.assertRaises(
+            ValueError, self.field.coerce, "obj", "attr", "not_a_priority"
+        )
 
 
 # NotificationStatusField borrowed from Ironic
 class TestNotificationStatusField(base.TestCase):
-
     def setUp(self):
         super(TestNotificationStatusField, self).setUp()
         self.field = fields.NotificationStatusField()
 
     def test_coerce_good_value(self):
-        self.assertEqual(fields.NotificationStatus.START,
-                         self.field.coerce('obj', 'attr', 'start'))
+        self.assertEqual(
+            fields.NotificationStatus.START, self.field.coerce("obj", "attr", "start")
+        )
 
     def test_coerce_bad_value(self):
-        self.assertRaises(ValueError, self.field.coerce, 'obj', 'attr',
-                          'not_a_priority')
+        self.assertRaises(
+            ValueError, self.field.coerce, "obj", "attr", "not_a_priority"
+        )

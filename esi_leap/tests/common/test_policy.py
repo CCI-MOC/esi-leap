@@ -21,26 +21,31 @@ CONF = esi_leap.conf.CONF
 
 
 class PolicyTestCase(base.TestCase):
-
     def setUp(self):
         super(PolicyTestCase, self).setUp()
 
-        CONF.set_override('auth_enable', True,
-                          group='pecan')
+        CONF.set_override("auth_enable", True, group="pecan")
 
     def test_authorized(self):
-        creds = {'roles': ['esi_leap_owner']}
-        self.assertTrue(policy.authorize('esi_leap:offer:get',
-                                         creds, creds))
+        creds = {"roles": ["esi_leap_owner"]}
+        self.assertTrue(policy.authorize("esi_leap:offer:get", creds, creds))
 
     def test_unauthorized(self):
-        creds = {'roles': ['generic_user']}
+        creds = {"roles": ["generic_user"]}
         self.assertRaises(
             oslo_policy.PolicyNotAuthorized,
-            policy.authorize, 'esi_leap:offer:get', creds, creds)
+            policy.authorize,
+            "esi_leap:offer:get",
+            creds,
+            creds,
+        )
 
     def test_authorize_policy_not_registered(self):
-        creds = {'roles': ['generic_user']}
+        creds = {"roles": ["generic_user"]}
         self.assertRaises(
             oslo_policy.PolicyNotRegistered,
-            policy.authorize, 'esi_leap:foo:bar', creds, creds)
+            policy.authorize,
+            "esi_leap:foo:bar",
+            creds,
+            creds,
+        )

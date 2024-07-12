@@ -22,13 +22,12 @@ from sqlalchemy import Index, Integer, String
 from esi_leap.common import statuses
 
 
-@compiles(DateTime, 'mysql')
+@compiles(DateTime, "mysql")
 def compile_datetime_mysql(type_, compiler, **kw):
-    return 'DATETIME(6)'
+    return "DATETIME(6)"
 
 
 class ESILEAPBase(models.TimestampMixin, models.ModelBase):
-
     metadata = None
 
     def to_dict(self):
@@ -44,12 +43,12 @@ Base = declarative_base(cls=ESILEAPBase)
 class Offer(Base):
     """Represents a resource that is offered."""
 
-    __tablename__ = 'offers'
+    __tablename__ = "offers"
     __table_args__ = (
-        Index('offer_uuid_idx', 'uuid'),
-        Index('offer_project_id_idx', 'project_id'),
-        Index('offer_resource_idx', 'resource_type', 'resource_uuid'),
-        Index('offer_status_idx', 'status'),
+        Index("offer_uuid_idx", "uuid"),
+        Index("offer_project_id_idx", "project_id"),
+        Index("offer_resource_idx", "resource_type", "resource_uuid"),
+        Index("offer_status_idx", "status"),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
@@ -63,11 +62,9 @@ class Offer(Base):
     end_time = Column(DateTime)
     status = Column(String(15), nullable=False, default=statuses.AVAILABLE)
     properties = Column(db_types.JsonEncodedDict, nullable=True)
-    parent_lease_uuid = Column(String(36),
-                               ForeignKey('leases.uuid'),
-                               nullable=True)
+    parent_lease_uuid = Column(String(36), ForeignKey("leases.uuid"), nullable=True)
     parent_lease = orm.relationship(
-        'Lease',
+        "Lease",
         foreign_keys=[parent_lease_uuid],
     )
 
@@ -75,12 +72,12 @@ class Offer(Base):
 class Lease(Base):
     """Represents a lease."""
 
-    __tablename__ = 'leases'
+    __tablename__ = "leases"
     __table_args__ = (
-        Index('lease_uuid_idx', 'uuid'),
-        Index('lease_project_id_idx', 'project_id'),
-        Index('lease_owner_id_idx', 'owner_id'),
-        Index('lease_status_idx', 'status'),
+        Index("lease_uuid_idx", "uuid"),
+        Index("lease_project_id_idx", "project_id"),
+        Index("lease_owner_id_idx", "owner_id"),
+        Index("lease_status_idx", "status"),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
@@ -97,33 +94,30 @@ class Lease(Base):
     expire_time = Column(DateTime)
     status = Column(String(15), nullable=False, default=statuses.CREATED)
     properties = Column(db_types.JsonEncodedDict, nullable=True)
-    offer_uuid = Column(String(36),
-                        ForeignKey('offers.uuid'),
-                        nullable=True)
-    parent_lease_uuid = Column(String(36),
-                               ForeignKey('leases.uuid'),
-                               nullable=True)
+    offer_uuid = Column(String(36), ForeignKey("offers.uuid"), nullable=True)
+    parent_lease_uuid = Column(String(36), ForeignKey("leases.uuid"), nullable=True)
     offer = orm.relationship(
         Offer,
-        backref=orm.backref('offers'),
+        backref=orm.backref("offers"),
         foreign_keys=offer_uuid,
-        primaryjoin=offer_uuid == Offer.uuid)
+        primaryjoin=offer_uuid == Offer.uuid,
+    )
     parent_lease = orm.relationship(
-        'Lease',
-        backref=orm.backref('child_leases', remote_side=uuid),
+        "Lease",
+        backref=orm.backref("child_leases", remote_side=uuid),
     )
 
 
 class Event(Base):
     """Represents an event."""
 
-    __tablename__ = 'events'
+    __tablename__ = "events"
     __table_args__ = (
-        Index('event_type_idx', 'event_type'),
-        Index('event_lessee_id_idx', 'lessee_id'),
-        Index('event_owner_id_idx', 'owner_id'),
-        Index('event_resource_idx', 'resource_type', 'resource_uuid'),
-        Index('event_time_idx', 'event_time'),
+        Index("event_type_idx", "event_type"),
+        Index("event_lessee_id_idx", "lessee_id"),
+        Index("event_owner_id_idx", "owner_id"),
+        Index("event_resource_idx", "resource_type", "resource_uuid"),
+        Index("event_time_idx", "event_time"),
     )
 
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)

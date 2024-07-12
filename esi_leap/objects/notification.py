@@ -35,7 +35,7 @@ NOTIFY_LEVELS = {
     fields.NotificationLevel.INFO: 1,
     fields.NotificationLevel.WARNING: 2,
     fields.NotificationLevel.ERROR: 3,
-    fields.NotificationLevel.CRITICAL: 4
+    fields.NotificationLevel.CRITICAL: 4,
 }
 
 
@@ -46,26 +46,27 @@ class EventType(base.ESILEAPObject):
     An EventType must specify the object being acted on, a string describing
     the action being taken on the notification, and the status of the action.
     """
+
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    VERSION = "1.0"
 
     fields = {
-        'object': fields.StringField(nullable=False),
-        'action': fields.StringField(nullable=False),
-        'status': fields.NotificationStatusField()
+        "object": fields.StringField(nullable=False),
+        "action": fields.StringField(nullable=False),
+        "status": fields.NotificationStatusField(),
     }
 
     def to_event_type_field(self):
         """Constructs string for event_type to be sent on the wire.
 
-           The string is in the format: esi_leap.<object>.<action>.<status>
+        The string is in the format: esi_leap.<object>.<action>.<status>
 
-           :raises: ValueError if self.status is not one of
-                    :class:`fields.NotificationStatusField`
-           :returns: event_type string
+        :raises: ValueError if self.status is not one of
+                 :class:`fields.NotificationStatusField`
+        :returns: event_type string
         """
-        parts = ['esi_leap', self.object, self.action, self.status]
-        return '.'.join(parts)
+        parts = ["esi_leap", self.object, self.action, self.status]
+        return ".".join(parts)
 
 
 class NotificationBase(base.ESILEAPObject):
@@ -74,13 +75,14 @@ class NotificationBase(base.ESILEAPObject):
     Subclasses must define the "payload" field, which must be a subclass of
     NotificationPayloadBase.
     """
+
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    VERSION = "1.0"
 
     fields = {
-        'level': fields.NotificationLevelField(),
-        'event_type': fields.ObjectField('EventType'),
-        'publisher': fields.ObjectField('NotificationPublisher')
+        "level": fields.NotificationLevelField(),
+        "event_type": fields.ObjectField("EventType"),
+        "publisher": fields.ObjectField("NotificationPublisher"),
     }
 
     def _should_notify(self):
@@ -95,24 +97,25 @@ class NotificationBase(base.ESILEAPObject):
         """
         if CONF.notification.notification_level is None:
             return False
-        return (NOTIFY_LEVELS[self.level] >=
-                NOTIFY_LEVELS[CONF.notification.notification_level])
+        return (
+            NOTIFY_LEVELS[self.level]
+            >= NOTIFY_LEVELS[CONF.notification.notification_level]
+        )
 
     def emit(self, context):
         """Send the notification.
 
-           :raises: NotificationPayloadError
-           :raises: oslo_versionedobjects.exceptions.MessageDeliveryFailure
+        :raises: NotificationPayloadError
+        :raises: oslo_versionedobjects.exceptions.MessageDeliveryFailure
         """
         if not self._should_notify():
             return
         if not self.payload.populated:
-            raise exception.NotificationPayloadError(
-                class_name=self.__class__.__name__)
+            raise exception.NotificationPayloadError(class_name=self.__class__.__name__)
 
         self.payload.obj_reset_changes()
         event_type = self.event_type.to_event_type_field()
-        publisher_id = '%s.%s' % (self.publisher.service, self.publisher.host)
+        publisher_id = "%s.%s" % (self.publisher.service, self.publisher.host)
         payload = self.payload.obj_to_primitive()
         notifier = rpc.get_versioned_notifier(publisher_id)
 
@@ -129,7 +132,7 @@ class NotificationPayloadBase(base.ESILEAPObject):
 
     SCHEMA = {}
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    VERSION = "1.0"
 
     def __init__(self, *args, **kwargs):
         super(NotificationPayloadBase, self).__init__(*args, **kwargs)
@@ -148,8 +151,7 @@ class NotificationPayloadBase(base.ESILEAPObject):
             try:
                 source = kwargs[obj]
             except KeyError:
-                raise exception.NotificationSchemaObjectError(obj=obj,
-                                                              source=kwargs)
+                raise exception.NotificationSchemaObjectError(obj=obj, source=kwargs)
             try:
                 setattr(self, key, getattr(source, field))
             except NotImplementedError:
@@ -158,32 +160,31 @@ class NotificationPayloadBase(base.ESILEAPObject):
                 # If this field is nullable in this payload, set its payload
                 # value to None.
                 field_obj = self.fields.get(key)
-                if field_obj is not None and getattr(field_obj, 'nullable',
-                                                     False):
+                if field_obj is not None and getattr(field_obj, "nullable", False):
                     setattr(self, key, None)
                     continue
-                raise exception.NotificationSchemaKeyError(obj=obj,
-                                                           field=field,
-                                                           key=key)
+                raise exception.NotificationSchemaKeyError(
+                    obj=obj, field=field, key=key
+                )
             except Exception:
-                raise exception.NotificationSchemaKeyError(obj=obj,
-                                                           field=field,
-                                                           key=key)
+                raise exception.NotificationSchemaKeyError(
+                    obj=obj, field=field, key=key
+                )
         self.populated = True
 
     def get_event_dict(self, event_type):
         return {
-            'event_type': event_type,
-            'event_time': datetime.now(),
+            "event_type": event_type,
+            "event_time": datetime.now(),
         }
 
 
 @versioned_objects_base.VersionedObjectRegistry.register
 class NotificationPublisher(base.ESILEAPObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    VERSION = "1.0"
 
     fields = {
-        'service': fields.StringField(nullable=False),
-        'host': fields.StringField(nullable=False)
+        "service": fields.StringField(nullable=False),
+        "host": fields.StringField(nullable=False),
     }

@@ -25,7 +25,5 @@ CONF = esi_leap.conf.CONF
 def main():
     esi_leap_service.prepare_service(sys.argv)
     service.launch(
-        CONF,
-        manager_service.ManagerService(),
-        restart_method='mutate'
+        CONF, manager_service.ManagerService(), restart_method="mutate"
     ).wait()

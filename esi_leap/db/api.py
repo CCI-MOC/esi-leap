@@ -16,12 +16,10 @@ from oslo_log import log as logging
 
 
 _BACKEND_MAPPING = {
-    'sqlalchemy': 'esi_leap.db.sqlalchemy.api',
+    "sqlalchemy": "esi_leap.db.sqlalchemy.api",
 }
 
-IMPL = db_api.DBAPI.from_config(cfg.CONF,
-                                backend_mapping=_BACKEND_MAPPING,
-                                lazy=True)
+IMPL = db_api.DBAPI.from_config(cfg.CONF, backend_mapping=_BACKEND_MAPPING, lazy=True)
 LOG = logging.getLogger(__name__)
 
 
@@ -93,13 +91,11 @@ def offer_get_conflict_times(offer_ref):
 
 
 def offer_get_next_lease_start_time(offer_uuid, start):
-    return IMPL.offer_get_next_lease_start_time(
-        offer_uuid, start)
+    return IMPL.offer_get_next_lease_start_time(offer_uuid, start)
 
 
 def offer_verify_availability(offer_ref, start, end):
-    return IMPL.offer_verify_availability(
-        offer_ref, start, end)
+    return IMPL.offer_verify_availability(offer_ref, start, end)
 
 
 def offer_create(values):
@@ -143,22 +139,30 @@ def lease_destroy(lease_uuid):
 
 
 def lease_verify_child_availability(lease_ref, start, end):
-    return IMPL.lease_verify_child_availability(
-        lease_ref, start, end)
+    return IMPL.lease_verify_child_availability(lease_ref, start, end)
 
 
 # Resource object
 def resource_verify_availability(r_type, r_uuid, start, end):
-    return IMPL.resource_verify_availability(
-        r_type, r_uuid, start, end)
+    return IMPL.resource_verify_availability(r_type, r_uuid, start, end)
 
 
-def resource_check_admin(resource_type, resource_uuid,
-                         start_time, end_time,
-                         default_admin_project_id, project_id):
+def resource_check_admin(
+    resource_type,
+    resource_uuid,
+    start_time,
+    end_time,
+    default_admin_project_id,
+    project_id,
+):
     return IMPL.resource_check_admin(
-        resource_type, resource_uuid, start_time, end_time,
-        default_admin_project_id, project_id)
+        resource_type,
+        resource_uuid,
+        start_time,
+        end_time,
+        default_admin_project_id,
+        project_id,
+    )
 
 
 # Event
