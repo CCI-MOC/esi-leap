@@ -23,7 +23,7 @@ from esi_leap.common import exception
 from esi_leap.common import statuses
 from esi_leap.objects import lease as lease_obj
 from esi_leap.resource_objects.ironic_node import IronicNode
-from esi_leap.resource_objects.test_node import TestNode
+from esi_leap.resource_objects.fake_node import FakeNode
 from esi_leap.tests.api import base as test_api_base
 
 
@@ -98,7 +98,7 @@ class TestLeasesController(test_api_base.APITestCase):
         mock_gro,
         mock_lgdwai,
     ):
-        resource = TestNode("1234567890")
+        resource = FakeNode("1234567890")
         data = {
             "project_id": "lesseeid",
             "resource_type": "test_node",
@@ -453,7 +453,7 @@ class TestLeasesController(test_api_base.APITestCase):
     def test_get_resource_filter(
         self, mock_get_all, mock_lgaaf, mock_gro, mock_lgdwai, mock_gpl, mock_gnl
     ):
-        mock_gro.return_value = TestNode("54321")
+        mock_gro.return_value = FakeNode("54321")
         mock_get_all.return_value = [self.test_lease, self.test_lease]
         mock_gpl.return_value = []
         mock_gnl.return_value = []

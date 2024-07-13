@@ -19,7 +19,7 @@ from esi_leap.common import exception
 from esi_leap.common import statuses
 from esi_leap.objects import offer
 from esi_leap.resource_objects.ironic_node import IronicNode
-from esi_leap.resource_objects.test_node import TestNode
+from esi_leap.resource_objects.fake_node import FakeNode
 from esi_leap.tests.api import base as test_api_base
 
 
@@ -124,7 +124,7 @@ class TestOffersController(test_api_base.APITestCase):
     def test_post(
         self, mock_ogdwai, mock_create, mock_cra, mock_generate_uuid, mock_gro
     ):
-        resource = TestNode(self.test_offer.resource_uuid)
+        resource = FakeNode(self.test_offer.resource_uuid)
         mock_gro.return_value = resource
         mock_generate_uuid.return_value = self.test_offer.uuid
         mock_create.return_value = self.test_offer
@@ -210,7 +210,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_gpufi,
         mock_gro,
     ):
-        resource = TestNode(self.test_offer_lessee.resource_uuid)
+        resource = FakeNode(self.test_offer_lessee.resource_uuid)
         mock_gro.return_value = resource
         mock_gpufi.return_value = "lessee_uuid"
         mock_generate_uuid.return_value = self.test_offer_lessee.uuid
@@ -260,7 +260,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_gro,
         mock_crla,
     ):
-        resource = TestNode(self.test_offer_with_parent.resource_uuid)
+        resource = FakeNode(self.test_offer_with_parent.resource_uuid)
         mock_gro.return_value = resource
         mock_generate_uuid.return_value = self.test_offer_with_parent.uuid
         mock_create.return_value = self.test_offer_with_parent
@@ -320,7 +320,7 @@ class TestOffersController(test_api_base.APITestCase):
         mock_gro,
         mock_crla,
     ):
-        resource = TestNode(self.test_offer_with_parent.resource_uuid)
+        resource = FakeNode(self.test_offer_with_parent.resource_uuid)
         mock_gro.return_value = resource
         mock_generate_uuid.return_value = self.test_offer_with_parent.uuid
         mock_create.return_value = self.test_offer_with_parent
@@ -496,7 +496,7 @@ class TestOffersController(test_api_base.APITestCase):
             _get_offer_response(self.test_offer, use_datetime=True),
             _get_offer_response(self.test_offer_2, use_datetime=True),
         ]
-        mock_gro.return_value = TestNode("54321")
+        mock_gro.return_value = FakeNode("54321")
         mock_gpl.return_value = []
         mock_gnl.return_value = []
 

@@ -12,7 +12,7 @@
 
 import datetime
 from esi_leap.common import statuses
-from esi_leap.resource_objects import test_node
+from esi_leap.resource_objects import fake_node
 from esi_leap.tests import base
 
 start = datetime.datetime(2016, 7, 16, 19, 20, 30)
@@ -36,10 +36,10 @@ def get_test_lease():
     }
 
 
-class TestTestNode(base.TestCase):
+class TestFakeNode(base.TestCase):
     def setUp(self):
-        super(TestTestNode, self).setUp()
-        self.fake_test_node = test_node.TestNode("1111", "123456")
+        super(TestFakeNode, self).setUp()
+        self.fake_test_node = fake_node.FakeNode("1111", "123456")
 
     def test_resource_type(self):
         resource_type = self.fake_test_node.resource_type

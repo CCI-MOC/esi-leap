@@ -18,7 +18,7 @@ from oslo_utils import uuidutils
 from esi_leap.common import notification_utils as notif_utils
 from esi_leap.objects import fields
 from esi_leap.objects import lease as lease_obj
-from esi_leap.resource_objects.test_node import TestNode
+from esi_leap.resource_objects.fake_node import FakeNode
 from esi_leap.tests import base as tests_base
 
 
@@ -48,7 +48,7 @@ class NotifyTestCase(tests_base.TestCase):
             status="created",
             purpose=None,
         )
-        self.node = TestNode(uuidutils.generate_uuid(), "12345")
+        self.node = FakeNode(uuidutils.generate_uuid(), "12345")
 
     def test_emit_notification(self):
         self.config(host="fake-host")
