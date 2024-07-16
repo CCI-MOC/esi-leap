@@ -25,15 +25,17 @@ CONF = esi_leap.conf.CONF
 def prepare_service(argv=None, default_config_files=None):
     argv = [] if argv is None else argv
     log.register_options(CONF)
-    CONF(argv[1:],
-         project='esi-leap',
-         version=version.version_info.release_string(),
-         default_config_files=default_config_files)
+    CONF(
+        argv[1:],
+        project="esi-leap",
+        version=version.version_info.release_string(),
+        default_config_files=default_config_files,
+    )
     db_options.set_defaults(CONF)
-    log.setup(CONF, 'esi-leap')
+    log.setup(CONF, "esi-leap")
     rpc.init(CONF)
     objects.register_all()
 
 
 def process_launcher():
-    return service.ProcessLauncher(CONF, restart_method='mutate')
+    return service.ProcessLauncher(CONF, restart_method="mutate")

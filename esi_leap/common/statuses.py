@@ -10,15 +10,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-ACTIVE = 'active'
-AVAILABLE = 'available'
-CREATED = 'created'
-DELETED = 'deleted'
-ERROR = 'error'
-EXPIRED = 'expired'
-WAIT_CANCEL = 'wait cancel'
-WAIT_EXPIRE = 'wait expire'
-WAIT_FULFILL = 'wait fulfill'
+ACTIVE = "active"
+AVAILABLE = "available"
+CREATED = "created"
+DELETED = "deleted"
+ERROR = "error"
+EXPIRED = "expired"
+WAIT_CANCEL = "wait cancel"
+WAIT_EXPIRE = "wait expire"
+WAIT_FULFILL = "wait fulfill"
 
 OFFER_CAN_DELETE = [AVAILABLE, ERROR]
 LEASE_CAN_DELETE = [ACTIVE, CREATED, ERROR, WAIT_FULFILL]

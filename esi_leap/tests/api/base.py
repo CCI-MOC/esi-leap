@@ -21,30 +21,37 @@ from esi_leap.tests import base
 
 
 CONF = esi_leap.conf.CONF
-PATH_PREFIX = '/v1'
+PATH_PREFIX = "/v1"
 
 
 class APITestCase(base.DBTestCase):
-
     def setUp(self):
         super(APITestCase, self).setUp()
 
-        CONF.set_override('auth_enable', False, group='pecan')
+        CONF.set_override("auth_enable", False, group="pecan")
 
         self.app = pecan.testing.load_test_app(dict(app.get_pecan_config()))
 
         self.patch_context = mock.patch(
-            'oslo_context.context.RequestContext.from_environ')
+            "oslo_context.context.RequestContext.from_environ"
+        )
         self.mock_context = self.patch_context.start()
         self.addCleanup(self.patch_context.stop)
         self.mock_context.return_value = self.context
 
-        self.config(lock_path=tempfile.mkdtemp(), group='oslo_concurrency')
+        self.config(lock_path=tempfile.mkdtemp(), group="oslo_concurrency")
 
     # borrowed from Ironic
-    def get_json(self, path, expect_errors=False, headers=None,
-                 extra_environ=None, q=None, path_prefix=PATH_PREFIX,
-                 **params):
+    def get_json(
+        self,
+        path,
+        expect_errors=False,
+        headers=None,
+        extra_environ=None,
+        q=None,
+        path_prefix=PATH_PREFIX,
+        **params,
+    ):
         """Sends simulated HTTP GET request to Pecan test app.
 
         :param path: url path of target service
@@ -60,28 +67,35 @@ class APITestCase(base.DBTestCase):
         """
         q = q if q is not None else []
         full_path = path_prefix + path
-        query_params = {'q.field': [],
-                        'q.value': [],
-                        'q.op': []}
+        query_params = {"q.field": [], "q.value": [], "q.op": []}
         for query in q:
-            for name in ['field', 'op', 'value']:
-                query_params['q.%s' % name].append(query.get(name, ''))
+            for name in ["field", "op", "value"]:
+                query_params["q.%s" % name].append(query.get(name, ""))
         all_params = {}
         all_params.update(params)
         if q:
             all_params.update(query_params)
-        response = self.app.get(full_path,
-                                params=all_params,
-                                headers=headers,
-                                extra_environ=extra_environ,
-                                expect_errors=expect_errors)
+        response = self.app.get(
+            full_path,
+            params=all_params,
+            headers=headers,
+            extra_environ=extra_environ,
+            expect_errors=expect_errors,
+        )
         if not expect_errors:
             response = response.json
         return response
 
     # borrowed from Ironic
-    def post_json(self, path, params, expect_errors=False, headers=None,
-                  extra_environ=None, status=None):
+    def post_json(
+        self,
+        path,
+        params,
+        expect_errors=False,
+        headers=None,
+        extra_environ=None,
+        status=None,
+    ):
         """Sends simulated HTTP POST request to Pecan test app.
 
         :param path: url path of target service
@@ -93,14 +107,26 @@ class APITestCase(base.DBTestCase):
                               with the request
         :param status: expected status code of response
         """
-        return self._request_json(path=path, params=params,
-                                  expect_errors=expect_errors,
-                                  headers=headers, extra_environ=extra_environ,
-                                  status=status, method='post')
+        return self._request_json(
+            path=path,
+            params=params,
+            expect_errors=expect_errors,
+            headers=headers,
+            extra_environ=extra_environ,
+            status=status,
+            method="post",
+        )
 
     # borrowed from Ironic
-    def patch_json(self, path, params, expect_errors=False, headers=None,
-                   extra_environ=None, status=None):
+    def patch_json(
+        self,
+        path,
+        params,
+        expect_errors=False,
+        headers=None,
+        extra_environ=None,
+        status=None,
+    ):
         """Sends simulated HTTP PATCH request to Pecan test app.
 
         :param path: url path of target service
@@ -112,14 +138,20 @@ class APITestCase(base.DBTestCase):
                               with the request
         :param status: expected status code of response
         """
-        return self._request_json(path=path, params=params,
-                                  expect_errors=expect_errors,
-                                  headers=headers, extra_environ=extra_environ,
-                                  status=status, method='patch')
+        return self._request_json(
+            path=path,
+            params=params,
+            expect_errors=expect_errors,
+            headers=headers,
+            extra_environ=extra_environ,
+            status=status,
+            method="patch",
+        )
 
     # borrowed from Ironic
-    def delete_json(self, path, expect_errors=False, headers=None,
-                    extra_environ=None, status=None):
+    def delete_json(
+        self, path, expect_errors=False, headers=None, extra_environ=None, status=None
+    ):
         """Sends simulated HTTP POST request to Pecan test app.
 
         :param path: url path of target service
@@ -130,15 +162,28 @@ class APITestCase(base.DBTestCase):
                               with the request
         :param status: expected status code of response
         """
-        return self._request_json(path=path, params={},
-                                  expect_errors=expect_errors,
-                                  headers=headers, extra_environ=extra_environ,
-                                  status=status, method='delete')
+        return self._request_json(
+            path=path,
+            params={},
+            expect_errors=expect_errors,
+            headers=headers,
+            extra_environ=extra_environ,
+            status=status,
+            method="delete",
+        )
 
     # borrowed from Ironic
-    def _request_json(self, path, params, expect_errors=False, headers=None,
-                      method='post', extra_environ=None, status=None,
-                      path_prefix=PATH_PREFIX):
+    def _request_json(
+        self,
+        path,
+        params,
+        expect_errors=False,
+        headers=None,
+        method="post",
+        extra_environ=None,
+        status=None,
+        path_prefix=PATH_PREFIX,
+    ):
         """Sends simulated HTTP request to Pecan test app.
 
         :param path: url path of target service
@@ -155,12 +200,12 @@ class APITestCase(base.DBTestCase):
         """
 
         full_path = path_prefix + path
-        response = getattr(self.app, '%s_json' % method)(
+        response = getattr(self.app, "%s_json" % method)(
             str(full_path),
             params=params,
             headers=headers,
             status=status,
             extra_environ=extra_environ,
-            expect_errors=expect_errors
+            expect_errors=expect_errors,
         )
         return response

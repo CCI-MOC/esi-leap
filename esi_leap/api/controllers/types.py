@@ -20,12 +20,11 @@ class JsonType(wtypes.UserType):
     """A simple JSON type."""
 
     basetype = wtypes.text
-    name = 'json'
+    name = "json"
 
     def __str__(self):
         # These are the json serializable native types
-        return ' | '.join(map(str, (wtypes.text, int, float,
-                                    bool, list, dict, None)))
+        return " | ".join(map(str, (wtypes.text, int, float, bool, list, dict, None)))
 
     @staticmethod
     def validate(value):
@@ -38,7 +37,6 @@ class JsonType(wtypes.UserType):
 
 
 class Collection(wtypes.Base):
-
     @property
     def collection(self):
         return getattr(self, self._type)
@@ -52,15 +50,17 @@ class Collection(wtypes.Base):
             return wtypes.Unset
 
         url = url or self._type
-        q_args = ''.join(['%s=%s&' % item for item in kwargs.items()])
-        next_args = '?%(args)slimit=%(limit)d&marker=%(marker)s' % {
-            'args': q_args, 'limit': limit,
-            'marker': getattr(self.collection[-1], 'uuid')}
+        q_args = "".join(["%s=%s&" % item for item in kwargs.items()])
+        next_args = "?%(args)slimit=%(limit)d&marker=%(marker)s" % {
+            "args": q_args,
+            "limit": limit,
+            "marker": getattr(self.collection[-1], "uuid"),
+        }
 
-        next_link = '%(url)s/v1/%(resource)s%(args)s' % {
-            'url': url,
-            'resource': self._type,
-            'args': next_args
+        next_link = "%(url)s/v1/%(resource)s%(args)s" % {
+            "url": url,
+            "resource": self._type,
+            "args": next_args,
         }
 
         return next_link

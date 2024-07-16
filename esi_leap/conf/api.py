@@ -14,19 +14,19 @@ from oslo_config import cfg
 
 
 opts = [
-    cfg.HostAddressOpt('host_ip', default='0.0.0.0'),
-    cfg.PortOpt('port', default=7777),
-    cfg.IntOpt('max_limit', default=1000),
-    cfg.StrOpt('public_endpoint'),
-    cfg.IntOpt('api_workers'),
-    cfg.BoolOpt('enable_ssl_api', default=False),
-    cfg.StrOpt('default_resource_type', default='ironic_node'),
-    cfg.IntOpt('max_lease_time', default=21),
-    cfg.IntOpt('default_lease_time', default=7),
+    cfg.HostAddressOpt("host_ip", default="0.0.0.0"),
+    cfg.PortOpt("port", default=7777),
+    cfg.IntOpt("max_limit", default=1000),
+    cfg.StrOpt("public_endpoint"),
+    cfg.IntOpt("api_workers"),
+    cfg.BoolOpt("enable_ssl_api", default=False),
+    cfg.StrOpt("default_resource_type", default="ironic_node"),
+    cfg.IntOpt("max_lease_time", default=21),
+    cfg.IntOpt("default_lease_time", default=7),
 ]
 
 
-api_group = cfg.OptGroup('api', title='API Options')
+api_group = cfg.OptGroup("api", title="API Options")
 
 
 def register_opts(conf):

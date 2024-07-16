@@ -29,21 +29,21 @@ def init(conf):
     global NOTIFICATION_TRANSPORT
     global VERSIONED_NOTIFIER
     NOTIFICATION_TRANSPORT = messaging.get_notification_transport(
-        conf,
-        allowed_remote_exmods=ALLOWED_EXMODS)
+        conf, allowed_remote_exmods=ALLOWED_EXMODS
+    )
 
     serializer = RequestContextSerializer(messaging.JsonPayloadSerializer())
 
     if conf.notification.notification_level is None:
-
-        VERSIONED_NOTIFIER = messaging.Notifier(NOTIFICATION_TRANSPORT,
-                                                serializer=serializer,
-                                                driver='noop')
+        VERSIONED_NOTIFIER = messaging.Notifier(
+            NOTIFICATION_TRANSPORT, serializer=serializer, driver="noop"
+        )
     else:
         VERSIONED_NOTIFIER = messaging.Notifier(
             NOTIFICATION_TRANSPORT,
             serializer=serializer,
-            topics=CONF.notification.versioned_notifications_topics)
+            topics=CONF.notification.versioned_notifications_topics,
+        )
 
 
 def cleanup():
@@ -58,7 +58,6 @@ def cleanup():
 
 # RequestContextSerializer borrowed from Ironic
 class RequestContextSerializer(messaging.Serializer):
-
     def __init__(self, base):
         self._base = base
 
@@ -79,7 +78,7 @@ class RequestContextSerializer(messaging.Serializer):
             trace_info = {
                 "hmac_key": prof.hmac_key,
                 "base_id": prof.get_base_id(),
-                "parent_id": prof.get_id()
+                "parent_id": prof.get_id(),
             }
             _context.update({"trace_info": trace_info})
         return _context

@@ -27,8 +27,7 @@ LOG = log.getLogger(__name__)
 CONF = cfg.CONF
 
 
-def _emit_notification(context, obj, action, level, status,
-                       crud_notify_obj, **kwargs):
+def _emit_notification(context, obj, action, level, status, crud_notify_obj, **kwargs):
     """Helper for emitting notifications.
 
     :param context: request context.
@@ -56,45 +55,58 @@ def _emit_notification(context, obj, action, level, status,
             payload_name = payload_method.__name__
         finally:
             # Prepare our exception message just in case
-            exception_values = {"resource": resource,
-                                "uuid": obj.uuid,
-                                "action": action,
-                                "status": status,
-                                "level": level,
-                                "notification_method": notification_name,
-                                "payload_method": payload_name}
-            exception_message = (_("Failed to send esi_leap.%(resource)s."
-                                   "%(action)s.%(status)s notification for "
-                                   "%(resource)s %(uuid)s with level "
-                                   "%(level)s, notification method "
-                                   "%(notification_method)s, payload method "
-                                   "%(payload_method)s, error %(error)s"))
+            exception_values = {
+                "resource": resource,
+                "uuid": obj.uuid,
+                "action": action,
+                "status": status,
+                "level": level,
+                "notification_method": notification_name,
+                "payload_method": payload_name,
+            }
+            exception_message = _(
+                "Failed to send esi_leap.%(resource)s."
+                "%(action)s.%(status)s notification for "
+                "%(resource)s %(uuid)s with level "
+                "%(level)s, notification method "
+                "%(notification_method)s, payload method "
+                "%(payload_method)s, error %(error)s"
+            )
         payload = payload_method(obj, **extra_args)
         event_type = "esi_leap.%s.%s.%s" % (resource, action, status)
         notification_method(
             publisher=notification.NotificationPublisher(
-                service='esi-leap-manager', host=CONF.host),
+                service="esi-leap-manager", host=CONF.host
+            ),
             event_type=notification.EventType(
-                object=resource, action=action, status=status),
+                object=resource, action=action, status=status
+            ),
             level=level,
-            payload=payload).emit(context)
-        LOG.info("Emit esi_leap notification: host is %s "
-                 "event is %s ,"
-                 "level is %s ,"
-                 "notification method is %s",
-                 CONF.host, event_type,
-                 level, notification_method)
-    except (exception.NotificationSchemaObjectError,
-            exception.NotificationSchemaKeyError,
-            exception.NotificationPayloadError,
-            oslo_msg_exc.MessageDeliveryFailure,
-            oslo_vo_exc.VersionedObjectsException) as e:
-        exception_values['error'] = e
+            payload=payload,
+        ).emit(context)
+        LOG.info(
+            "Emit esi_leap notification: host is %s "
+            "event is %s ,"
+            "level is %s ,"
+            "notification method is %s",
+            CONF.host,
+            event_type,
+            level,
+            notification_method,
+        )
+    except (
+        exception.NotificationSchemaObjectError,
+        exception.NotificationSchemaKeyError,
+        exception.NotificationPayloadError,
+        oslo_msg_exc.MessageDeliveryFailure,
+        oslo_vo_exc.VersionedObjectsException,
+    ) as e:
+        exception_values["error"] = e
         LOG.warning(exception_message, exception_values)
         LOG.exception(e.msg_fmt)
 
     except Exception as e:
-        exception_values['error'] = e
+        exception_values["error"] = e
         LOG.exception(exception_message, exception_values)
 
 
@@ -106,11 +118,15 @@ def emit_start_notification(context, obj, action, crud_notify_obj, **kwargs):
     :param action: Action string to go in the EventType.
     :param kwargs: kwargs to use when creating the notification payload.
     """
-    _emit_notification(context, obj, action,
-                       fields.NotificationLevel.INFO,
-                       fields.NotificationStatus.START,
-                       crud_notify_obj,
-                       **kwargs)
+    _emit_notification(
+        context,
+        obj,
+        action,
+        fields.NotificationLevel.INFO,
+        fields.NotificationStatus.START,
+        crud_notify_obj,
+        **kwargs,
+    )
 
 
 @contextlib.contextmanager
@@ -126,11 +142,15 @@ def handle_error_notification(context, obj, action, crud_notify_obj, **kwargs):
         yield
     except Exception:
         with excutils.save_and_reraise_exception():
-            _emit_notification(context, obj, action,
-                               fields.NotificationLevel.ERROR,
-                               fields.NotificationStatus.ERROR,
-                               crud_notify_obj,
-                               **kwargs)
+            _emit_notification(
+                context,
+                obj,
+                action,
+                fields.NotificationLevel.ERROR,
+                fields.NotificationStatus.ERROR,
+                crud_notify_obj,
+                **kwargs,
+            )
 
 
 def emit_end_notification(context, obj, action, crud_notify_obj, **kwargs):
@@ -141,8 +161,12 @@ def emit_end_notification(context, obj, action, crud_notify_obj, **kwargs):
     :param action: Action string to go in the EventType.
     :param kwargs: kwargs to use when creating the notification payload.
     """
-    _emit_notification(context, obj, action,
-                       fields.NotificationLevel.INFO,
-                       fields.NotificationStatus.END,
-                       crud_notify_obj,
-                       **kwargs)
+    _emit_notification(
+        context,
+        obj,
+        action,
+        fields.NotificationLevel.INFO,
+        fields.NotificationStatus.END,
+        crud_notify_obj,
+        **kwargs,
+    )

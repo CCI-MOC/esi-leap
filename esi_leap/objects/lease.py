@@ -35,92 +35,93 @@ LOG = logging.getLogger(__name__)
 class LeaseCRUDNotification(notification.NotificationBase):
     """Notification emitted when a lease is created or deleted."""
 
-    fields = {
-        'payload': fields.ObjectField('LeaseCRUDPayload')
-    }
+    fields = {"payload": fields.ObjectField("LeaseCRUDPayload")}
 
 
 @versioned_objects_base.VersionedObjectRegistry.register
 class LeaseCRUDPayload(notification.NotificationPayloadBase):
     """Payload schema for when a lease is created or deleted."""
+
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    VERSION = "1.0"
 
     SCHEMA = {
-        'id': ('lease', 'id'),
-        'name': ('lease', 'name'),
-        'uuid': ('lease', 'uuid'),
-        'project_id': ('lease', 'project_id'),
-        'owner_id': ('lease', 'owner_id'),
-        'resource_type': ('lease', 'resource_type'),
-        'resource_uuid': ('lease', 'resource_uuid'),
-        'start_time': ('lease', 'start_time'),
-        'end_time': ('lease', 'end_time'),
-        'fulfill_time': ('lease', 'fulfill_time'),
-        'expire_time': ('lease', 'expire_time'),
-        'status': ('lease', 'status'),
-        'properties': ('lease', 'properties'),
-        'purpose': ('lease', 'purpose'),
-        'offer_uuid': ('lease', 'offer_uuid'),
-        'parent_lease_uuid': ('lease', 'parent_lease_uuid'),
-        'node_name': ('node', 'node_name'),
-        'node_uuid': ('node', '_uuid'),
-        'node_provision_state': ('node', 'node_provision_state'),
-        'node_power_state': ('node', 'node_power_state'),
-        'node_properties': ('node', 'node_properties'),
+        "id": ("lease", "id"),
+        "name": ("lease", "name"),
+        "uuid": ("lease", "uuid"),
+        "project_id": ("lease", "project_id"),
+        "owner_id": ("lease", "owner_id"),
+        "resource_type": ("lease", "resource_type"),
+        "resource_uuid": ("lease", "resource_uuid"),
+        "start_time": ("lease", "start_time"),
+        "end_time": ("lease", "end_time"),
+        "fulfill_time": ("lease", "fulfill_time"),
+        "expire_time": ("lease", "expire_time"),
+        "status": ("lease", "status"),
+        "properties": ("lease", "properties"),
+        "purpose": ("lease", "purpose"),
+        "offer_uuid": ("lease", "offer_uuid"),
+        "parent_lease_uuid": ("lease", "parent_lease_uuid"),
+        "node_name": ("node", "node_name"),
+        "node_uuid": ("node", "_uuid"),
+        "node_provision_state": ("node", "node_provision_state"),
+        "node_power_state": ("node", "node_power_state"),
+        "node_properties": ("node", "node_properties"),
     }
 
     fields = {
-        'id': fields.IntegerField(),
-        'name': fields.StringField(nullable=True),
-        'uuid': fields.UUIDField(),
-        'project_id': fields.StringField(),
-        'owner_id': fields.StringField(),
-        'purpose': fields.StringField(nullable=True),
-        'resource_type': fields.StringField(),
-        'resource_uuid': fields.StringField(),
-        'start_time': fields.DateTimeField(nullable=True),
-        'end_time': fields.DateTimeField(nullable=True),
-        'fulfill_time': fields.DateTimeField(nullable=True),
-        'expire_time': fields.DateTimeField(nullable=True),
-        'status': fields.StringField(),
-        'properties': fields.FlexibleDictField(nullable=True),
-        'offer_uuid': fields.UUIDField(nullable=True),
-        'parent_lease_uuid': fields.UUIDField(nullable=True),
-        'node_name': fields.StringField(nullable=True),
-        'node_uuid': fields.UUIDField(),
-        'node_provision_state': fields.StringField(),
-        'node_power_state': fields.StringField(),
-        'node_properties': fields.FlexibleDictField(nullable=True),
+        "id": fields.IntegerField(),
+        "name": fields.StringField(nullable=True),
+        "uuid": fields.UUIDField(),
+        "project_id": fields.StringField(),
+        "owner_id": fields.StringField(),
+        "purpose": fields.StringField(nullable=True),
+        "resource_type": fields.StringField(),
+        "resource_uuid": fields.StringField(),
+        "start_time": fields.DateTimeField(nullable=True),
+        "end_time": fields.DateTimeField(nullable=True),
+        "fulfill_time": fields.DateTimeField(nullable=True),
+        "expire_time": fields.DateTimeField(nullable=True),
+        "status": fields.StringField(),
+        "properties": fields.FlexibleDictField(nullable=True),
+        "offer_uuid": fields.UUIDField(nullable=True),
+        "parent_lease_uuid": fields.UUIDField(nullable=True),
+        "node_name": fields.StringField(nullable=True),
+        "node_uuid": fields.UUIDField(),
+        "node_provision_state": fields.StringField(),
+        "node_power_state": fields.StringField(),
+        "node_properties": fields.FlexibleDictField(nullable=True),
     }
 
     def __init__(self, lease, node):
         super(LeaseCRUDPayload, self).__init__()
 
-        setattr(node, 'node_name', node.get_name())
-        setattr(node, 'node_provision_state', node.get_node_provision_state())
-        setattr(node, 'node_power_state', node.get_node_power_state())
+        setattr(node, "node_name", node.get_name())
+        setattr(node, "node_provision_state", node.get_node_provision_state())
+        setattr(node, "node_power_state", node.get_node_power_state())
         node_properties = node.get_properties().copy()
-        node_properties.pop('lease_uuid', None)
-        setattr(node, 'node_properties', node_properties)
+        node_properties.pop("lease_uuid", None)
+        setattr(node, "node_properties", node_properties)
 
         self.populate_schema(lease=lease, node=node)
 
     def get_event_dict(self, event_type):
         event_dict = super().get_event_dict(event_type)
-        event_dict.update({
-            'object_type': 'lease',
-            'object_uuid': self.uuid,
-            'resource_type': self.resource_type,
-            'resource_uuid': self.resource_uuid,
-            'lessee_id': self.project_id,
-            'owner_id': self.owner_id,
-        })
+        event_dict.update(
+            {
+                "object_type": "lease",
+                "object_uuid": self.uuid,
+                "resource_type": self.resource_type,
+                "resource_uuid": self.resource_uuid,
+                "lessee_id": self.project_id,
+                "owner_id": self.owner_id,
+            }
+        )
         return event_dict
 
 
 CRUD_NOTIFY_OBJ = {
-    'lease': (LeaseCRUDNotification, LeaseCRUDPayload),
+    "lease": (LeaseCRUDNotification, LeaseCRUDPayload),
 }
 
 
@@ -129,22 +130,22 @@ class Lease(base.ESILEAPObject):
     dbapi = dbapi.get_instance()
 
     fields = {
-        'id': fields.IntegerField(),
-        'name': fields.StringField(nullable=True),
-        'uuid': fields.UUIDField(),
-        'project_id': fields.StringField(),
-        'owner_id': fields.StringField(),
-        'purpose': fields.StringField(nullable=True),
-        'resource_type': fields.StringField(),
-        'resource_uuid': fields.StringField(),
-        'start_time': fields.DateTimeField(nullable=True),
-        'end_time': fields.DateTimeField(nullable=True),
-        'fulfill_time': fields.DateTimeField(nullable=True),
-        'expire_time': fields.DateTimeField(nullable=True),
-        'status': fields.StringField(),
-        'properties': fields.FlexibleDictField(nullable=True),
-        'offer_uuid': fields.UUIDField(nullable=True),
-        'parent_lease_uuid': fields.UUIDField(nullable=True),
+        "id": fields.IntegerField(),
+        "name": fields.StringField(nullable=True),
+        "uuid": fields.UUIDField(),
+        "project_id": fields.StringField(),
+        "owner_id": fields.StringField(),
+        "purpose": fields.StringField(nullable=True),
+        "resource_type": fields.StringField(),
+        "resource_uuid": fields.StringField(),
+        "start_time": fields.DateTimeField(nullable=True),
+        "end_time": fields.DateTimeField(nullable=True),
+        "fulfill_time": fields.DateTimeField(nullable=True),
+        "expire_time": fields.DateTimeField(nullable=True),
+        "status": fields.StringField(),
+        "properties": fields.FlexibleDictField(nullable=True),
+        "offer_uuid": fields.UUIDField(nullable=True),
+        "parent_lease_uuid": fields.UUIDField(nullable=True),
     }
 
     @classmethod
@@ -160,44 +161,52 @@ class Lease(base.ESILEAPObject):
 
     def create(self, context=None):
         updates = self.obj_get_changes()
-        resource_type = updates['resource_type']
-        resource_uuid = updates['resource_uuid']
-        start_time = updates['start_time']
-        end_time = updates['end_time']
-        with utils.lock(utils.get_resource_lock_name(resource_type,
-                                                     resource_uuid),
-                        external=True):
+        resource_type = updates["resource_type"]
+        resource_uuid = updates["resource_uuid"]
+        start_time = updates["start_time"]
+        end_time = updates["end_time"]
+        with utils.lock(
+            utils.get_resource_lock_name(resource_type, resource_uuid), external=True
+        ):
             self.verify_time_range(
-                start_time, end_time,
-                updates.get('offer_uuid', None),
-                updates.get('parent_lease_uuid', None),
-                resource_type, resource_uuid)
+                start_time,
+                end_time,
+                updates.get("offer_uuid", None),
+                updates.get("parent_lease_uuid", None),
+                resource_type,
+                resource_uuid,
+            )
 
             db_lease = self.dbapi.lease_create(updates)
             self._from_db_object(context, self, db_lease)
 
     def update(self, updates, context=None):
         # only allow updates to end_time right now
-        if 'end_time' not in updates:
+        if "end_time" not in updates:
             return
-        new_end_time = updates['end_time']
-        with utils.lock(utils.get_resource_lock_name(self.resource_type,
-                                                     self.resource_uuid),
-                        external=True):
+        new_end_time = updates["end_time"]
+        with utils.lock(
+            utils.get_resource_lock_name(self.resource_type, self.resource_uuid),
+            external=True,
+        ):
             if self.start_time >= new_end_time:
                 raise exception.InvalidTimeRange(
-                    resource='lease',
+                    resource="lease",
                     start_time=str(self.start_time),
-                    end_time=str(new_end_time)
-                    )
+                    end_time=str(new_end_time),
+                )
 
             # only need to check availabilities if new end time is greater
             # than previous end time
             if new_end_time > self.end_time:
                 self.verify_time_range(
-                    self.end_time, new_end_time,
-                    self.offer_uuid, self.parent_lease_uuid,
-                    self.resource_type, self.resource_uuid)
+                    self.end_time,
+                    new_end_time,
+                    self.offer_uuid,
+                    self.parent_lease_uuid,
+                    self.resource_type,
+                    self.resource_uuid,
+                )
 
             # lease is available in new range; set and save
             self.end_time = new_end_time
@@ -205,22 +214,21 @@ class Lease(base.ESILEAPObject):
 
     def cancel(self, context=None):
         leases = Lease.get_all(
-            {'parent_lease_uuid': self.uuid,
-             'status': statuses.LEASE_CAN_DELETE},
-            None)
+            {"parent_lease_uuid": self.uuid, "status": statuses.LEASE_CAN_DELETE}, None
+        )
         for lease in leases:
             lease.cancel()
         offers = offer_obj.Offer.get_all(
-            {'parent_lease_uuid': self.uuid,
-             'status': statuses.OFFER_CAN_DELETE},
-            None)
+            {"parent_lease_uuid": self.uuid, "status": statuses.OFFER_CAN_DELETE}, None
+        )
         for offer in offers:
             offer.cancel()
 
-        with utils.lock(utils.get_resource_lock_name(self.resource_type,
-                                                     self.resource_uuid),
-                        external=True):
-            LOG.info('Deleting lease %s', self.uuid)
+        with utils.lock(
+            utils.get_resource_lock_name(self.resource_type, self.resource_uuid),
+            external=True,
+        ):
+            LOG.info("Deleting lease %s", self.uuid)
             try:
                 resource = self.resource_object()
                 self.deactivate(context, resource)
@@ -228,9 +236,8 @@ class Lease(base.ESILEAPObject):
                 self.expire_time = datetime.datetime.now()
 
             except Exception as e:
-                LOG.info('Error canceling lease: %s: %s' %
-                         (type(e).__name__, e))
-                LOG.info('Setting lease status to WAIT')
+                LOG.info("Error canceling lease: %s: %s" % (type(e).__name__, e))
+                LOG.info("Setting lease status to WAIT")
                 self.status = statuses.WAIT_CANCEL
             self.save(context)
 
@@ -240,61 +247,55 @@ class Lease(base.ESILEAPObject):
 
     def save(self, context=None):
         updates = self.obj_get_changes()
-        db_lease = self.dbapi.lease_update(
-            self.uuid, updates)
+        db_lease = self.dbapi.lease_update(self.uuid, updates)
         self._from_db_object(context, self, db_lease)
 
     def fulfill(self, context=None):
-        with utils.lock(utils.get_resource_lock_name(self.resource_type,
-                                                     self.resource_uuid),
-                        external=True):
-            LOG.info('Fulfilling lease %s', self.uuid)
+        with utils.lock(
+            utils.get_resource_lock_name(self.resource_type, self.resource_uuid),
+            external=True,
+        ):
+            LOG.info("Fulfilling lease %s", self.uuid)
             try:
                 resource = self.resource_object()
-                notify.emit_start_notification(context, self,
-                                               'fulfill',
-                                               CRUD_NOTIFY_OBJ,
-                                               node=resource)
-                with notify.handle_error_notification(context,
-                                                      self,
-                                                      'fulfill',
-                                                      CRUD_NOTIFY_OBJ,
-                                                      node=resource):
+                notify.emit_start_notification(
+                    context, self, "fulfill", CRUD_NOTIFY_OBJ, node=resource
+                )
+                with notify.handle_error_notification(
+                    context, self, "fulfill", CRUD_NOTIFY_OBJ, node=resource
+                ):
                     resource.set_lease(self)
 
-                notify.emit_end_notification(context, self,
-                                             'fulfill',
-                                             CRUD_NOTIFY_OBJ,
-                                             node=resource)
+                notify.emit_end_notification(
+                    context, self, "fulfill", CRUD_NOTIFY_OBJ, node=resource
+                )
 
                 self.status = statuses.ACTIVE
                 self.fulfill_time = datetime.datetime.now()
 
             except Exception as e:
-                LOG.info('Error fulfilling lease: %s: %s' %
-                         (type(e).__name__, e))
-                LOG.info('Setting lease status to WAIT')
+                LOG.info("Error fulfilling lease: %s: %s" % (type(e).__name__, e))
+                LOG.info("Setting lease status to WAIT")
                 self.status = statuses.WAIT_FULFILL
             self.save(context)
 
     def expire(self, context=None):
         leases = Lease.get_all(
-            {'parent_lease_uuid': self.uuid,
-             'status': statuses.LEASE_CAN_DELETE},
-            None)
+            {"parent_lease_uuid": self.uuid, "status": statuses.LEASE_CAN_DELETE}, None
+        )
         for lease in leases:
             lease.expire(context)
         offers = offer_obj.Offer.get_all(
-            {'parent_lease_uuid': self.uuid,
-             'status': statuses.OFFER_CAN_DELETE},
-            None)
+            {"parent_lease_uuid": self.uuid, "status": statuses.OFFER_CAN_DELETE}, None
+        )
         for offer in offers:
             offer.expire(context)
 
-        with utils.lock(utils.get_resource_lock_name(self.resource_type,
-                                                     self.resource_uuid),
-                        external=True):
-            LOG.info('Expiring lease %s', self.uuid)
+        with utils.lock(
+            utils.get_resource_lock_name(self.resource_type, self.resource_uuid),
+            external=True,
+        ):
+            LOG.info("Expiring lease %s", self.uuid)
             try:
                 # expire lease
                 resource = self.resource_object()
@@ -303,9 +304,8 @@ class Lease(base.ESILEAPObject):
                 self.expire_time = datetime.datetime.now()
 
             except Exception as e:
-                LOG.info('Error expiring lease: %s: %s' %
-                         (type(e).__name__, e))
-                LOG.info('Setting lease status to WAIT')
+                LOG.info("Error expiring lease: %s: %s" % (type(e).__name__, e))
+                LOG.info("Setting lease status to WAIT")
                 self.status = statuses.WAIT_EXPIRE
             self.save(context)
 
@@ -313,19 +313,16 @@ class Lease(base.ESILEAPObject):
         return get_resource_object(self.resource_type, self.resource_uuid)
 
     def verify_child_availability(self, start_time, end_time):
-        return self.dbapi.lease_verify_child_availability(
-            self, start_time, end_time)
+        return self.dbapi.lease_verify_child_availability(self, start_time, end_time)
 
     def deactivate(self, context, resource):
-        notify.emit_start_notification(context, self,
-                                       'delete', CRUD_NOTIFY_OBJ,
-                                       node=resource)
+        notify.emit_start_notification(
+            context, self, "delete", CRUD_NOTIFY_OBJ, node=resource
+        )
 
-        with notify.handle_error_notification(context,
-                                              self,
-                                              'delete',
-                                              CRUD_NOTIFY_OBJ,
-                                              node=resource):
+        with notify.handle_error_notification(
+            context, self, "delete", CRUD_NOTIFY_OBJ, node=resource
+        ):
             if resource.get_lease_uuid() == self.uuid:
                 resource.remove_lease(self)
 
@@ -333,19 +330,22 @@ class Lease(base.ESILEAPObject):
                     parent_lease = Lease.get(self.parent_lease_uuid)
                     resource.set_lease(parent_lease)
 
-        notify.emit_end_notification(context, self,
-                                     'delete', CRUD_NOTIFY_OBJ,
-                                     node=resource)
+        notify.emit_end_notification(
+            context, self, "delete", CRUD_NOTIFY_OBJ, node=resource
+        )
 
     @staticmethod
-    def verify_time_range(start_time, end_time,
-                          offer_uuid, parent_lease_uuid,
-                          resource_type, resource_uuid):
+    def verify_time_range(
+        start_time,
+        end_time,
+        offer_uuid,
+        parent_lease_uuid,
+        resource_type,
+        resource_uuid,
+    ):
         if start_time >= end_time:
             raise exception.InvalidTimeRange(
-                resource='lease',
-                start_time=str(start_time),
-                end_time=str(end_time)
+                resource="lease", start_time=str(start_time), end_time=str(end_time)
             )
 
         # check availability
@@ -354,20 +354,16 @@ class Lease(base.ESILEAPObject):
             related_offer = offer_obj.Offer.get(offer_uuid)
             if related_offer.status != statuses.AVAILABLE:
                 raise exception.OfferNotAvailable(
-                    offer_uuid=related_offer.uuid,
-                    status=related_offer.status)
-            related_offer.verify_availability(start_time,
-                                              end_time)
+                    offer_uuid=related_offer.uuid, status=related_offer.status
+                )
+            related_offer.verify_availability(start_time, end_time)
         elif parent_lease_uuid:
             # lease is a child of an existing lease
             parent_lease = Lease.get(parent_lease_uuid)
             if parent_lease.status != statuses.ACTIVE:
-                raise exception.LeaseNotActive(
-                    parent_lease_uuid)
-            parent_lease.verify_child_availability(start_time,
-                                                   end_time)
+                raise exception.LeaseNotActive(parent_lease_uuid)
+            parent_lease.verify_child_availability(start_time, end_time)
         else:
-            ro = get_resource_object(resource_type,
-                                     resource_uuid)
+            ro = get_resource_object(resource_type, resource_uuid)
             ro.verify_availability(start_time, end_time)
         return

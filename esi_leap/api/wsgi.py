@@ -25,11 +25,11 @@ LOG = logging.getLogger(__name__)
 
 
 def initialize_wsgi_app(argv=sys.argv):
-    i18n.install('esi_leap')
+    i18n.install("esi_leap")
 
     service.prepare_service(argv)
 
-    LOG.debug('Configuration:')
+    LOG.debug("Configuration:")
     CONF.log_opt_values(LOG, logging.DEBUG)
 
     return WSGIApplication()

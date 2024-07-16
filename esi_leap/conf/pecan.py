@@ -14,14 +14,13 @@ from oslo_config import cfg
 
 
 opts = [
-    cfg.StrOpt('root',
-               default='esi_leap.api.controllers.root.RootController'),
-    cfg.ListOpt('modules', default=['esi_leap.api']),
-    cfg.BoolOpt('debug', default=False),
-    cfg.BoolOpt('auth_enable', default=True)
+    cfg.StrOpt("root", default="esi_leap.api.controllers.root.RootController"),
+    cfg.ListOpt("modules", default=["esi_leap.api"]),
+    cfg.BoolOpt("debug", default=False),
+    cfg.BoolOpt("auth_enable", default=True),
 ]
 
-pecan_group = cfg.OptGroup('pecan', title='Pecan Options')
+pecan_group = cfg.OptGroup("pecan", title="Pecan Options")
 
 
 def register_opts(conf):

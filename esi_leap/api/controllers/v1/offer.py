@@ -37,7 +37,6 @@ CONF = esi_leap.conf.CONF
 
 
 class Offer(base.ESILEAPBase):
-
     name = wsme.wsattr(wtypes.text)
     uuid = wsme.wsattr(wtypes.text, readonly=True)
     project_id = wsme.wsattr(wtypes.text, readonly=True)
@@ -57,14 +56,18 @@ class Offer(base.ESILEAPBase):
     parent_lease_uuid = wsme.wsattr(wtypes.text, readonly=True)
 
     def __init__(self, **kwargs):
-
         self.fields = offer_obj.Offer.fields
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
-        for attr in ('availabilities', 'project', 'lessee',
-                     'resource', 'resource_class',
-                     'resource_properties'):
+        for attr in (
+            "availabilities",
+            "project",
+            "lessee",
+            "resource",
+            "resource_class",
+            "resource_properties",
+        ):
             setattr(self, attr, kwargs.get(attr, wtypes.Unset))
 
 
@@ -72,14 +75,11 @@ class OfferCollection(types.Collection):
     offers = [Offer]
 
     def __init__(self, **kwargs):
-        self._type = 'offers'
+        self._type = "offers"
 
 
 class OffersController(rest.RestController):
-
-    _custom_actions = {
-        'claim': ['POST']
-    }
+    _custom_actions = {"claim": ["POST"]}
 
     @wsme_pecan.wsexpose(Offer, wtypes.text)
     def get_one(self, offer_id):
@@ -87,25 +87,41 @@ class OffersController(rest.RestController):
         cdict = request.to_policy_values()
 
         offer = utils.check_offer_policy_and_retrieve(
-            request, 'esi_leap:offer:get', offer_id)
+            request, "esi_leap:offer:get", offer_id
+        )
         utils.check_offer_lessee(cdict, offer)
 
         o = utils.offer_get_dict_with_added_info(offer)
 
         return Offer(**o)
 
-    @wsme_pecan.wsexpose(OfferCollection, wtypes.text, wtypes.text,
-                         wtypes.text, wtypes.text, datetime.datetime,
-                         datetime.datetime, datetime.datetime,
-                         datetime.datetime, wtypes.text)
-    def get_all(self, project_id=None, resource_type=None,
-                resource_class=None, resource_uuid=None,
-                start_time=None, end_time=None,
-                available_start_time=None, available_end_time=None,
-                status=None):
+    @wsme_pecan.wsexpose(
+        OfferCollection,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        datetime.datetime,
+        datetime.datetime,
+        datetime.datetime,
+        datetime.datetime,
+        wtypes.text,
+    )
+    def get_all(
+        self,
+        project_id=None,
+        resource_type=None,
+        resource_class=None,
+        resource_uuid=None,
+        start_time=None,
+        end_time=None,
+        available_start_time=None,
+        available_end_time=None,
+        status=None,
+    ):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        utils.policy_authorize('esi_leap:offer:get_all', cdict, cdict)
+        utils.policy_authorize("esi_leap:offer:get_all", cdict, cdict)
 
         if project_id is not None:
             project_id = keystone.get_project_uuid_from_ident(project_id)
@@ -118,47 +134,48 @@ class OffersController(rest.RestController):
 
         # either both are defined or both are None
         if bool(start_time) != bool(end_time):
-            raise exception.InvalidTimeAPICommand(resource='an offer',
-                                                  start_time=str(start_time),
-                                                  end_time=str(end_time))
+            raise exception.InvalidTimeAPICommand(
+                resource="an offer", start_time=str(start_time), end_time=str(end_time)
+            )
         if (start_time or end_time) and (end_time <= start_time):
-            raise exception.InvalidTimeAPICommand(resource='an offer',
-                                                  start_time=str(start_time),
-                                                  end_time=str(end_time))
+            raise exception.InvalidTimeAPICommand(
+                resource="an offer", start_time=str(start_time), end_time=str(end_time)
+            )
 
         if bool(available_start_time) != bool(available_end_time):
             raise exception.InvalidAvailabilityAPICommand(
-                a_start=str(available_start_time),
-                a_end=str(available_end_time))
-        if ((available_start_time or available_end_time) and
-                (available_end_time <= available_start_time)):
+                a_start=str(available_start_time), a_end=str(available_end_time)
+            )
+        if (available_start_time or available_end_time) and (
+            available_end_time <= available_start_time
+        ):
             raise exception.InvalidAvailabilityAPICommand(
-                a_start=str(available_start_time),
-                a_end=str(available_end_time))
+                a_start=str(available_start_time), a_end=str(available_end_time)
+            )
 
         if status is None:
             status = statuses.OFFER_CAN_DELETE
-        elif status == 'any':
+        elif status == "any":
             status = None
         else:
             status = [status]
 
         try:
-            utils.policy_authorize('esi_leap:offer:offer_admin', cdict, cdict)
+            utils.policy_authorize("esi_leap:offer:offer_admin", cdict, cdict)
             lessee_id = None
         except exception.HTTPForbidden:
-            lessee_id = cdict['project_id']
+            lessee_id = cdict["project_id"]
 
         filters = {
-            'project_id': project_id,
-            'lessee_id': lessee_id,
-            'resource_type': resource_type,
-            'resource_uuid': resource_uuid,
-            'status': status,
-            'start_time': start_time,
-            'end_time': end_time,
-            'available_start_time': available_start_time,
-            'available_end_time': available_end_time,
+            "project_id": project_id,
+            "lessee_id": lessee_id,
+            "resource_type": resource_type,
+            "resource_uuid": resource_uuid,
+            "status": status,
+            "start_time": start_time,
+            "end_time": end_time,
+            "available_start_time": available_start_time,
+            "available_end_time": available_end_time,
         }
 
         # unpack iterator to tuple so we can use 'del'
@@ -181,13 +198,17 @@ class OffersController(rest.RestController):
                 project_list = f2.result()
 
             offers_with_added_info = [
-                Offer(**utils.offer_get_dict_with_added_info(o, project_list,
-                                                             node_list))
-                for o in offers]
+                Offer(
+                    **utils.offer_get_dict_with_added_info(o, project_list, node_list)
+                )
+                for o in offers
+            ]
             if resource_class:
                 offer_collection.offers = [
-                    o for o in offers_with_added_info
-                    if o.resource_class == resource_class]
+                    o
+                    for o in offers_with_added_info
+                    if o.resource_class == resource_class
+                ]
             else:
                 offer_collection.offers = offers_with_added_info
 
@@ -197,31 +218,34 @@ class OffersController(rest.RestController):
     def post(self, new_offer):
         request = pecan.request.context
         cdict = request.to_policy_values()
-        utils.policy_authorize('esi_leap:offer:create', cdict, cdict)
+        utils.policy_authorize("esi_leap:offer:create", cdict, cdict)
 
         offer_dict = new_offer.to_dict()
-        offer_dict['project_id'] = request.project_id
-        offer_dict['uuid'] = uuidutils.generate_uuid()
-        if 'resource_type' not in offer_dict:
-            offer_dict['resource_type'] = CONF.api.default_resource_type
-        resource = get_resource_object(offer_dict['resource_type'],
-                                       offer_dict['resource_uuid'])
-        offer_dict['resource_uuid'] = resource.get_uuid()
+        offer_dict["project_id"] = request.project_id
+        offer_dict["uuid"] = uuidutils.generate_uuid()
+        if "resource_type" not in offer_dict:
+            offer_dict["resource_type"] = CONF.api.default_resource_type
+        resource = get_resource_object(
+            offer_dict["resource_type"], offer_dict["resource_uuid"]
+        )
+        offer_dict["resource_uuid"] = resource.get_uuid()
 
-        if 'lessee_id' in offer_dict:
-            offer_dict['lessee_id'] = keystone.get_project_uuid_from_ident(
-                offer_dict['lessee_id'])
+        if "lessee_id" in offer_dict:
+            offer_dict["lessee_id"] = keystone.get_project_uuid_from_ident(
+                offer_dict["lessee_id"]
+            )
 
-        if 'start_time' not in offer_dict:
-            offer_dict['start_time'] = datetime.datetime.now()
-        if 'end_time' not in offer_dict:
-            offer_dict['end_time'] = datetime.datetime.max
+        if "start_time" not in offer_dict:
+            offer_dict["start_time"] = datetime.datetime.now()
+        if "end_time" not in offer_dict:
+            offer_dict["end_time"] = datetime.datetime.max
 
-        if offer_dict['start_time'] >= offer_dict['end_time']:
+        if offer_dict["start_time"] >= offer_dict["end_time"]:
             raise exception.InvalidTimeRange(
-                resource='an offer',
-                start_time=str(offer_dict['start_time']),
-                end_time=str(offer_dict['end_time']))
+                resource="an offer",
+                start_time=str(offer_dict["start_time"]),
+                end_time=str(offer_dict["end_time"]),
+            )
 
         try:
             utils.check_resource_admin(cdict, resource, request.project_id)
@@ -230,11 +254,12 @@ class OffersController(rest.RestController):
                 cdict,
                 resource,
                 request.project_id,
-                offer_dict.get('start_time'),
-                offer_dict.get('end_time'))
+                offer_dict.get("start_time"),
+                offer_dict.get("end_time"),
+            )
             if parent_lease_uuid is None:
                 raise
-            offer_dict['parent_lease_uuid'] = parent_lease_uuid
+            offer_dict["parent_lease_uuid"] = parent_lease_uuid
 
         o = offer_obj.Offer(**offer_dict)
         o.create()
@@ -245,41 +270,42 @@ class OffersController(rest.RestController):
         request = pecan.request.context
 
         offer = utils.check_offer_policy_and_retrieve(
-            request, 'esi_leap:offer:delete', offer_id,
-            statuses.OFFER_CAN_DELETE)
+            request, "esi_leap:offer:delete", offer_id, statuses.OFFER_CAN_DELETE
+        )
         offer.cancel()
 
-    @wsme_pecan.wsexpose(lease.Lease, wtypes.text, body=lease.Lease,
-                         status_code=http_client.CREATED)
+    @wsme_pecan.wsexpose(
+        lease.Lease, wtypes.text, body=lease.Lease, status_code=http_client.CREATED
+    )
     def claim(self, offer_uuid, new_lease):
         request = pecan.request.context
         cdict = request.to_policy_values()
 
         offer = utils.check_offer_policy_and_retrieve(
-            request, 'esi_leap:offer:claim', offer_uuid, [statuses.AVAILABLE])
+            request, "esi_leap:offer:claim", offer_uuid, [statuses.AVAILABLE]
+        )
         utils.check_offer_lessee(cdict, offer)
 
         lease_dict = new_lease.to_dict()
-        lease_dict['project_id'] = request.project_id
-        lease_dict['uuid'] = uuidutils.generate_uuid()
-        lease_dict['offer_uuid'] = offer_uuid
-        lease_dict['resource_type'] = offer.resource_type
-        lease_dict['resource_uuid'] = offer.resource_uuid
-        lease_dict['owner_id'] = offer.project_id
+        lease_dict["project_id"] = request.project_id
+        lease_dict["uuid"] = uuidutils.generate_uuid()
+        lease_dict["offer_uuid"] = offer_uuid
+        lease_dict["resource_type"] = offer.resource_type
+        lease_dict["resource_uuid"] = offer.resource_uuid
+        lease_dict["owner_id"] = offer.project_id
 
         if offer.parent_lease_uuid is not None:
-            lease_dict['parent_lease_uuid'] = offer.parent_lease_uuid
+            lease_dict["parent_lease_uuid"] = offer.parent_lease_uuid
 
-        if 'start_time' not in lease_dict:
-            lease_dict['start_time'] = datetime.datetime.now()
+        if "start_time" not in lease_dict:
+            lease_dict["start_time"] = datetime.datetime.now()
 
-        if 'end_time' not in lease_dict:
-            q = offer.get_next_lease_start_time(
-                lease_dict['start_time'])
+        if "end_time" not in lease_dict:
+            q = offer.get_next_lease_start_time(lease_dict["start_time"])
             if q is None:
-                lease_dict['end_time'] = offer.end_time
+                lease_dict["end_time"] = offer.end_time
             else:
-                lease_dict['end_time'] = q.start_time
+                lease_dict["end_time"] = q.start_time
 
         new_lease = lease_obj.Lease(**lease_dict)
         new_lease.create(request)

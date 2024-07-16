@@ -26,7 +26,6 @@ CONF = esi_leap.conf.CONF
 
 
 class DBCommand(object):
-
     def create_schema(self):
         migration.create_schema()
 
@@ -50,46 +49,42 @@ def add_command_parsers(subparsers):
     command_object = DBCommand()
 
     parser = subparsers.add_parser(
-        'create_schema',
-        help=_('Create the database schema.'))
+        "create_schema", help=_("Create the database schema.")
+    )
     parser.set_defaults(func=command_object.create_schema)
 
-    parser = subparsers.add_parser(
-        'upgrade',
-        help=_('Upgrade the database.'))
+    parser = subparsers.add_parser("upgrade", help=_("Upgrade the database."))
     parser.set_defaults(func=command_object.upgrade)
-    parser.add_argument('--revision', nargs='?')
+    parser.add_argument("--revision", nargs="?")
 
-    parser = subparsers.add_parser(
-        'downgrade',
-        help=_('Downgrade the database.'))
+    parser = subparsers.add_parser("downgrade", help=_("Downgrade the database."))
     parser.set_defaults(func=command_object.downgrade)
-    parser.add_argument('--revision', nargs='?')
+    parser.add_argument("--revision", nargs="?")
 
     parser = subparsers.add_parser(
-        'stamp',
-        help=_('Stamp the database with provided revision.'))
+        "stamp", help=_("Stamp the database with provided revision.")
+    )
     parser.set_defaults(func=command_object.stamp)
-    parser.add_argument('--revision', nargs='?')
+    parser.add_argument("--revision", nargs="?")
 
-    parser = subparsers.add_parser(
-        'revision',
-        help=_('Creates template for migration'))
+    parser = subparsers.add_parser("revision", help=_("Creates template for migration"))
     parser.set_defaults(func=command_object.revision)
-    parser.add_argument('-m', '--message')
-    parser.add_argument('--autogenerate', action='store_true')
+    parser.add_argument("-m", "--message")
+    parser.add_argument("--autogenerate", action="store_true")
 
     parser = subparsers.add_parser(
-        'version',
-        help=_('Print the current version information and exit.'))
+        "version", help=_("Print the current version information and exit.")
+    )
     parser.set_defaults(func=command_object.version)
 
 
 def main():
-    command_opt = cfg.SubCommandOpt('command',
-                                    title='Command',
-                                    help=_('Available commands'),
-                                    handler=add_command_parsers)
+    command_opt = cfg.SubCommandOpt(
+        "command",
+        title="Command",
+        help=_("Available commands"),
+        handler=add_command_parsers,
+    )
 
     CONF.register_cli_opt(command_opt)
 

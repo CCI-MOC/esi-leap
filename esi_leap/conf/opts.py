@@ -13,13 +13,13 @@
 import esi_leap.conf
 
 _opts = [
-    ('DEFAULT', esi_leap.conf.netconf.opts),
-    ('api', esi_leap.conf.api.opts),
-    ('dummy_node', esi_leap.conf.dummy_node.opts),
-    ('ironic', esi_leap.conf.ironic.list_opts()),
-    ('keystone', esi_leap.conf.keystone.list_opts()),
-    ('pecan', esi_leap.conf.pecan.opts),
-    ('notification', esi_leap.conf.notification.opts),
+    ("DEFAULT", esi_leap.conf.netconf.opts),
+    ("api", esi_leap.conf.api.opts),
+    ("dummy_node", esi_leap.conf.dummy_node.opts),
+    ("ironic", esi_leap.conf.ironic.list_opts()),
+    ("keystone", esi_leap.conf.keystone.list_opts()),
+    ("pecan", esi_leap.conf.pecan.opts),
+    ("notification", esi_leap.conf.notification.opts),
 ]
 
 

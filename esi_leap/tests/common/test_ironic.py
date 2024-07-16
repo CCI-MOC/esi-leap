@@ -18,48 +18,43 @@ from esi_leap.tests import base
 
 class FakeNode(object):
     def __init__(self):
-        self.uuid = 'uuid'
-        self.name = 'name'
-        self.resource_class = 'baremetal'
+        self.uuid = "uuid"
+        self.name = "name"
+        self.resource_class = "baremetal"
 
 
 class IronicTestCase(base.TestCase):
-
-    @mock.patch.object(ironic, 'get_ironic_client', autospec=True)
+    @mock.patch.object(ironic, "get_ironic_client", autospec=True)
     def test_get_node(self, mock_ironic):
         fake_node = FakeNode()
         mock_ironic.return_value.node.get.return_value = fake_node
-        node = ironic.get_node('12345')
+        node = ironic.get_node("12345")
 
         self.assertEqual(fake_node, node)
 
-    @mock.patch.object(ironic, 'get_ironic_client', autospec=True)
+    @mock.patch.object(ironic, "get_ironic_client", autospec=True)
     def test_get_node_list(self, mock_ironic):
         fake_node = FakeNode()
         node_list = [fake_node]
-        node = ironic.get_node('uuid', node_list)
+        node = ironic.get_node("uuid", node_list)
 
         self.assertEqual(fake_node, node)
 
-    @mock.patch.object(ironic, 'get_ironic_client', autospec=True)
+    @mock.patch.object(ironic, "get_ironic_client", autospec=True)
     def test_get_node_list_no_match(self, mock_ironic):
         fake_node = FakeNode()
         node_list = [fake_node]
-        node = ironic.get_node('uuid2', node_list)
+        node = ironic.get_node("uuid2", node_list)
 
         self.assertEqual(None, node)
 
     def test_get_condensed_properties(self):
         properties = {
-            'lease_uuid': '12345',
-            'capabilities': 'magic',
-            'cpu': '40',
-            'local_gb': '1000'
+            "lease_uuid": "12345",
+            "capabilities": "magic",
+            "cpu": "40",
+            "local_gb": "1000",
         }
-        cp = ironic.get_condensed_properties(
-            properties)
+        cp = ironic.get_condensed_properties(properties)
 
-        self.assertEqual(cp, {
-            'cpu': '40',
-            'local_gb': '1000'
-        })
+        self.assertEqual(cp, {"cpu": "40", "local_gb": "1000"})

@@ -22,19 +22,18 @@ CONF = esi_leap.conf.CONF
 
 
 class WSGIService(service.ServiceBase):
-
     def __init__(self, name):
         self.name = name
         self.app = app.setup_app()
-        self.workers = (
-            CONF.api.api_workers or processutils.get_worker_count()
-        )
+        self.workers = CONF.api.api_workers or processutils.get_worker_count()
 
         self.server = wsgi.Server(
-            CONF, name, self.app,
+            CONF,
+            name,
+            self.app,
             host=CONF.api.host_ip,
             port=CONF.api.port,
-            use_ssl=CONF.api.enable_ssl_api
+            use_ssl=CONF.api.enable_ssl_api,
         )
 
     def start(self):

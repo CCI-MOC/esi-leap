@@ -19,12 +19,12 @@ LOG = log.getLogger(__name__)
 
 
 class ESILEAPObject(object_base.VersionedObject):
-    OBJ_SERIAL_NAMESPACE = 'esi_leap_object'
-    OBJ_PROJECT_NAMESPACE = 'esi_leap'
+    OBJ_SERIAL_NAMESPACE = "esi_leap_object"
+    OBJ_PROJECT_NAMESPACE = "esi_leap"
 
     fields = {
-        'created_at': object_fields.DateTimeField(nullable=True),
-        'updated_at': object_fields.DateTimeField(nullable=True),
+        "created_at": object_fields.DateTimeField(nullable=True),
+        "updated_at": object_fields.DateTimeField(nullable=True),
     }
 
     @staticmethod
@@ -37,10 +37,9 @@ class ESILEAPObject(object_base.VersionedObject):
 
     @classmethod
     def _from_db_object_list(cls, context, db_objs):
-        return [cls._from_db_object(context, cls(), db_obj)
-                for db_obj in db_objs]
+        return [cls._from_db_object(context, cls(), db_obj) for db_obj in db_objs]
 
     def to_dict(self):
-        return dict((k, getattr(self, k))
-                    for k in self.fields
-                    if self.obj_attr_is_set(k))
+        return dict(
+            (k, getattr(self, k)) for k in self.fields if self.obj_attr_is_set(k)
+        )

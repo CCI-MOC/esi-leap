@@ -15,11 +15,11 @@ from esi_leap.tests import base
 
 
 class LockTestCase(base.TestCase):
-
     def test_get_resource_lock_name(self):
-        resource_type = 'ironic_node'
-        resource_uuid = '12345'
+        resource_type = "ironic_node"
+        resource_uuid = "12345"
 
-        self.assertEqual(resource_type + '-' + resource_uuid,
-                         utils.get_resource_lock_name(
-                             resource_type, resource_uuid))
+        self.assertEqual(
+            resource_type + "-" + resource_uuid,
+            utils.get_resource_lock_name(resource_type, resource_uuid),
+        )

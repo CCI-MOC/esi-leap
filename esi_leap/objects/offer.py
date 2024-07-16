@@ -34,18 +34,18 @@ class Offer(base.ESILEAPObject):
     dbapi = dbapi.get_instance()
 
     fields = {
-        'id': fields.IntegerField(),
-        'name': fields.StringField(nullable=True),
-        'uuid': fields.UUIDField(),
-        'project_id': fields.StringField(),
-        'lessee_id': fields.StringField(nullable=True),
-        'resource_type': fields.StringField(),
-        'resource_uuid': fields.StringField(),
-        'start_time': fields.DateTimeField(nullable=True),
-        'end_time': fields.DateTimeField(nullable=True),
-        'status': fields.StringField(),
-        'properties': fields.FlexibleDictField(nullable=True),
-        'parent_lease_uuid': fields.UUIDField(nullable=True),
+        "id": fields.IntegerField(),
+        "name": fields.StringField(nullable=True),
+        "uuid": fields.UUIDField(),
+        "project_id": fields.StringField(),
+        "lessee_id": fields.StringField(nullable=True),
+        "resource_type": fields.StringField(),
+        "resource_uuid": fields.StringField(),
+        "start_time": fields.DateTimeField(nullable=True),
+        "end_time": fields.DateTimeField(nullable=True),
+        "status": fields.StringField(),
+        "properties": fields.FlexibleDictField(nullable=True),
+        "parent_lease_uuid": fields.UUIDField(nullable=True),
     }
 
     @classmethod
@@ -60,7 +60,6 @@ class Offer(base.ESILEAPObject):
         return cls._from_db_object_list(context, db_offers)
 
     def get_availabilities(self):
-
         if self.status != statuses.AVAILABLE:
             return []
 
@@ -88,9 +87,10 @@ class Offer(base.ESILEAPObject):
                         # Find the conflict timeframe that started
                         # in the past and will end in the future.
                         # add all times after this
-                        if (conflicts[i][0] <= start_time and
-                            conflicts[i][1] > start_time) \
-                            or conflicts[i][0] > start_time:
+                        if (
+                            conflicts[i][0] <= start_time
+                            and conflicts[i][1] > start_time
+                        ) or conflicts[i][0] > start_time:
                             times.append(conflicts[i][1])
                             times.append(conflicts[i + 1][0])
 
@@ -105,8 +105,7 @@ class Offer(base.ESILEAPObject):
                     else:
                         i += 1
 
-                avails = [[times[j], times[j + 1]]
-                          for j in range(0, len(times) - 1, 2)]
+                avails = [[times[j], times[j + 1]] for j in range(0, len(times) - 1, 2)]
 
         else:
             avails = [[start_time, self.end_time]]
@@ -114,76 +113,76 @@ class Offer(base.ESILEAPObject):
         return avails
 
     def get_next_lease_start_time(self, start):
-        return self.dbapi.offer_get_next_lease_start_time(
-            self.uuid, start)
+        return self.dbapi.offer_get_next_lease_start_time(self.uuid, start)
 
     def create(self, context=None):
         updates = self.obj_get_changes()
 
-        with utils.lock(utils.get_resource_lock_name(updates['resource_type'],
-                                                     updates['resource_uuid']),
-                        external=True):
-            LOG.info('Creating offer')
-            if updates['start_time'] >= updates['end_time']:
+        with utils.lock(
+            utils.get_resource_lock_name(
+                updates["resource_type"], updates["resource_uuid"]
+            ),
+            external=True,
+        ):
+            LOG.info("Creating offer")
+            if updates["start_time"] >= updates["end_time"]:
                 raise exception.InvalidTimeRange(
-                    resource='offer',
-                    start_time=str(updates['start_time']),
-                    end_time=str(updates['end_time'])
+                    resource="offer",
+                    start_time=str(updates["start_time"]),
+                    end_time=str(updates["end_time"]),
                 )
 
-            if updates.get('parent_lease_uuid'):
+            if updates.get("parent_lease_uuid"):
                 # offer is a child of an existing lease
-                parent_lease = lease_obj.Lease.get(
-                    updates['parent_lease_uuid'])
+                parent_lease = lease_obj.Lease.get(updates["parent_lease_uuid"])
 
                 if parent_lease.status != statuses.ACTIVE:
-                    raise exception.LeaseNotActive(
-                        updates['parent_lease_uuid'])
+                    raise exception.LeaseNotActive(updates["parent_lease_uuid"])
 
-                parent_lease.verify_child_availability(updates['start_time'],
-                                                       updates['end_time'])
+                parent_lease.verify_child_availability(
+                    updates["start_time"], updates["end_time"]
+                )
             else:
-                ro = get_resource_object(updates['resource_type'],
-                                         updates['resource_uuid'])
-                ro.verify_availability(updates['start_time'],
-                                       updates['end_time'])
+                ro = get_resource_object(
+                    updates["resource_type"], updates["resource_uuid"]
+                )
+                ro.verify_availability(updates["start_time"], updates["end_time"])
 
             db_offer = self.dbapi.offer_create(updates)
             self._from_db_object(context, self, db_offer)
 
     def cancel(self):
-        LOG.info('Deleting offer %s', self.uuid)
+        LOG.info("Deleting offer %s", self.uuid)
         leases = lease_obj.Lease.get_all(
-            {'offer_uuid': self.uuid,
-             'status': statuses.LEASE_CAN_DELETE},
-            None)
+            {"offer_uuid": self.uuid, "status": statuses.LEASE_CAN_DELETE}, None
+        )
         for lease in leases:
             lease.cancel()
 
-        with utils.lock(utils.get_resource_lock_name(self.resource_type,
-                                                     self.resource_uuid),
-                        external=True):
+        with utils.lock(
+            utils.get_resource_lock_name(self.resource_type, self.resource_uuid),
+            external=True,
+        ):
             self.status = statuses.DELETED
             self.save(None)
 
     def expire(self, context=None):
-        LOG.info('Expiring offer %s', self.uuid)
+        LOG.info("Expiring offer %s", self.uuid)
         leases = lease_obj.Lease.get_all(
-            {'offer_uuid': self.uuid,
-             'status': statuses.LEASE_CAN_DELETE},
-            None)
+            {"offer_uuid": self.uuid, "status": statuses.LEASE_CAN_DELETE}, None
+        )
         for lease in leases:
             lease.expire(context)
 
-        with utils.lock(utils.get_resource_lock_name(self.resource_type,
-                                                     self.resource_uuid),
-                        external=True):
+        with utils.lock(
+            utils.get_resource_lock_name(self.resource_type, self.resource_uuid),
+            external=True,
+        ):
             self.status = statuses.EXPIRED
             self.save(context)
 
     def verify_availability(self, start_time, end_time):
-        return self.dbapi.offer_verify_availability(
-            self, start_time, end_time)
+        return self.dbapi.offer_verify_availability(self, start_time, end_time)
 
     def destroy(self):
         self.dbapi.offer_destroy(self.uuid)
@@ -191,8 +190,7 @@ class Offer(base.ESILEAPObject):
 
     def save(self, context=None):
         updates = self.obj_get_changes()
-        db_offer = self.dbapi.offer_update(
-            self.uuid, updates)
+        db_offer = self.dbapi.offer_update(self.uuid, updates)
         self._from_db_object(context, self, db_offer)
 
     def resource_object(self):

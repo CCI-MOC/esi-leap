@@ -18,7 +18,7 @@ from esi_leap.db import api as dbapi
 class ResourceObjectInterface(object, metaclass=abc.ABCMeta):
     dbapi = dbapi.get_instance()
 
-    resource_type = 'base'
+    resource_type = "base"
 
     @abc.abstractmethod
     def get_uuid(self):

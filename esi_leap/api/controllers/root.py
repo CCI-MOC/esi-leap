@@ -17,29 +17,27 @@ from pecan import rest
 from esi_leap.api.controllers.v1 import root
 
 
-API_VERSION = 'v1'
+API_VERSION = "v1"
 
 
 class RootController(rest.RestController):
-
     _versions = [API_VERSION]
     _default_version = API_VERSION
 
     v1 = root.Controller()
 
-    @pecan.expose(content_type='application/json')
+    @pecan.expose(content_type="application/json")
     def index(self):
         pecan.response.status_code = 300
-        pecan.response.content_type = 'application/json'
+        pecan.response.content_type = "application/json"
         versions = {
-            'versions': [
+            "versions": [
                 {
-                    'id': 'v1.0',
-                    'status': 'CURRENT',
-                    'links': [{
-                        'href': '{0}/v1'.format(pecan.request.host_url),
-                        'rel': 'self'
-                    }]
+                    "id": "v1.0",
+                    "status": "CURRENT",
+                    "links": [
+                        {"href": "{0}/v1".format(pecan.request.host_url), "rel": "self"}
+                    ],
                 }
             ]
         }

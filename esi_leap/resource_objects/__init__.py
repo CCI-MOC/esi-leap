@@ -11,6 +11,7 @@
 #    under the License.
 from esi_leap.common.exception import ResourceTypeUnknown
 from esi_leap.resource_objects import base
+
 # types derived from base won't show as subclasses unless imported somewhere
 from esi_leap.resource_objects import dummy_node  # noqa: F401
 from esi_leap.resource_objects import ironic_node  # noqa: F401
@@ -18,8 +19,8 @@ from esi_leap.resource_objects import test_node  # noqa: F401
 
 
 _RESOURCE_TYPE_MAP = {
-    typ.resource_type: typ for typ in
-    base.ResourceObjectInterface.__subclasses__()}
+    typ.resource_type: typ for typ in base.ResourceObjectInterface.__subclasses__()
+}
 RESOURCE_TYPES = tuple(_RESOURCE_TYPE_MAP.keys())
 
 

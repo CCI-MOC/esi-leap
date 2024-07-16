@@ -22,9 +22,10 @@ LOG = logging.getLogger(__name__)
 def get_backend():
     global _IMPL
     if not _IMPL:
-        cfg.CONF.import_opt('backend', 'oslo_db.options', group='database')
-        _IMPL = driver.DriverManager('esi_leap.database.migration_backend',
-                                     cfg.CONF.database.backend).driver
+        cfg.CONF.import_opt("backend", "oslo_db.options", group="database")
+        _IMPL = driver.DriverManager(
+            "esi_leap.database.migration_backend", cfg.CONF.database.backend
+        ).driver
     return _IMPL
 
 

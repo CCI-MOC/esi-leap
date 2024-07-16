@@ -8,7 +8,7 @@ To generate a csv file with data on all lessees' usage on different nodes:
 openstack esi lease list --all --long -f csv > report.csv
 ```
 
-The ESI-Leap API allows users to retrieve data based on certain parameters. 
+The ESI-Leap API allows users to retrieve data based on certain parameters.
 
 For example, it is possible to generate a report based on a lessee's OpenStack project_id. To get a list of all
 projects type ``openstack project list`` and from there grab the desired project id and run the command:

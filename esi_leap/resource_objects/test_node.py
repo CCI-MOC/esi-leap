@@ -14,10 +14,9 @@ from esi_leap.resource_objects import base
 
 
 class TestNode(base.ResourceObjectInterface):
+    resource_type = "test_node"
 
-    resource_type = 'test_node'
-
-    def __init__(self, uuid, project_id='12345'):
+    def __init__(self, uuid, project_id="12345"):
         self._uuid = uuid
         self._project_id = project_id
 
@@ -25,10 +24,10 @@ class TestNode(base.ResourceObjectInterface):
         return self._uuid
 
     def get_name(self, resource_list=None):
-        return 'test-node-%s' % self._uuid
+        return "test-node-%s" % self._uuid
 
     def get_resource_class(self, resource_list=None):
-        return 'fake'
+        return "fake"
 
     def get_properties(self, resource_list=None):
         return {}
@@ -37,16 +36,16 @@ class TestNode(base.ResourceObjectInterface):
         return self._project_id
 
     def get_lease_uuid(self):
-        return '12345'
+        return "12345"
 
     def get_lessee_project_id(self):
         return self._project_id
 
     def get_node_power_state(self):
-        return 'Off'
+        return "Off"
 
     def get_node_provision_state(self):
-        return 'available'
+        return "available"
 
     def set_lease(self, lease):
         return

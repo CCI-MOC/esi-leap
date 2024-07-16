@@ -28,9 +28,8 @@ def get_keystone_client():
     if _cached_keystone_client is not None:
         return _cached_keystone_client
 
-    auth_plugin = ks_loading.load_auth_from_conf_options(CONF, 'keystone')
-    sess = ks_loading.load_session_from_conf_options(CONF, 'keystone',
-                                                     auth=auth_plugin)
+    auth_plugin = ks_loading.load_auth_from_conf_options(CONF, "keystone")
+    sess = ks_loading.load_session_from_conf_options(CONF, "keystone", auth=auth_plugin)
     cli = keystone_client.Client(session=sess)
     _cached_keystone_client = cli
 
@@ -67,9 +66,9 @@ def get_project_name(project_id, project_list=None):
         if project_list is None:
             project = get_keystone_client().projects.get(project_id)
         else:
-            project = next((p for p in project_list
-                            if getattr(p, 'id') == project_id),
-                           None)
-        return project.name if project else ''
+            project = next(
+                (p for p in project_list if getattr(p, "id") == project_id), None
+            )
+        return project.name if project else ""
     else:
-        return ''
+        return ""
