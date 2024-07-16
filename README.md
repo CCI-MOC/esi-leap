@@ -167,3 +167,23 @@ EOF
 ```
 
 `1718` is the dummy node UUID; replace it with whatever you'd like. When creating an offer for this dummy node, simply specify `resource_type` as `dummy_node` and `resource_uuid` as `1718`.
+
+## Contributing
+
+### Pull requests
+
+When you submit a pull request, your changes will be validated by running a number of automatic tests.
+
+First, we run a series of [linters] and an automatic formatter on the code to check for a variety of minor issues and ensure consistent formatting. As a developer you will want to integrate these same checks into your local development environment:
+
+1. Install the [pre-commit] tool using your favorite package manager.
+2. Run `pre-commit install` from inside this repository.
+
+This will enable a git [`pre-commit` hook][hooks] that will run the linters and formatter whenever you commit changes locally. We are using [`ruff`][ruff] for linting and formatting; this can be integrated into many editors to provide live checks as you are writing code.
+
+Next, we run all unit tests across all the Python versions supported by the `esi-leap` code. We expect that any changes introducing new functionality will also include appropriate unit tests to exercise those changes.
+
+[linters]: https://en.wikipedia.org/wiki/Lint_(software)
+[pre-commit]: https://pre-commit.com/
+[hooks]: https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks
+[ruff]: https://github.com/astral-sh/ruff
