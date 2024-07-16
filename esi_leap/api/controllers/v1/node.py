@@ -36,6 +36,9 @@ class Node(base.ESILEAPBase):
     owner = wsme.wsattr(wtypes.text)
     maintenance = wsme.wsattr(wtypes.text)
     provision_state = wsme.wsattr(wtypes.text)
+    target_provision_state = wsme.wsattr(wtypes.text)
+    power_state = wsme.wsattr(wtypes.text)
+    target_power_state = wsme.wsattr(wtypes.text)
     properties = {wtypes.text: types.jsontype}
     resource_class = wsme.wsattr(wtypes.text)
     uuid = wsme.wsattr(wtypes.text)
@@ -49,7 +52,8 @@ class Node(base.ESILEAPBase):
         self.fields = ('name', 'owner', 'uuid', 'offer_uuid', 'lease_uuid',
                        'lessee', 'future_offers', 'future_leases',
                        'resource_class', 'provision_state', 'maintenance',
-                       'properties')
+                       'properties', 'target_provision_state', 'power_state',
+                       'target_power_state')
         for field in self.fields:
             setattr(self, field, kwargs.get(field, wtypes.Unset))
 
@@ -122,6 +126,9 @@ class NodesController(rest.RestController):
 
             n = Node(name=node.name, uuid=node.uuid,
                      provision_state=node.provision_state,
+                     target_provision_state=node.target_provision_state,
+                     power_state=node.power_state,
+                     target_power_state=node.target_power_state,
                      resource_class=node.resource_class,
                      properties=ironic.get_condensed_properties(
                          node.properties),

@@ -24,6 +24,9 @@ class FakeIronicNode(object):
         self.lessee = 'fake-project-uuid'
         self.maintenance = False
         self.provision_state = 'active'
+        self.target_provision_state = 'target_state'
+        self.power_state = 'power off'
+        self.target_power_state = 'power on'
         self.resource_class = 'baremetal'
 
 
