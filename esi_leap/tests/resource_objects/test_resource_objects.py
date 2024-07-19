@@ -22,7 +22,7 @@ class TestResourceObjects(base.TestCase):
         types = {
             "ironic_node": resource_objects.ironic_node.IronicNode,
             "dummy_node": resource_objects.dummy_node.DummyNode,
-            "test_node": resource_objects.test_node.TestNode,
+            "test_node": resource_objects.fake_node.FakeNode,
         }
 
         for type_name, expected_type in types.items():
@@ -84,7 +84,7 @@ class TestResourceObjects(base.TestCase):
     def test_test_node(self):
         node = resource_objects.get_resource_object("test_node", "1111")
 
-        self.assertIsInstance(node, resource_objects.test_node.TestNode)
+        self.assertIsInstance(node, resource_objects.fake_node.FakeNode)
         self.assertEqual("1111", node.get_uuid())
 
     def test_unknown_resource_type(self):

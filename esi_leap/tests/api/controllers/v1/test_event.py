@@ -14,7 +14,7 @@ from datetime import datetime
 import mock
 
 from esi_leap.common import exception
-from esi_leap.resource_objects.test_node import TestNode
+from esi_leap.resource_objects.fake_node import FakeNode
 from esi_leap.tests.api import base as test_api_base
 
 
@@ -82,7 +82,7 @@ class TestEventsController(test_api_base.APITestCase):
         fake_event = FakeEvent()
         expected_filters = {"resource_type": "test_node", "resource_uuid": "1111"}
         mock_pa.side_effect = None
-        mock_gro.return_value = TestNode("1111")
+        mock_gro.return_value = FakeNode("1111")
         mock_ega.return_value = [fake_event]
 
         data = self.get_json("/events?resource_uuid=1111&resource_type=test_node")

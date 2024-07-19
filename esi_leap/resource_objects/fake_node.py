@@ -13,7 +13,7 @@
 from esi_leap.resource_objects import base
 
 
-class TestNode(base.ResourceObjectInterface):
+class FakeNode(base.ResourceObjectInterface):
     resource_type = "test_node"
 
     def __init__(self, uuid, project_id="12345"):

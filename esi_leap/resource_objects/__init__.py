@@ -15,7 +15,7 @@ from esi_leap.resource_objects import base
 # types derived from base won't show as subclasses unless imported somewhere
 from esi_leap.resource_objects import dummy_node  # noqa: F401
 from esi_leap.resource_objects import ironic_node  # noqa: F401
-from esi_leap.resource_objects import test_node  # noqa: F401
+from esi_leap.resource_objects import fake_node  # noqa: F401
 
 
 _RESOURCE_TYPE_MAP = {

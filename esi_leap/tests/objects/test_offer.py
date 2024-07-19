@@ -55,7 +55,7 @@ class TestOfferObject(base.DBTestCase):
         }
         self.test_offer_create_parent_lease_data = self.test_offer_create_data.copy()
         self.test_offer_create_parent_lease_data["parent_lease_uuid"] = (
-            "parent-lease-uuid"
+            uuidutils.generate_uuid()
         )
         self.test_parent_lease = lease.Lease(
             uuid=uuidutils.generate_uuid(), status=statuses.ACTIVE
@@ -267,7 +267,9 @@ class TestOfferObject(base.DBTestCase):
 
         o.create(self.context)
 
-        mock_lg.assert_called_once_with("parent-lease-uuid")
+        mock_lg.assert_called_once_with(
+            self.test_offer_create_parent_lease_data["parent_lease_uuid"]
+        )
         mock_lvca.assert_called_once_with(
             self.test_parent_lease, o.start_time, o.end_time
         )
@@ -284,7 +286,9 @@ class TestOfferObject(base.DBTestCase):
 
         self.assertRaises(exception.LeaseNotActive, o.create, self.context)
 
-        mock_lg.assert_called_once_with("parent-lease-uuid")
+        mock_lg.assert_called_once_with(
+            self.test_offer_create_parent_lease_data["parent_lease_uuid"]
+        )
         mock_lvca.assert_not_called()
         mock_oc.assert_not_called()
 
@@ -300,8 +304,8 @@ class TestOfferObject(base.DBTestCase):
 
         mock_oc.side_effect = update_mock
 
-        thread = threading.Thread(target=o.create)
-        thread2 = threading.Thread(target=o2.create)
+        thread = threading.Thread(target=self.catch_exception(o.create))
+        thread2 = threading.Thread(target=self.catch_exception(o2.create))
 
         thread.start()
         thread2.start()

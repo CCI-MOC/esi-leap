@@ -24,7 +24,7 @@ from esi_leap.common import policy
 from esi_leap.common import statuses
 from esi_leap.objects import lease
 from esi_leap.objects import offer
-from esi_leap.resource_objects.test_node import TestNode
+from esi_leap.resource_objects.fake_node import FakeNode
 
 
 admin_ctx = ctx.RequestContext(project_id="adminid", roles=["admin"])
@@ -45,8 +45,8 @@ start_iso = "2016-07-16T00:00:00"
 end = start + datetime.timedelta(days=100)
 end_iso = "2016-10-24T00:00:00"
 
-test_node_1 = TestNode("111", owner_ctx.project_id)
-test_node_2 = TestNode("bbb", owner_ctx_2.project_id)
+test_node_1 = FakeNode("111", owner_ctx.project_id)
+test_node_2 = FakeNode("bbb", owner_ctx_2.project_id)
 
 o_uuid = uuidutils.generate_uuid()
 
@@ -328,7 +328,7 @@ class TestCheckResourceLeaseAdminUtils(testtools.TestCase):
             uuid=uuidutils.generate_uuid(),
             start_time=datetime.datetime(2016, 7, 16, 19, 20, 30),
             end_time=datetime.datetime(2016, 8, 16, 19, 20, 30),
-            parent_lease_uuid="parent-lease-uuid",
+            parent_lease_uuid=uuidutils.generate_uuid(),
         )
 
     @mock.patch("esi_leap.objects.lease.Lease.get")
@@ -684,11 +684,11 @@ class TestLeaseGetDictWithAddedInfoUtils(testtools.TestCase):
             parent_lease_uuid=None,
         )
 
-    @mock.patch("esi_leap.resource_objects.test_node.TestNode.get_name")
+    @mock.patch("esi_leap.resource_objects.fake_node.FakeNode.get_name")
     @mock.patch("esi_leap.common.keystone.get_project_name")
     @mock.patch("esi_leap.objects.lease.get_resource_object")
     def test_lease_get_dict_with_added_info(self, mock_gro, mock_gpn, mock_gn):
-        mock_gro.return_value = TestNode("111")
+        mock_gro.return_value = FakeNode("111")
         mock_gpn.return_value = "project-name"
         mock_gn.return_value = "resource-name"
 
