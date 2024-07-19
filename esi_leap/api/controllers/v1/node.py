@@ -44,8 +44,8 @@ class Node(base.ESILEAPBase):
     offer_uuid = wsme.wsattr(wtypes.text)
     lease_uuid = wsme.wsattr(wtypes.text)
     lessee = wsme.wsattr(wtypes.text)
-    future_offers = wsme.wsattr(wtypes.text)
-    future_leases = wsme.wsattr(wtypes.text)
+    future_offers = wsme.wsattr([wtypes.text])
+    future_leases = wsme.wsattr([wtypes.text])
 
     def __init__(self, **kwargs):
         self.fields = (
@@ -112,7 +112,7 @@ class NodesController(rest.RestController):
         leases = lease_obj.Lease.get_all({"status": [statuses.CREATED]}, context)
 
         for node in nodes:
-            future_offers = []
+            f_offer_uuids = []
             current_offer = None
 
             node_offers = [
@@ -121,14 +121,13 @@ class NodesController(rest.RestController):
 
             for offer in node_offers:
                 if offer.start_time > now:
-                    future_offers.append(offer.uuid)
+                    f_offer_uuids.append(offer.uuid)
                 elif offer.end_time >= now:
                     current_offer = offer
-            future_offers = " ".join(future_offers)
 
-            f_lease_uuids = "".join(
-                [lease.uuid for lease in leases if lease.resource_uuid == node.uuid]
-            )
+            f_lease_uuids = [
+                lease.uuid for lease in leases if lease.resource_uuid == node.uuid
+            ]
 
             n = Node(
                 name=node.name,
@@ -142,7 +141,7 @@ class NodesController(rest.RestController):
                 maintenance=str(node.maintenance),
                 owner=keystone.get_project_name(node.owner, project_list),
                 lessee=keystone.get_project_name(node.lessee, project_list),
-                future_offers=future_offers,
+                future_offers=f_offer_uuids,
                 future_leases=f_lease_uuids,
             )
 

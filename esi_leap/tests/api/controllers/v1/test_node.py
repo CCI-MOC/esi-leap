@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from datetime import datetime
+
 import mock
 
 from esi_leap.tests.api import base as test_api_base
@@ -36,6 +38,20 @@ class FakeProject(object):
         self.id = "fake-project-uuid"
 
 
+class FakeOffer(object):
+    def __init__(self, uuid, start_time, end_time):
+        self.uuid = uuid
+        self.resource_uuid = "fake-uuid"
+        self.start_time = start_time
+        self.end_time = end_time
+
+
+class FakeFutureLease(object):
+    def __init__(self):
+        self.uuid = "fake-future-lease-uuid"
+        self.resource_uuid = "fake-uuid"
+
+
 class TestNodesController(test_api_base.APITestCase):
     def setUp(self):
         super(TestNodesController, self).setUp()
@@ -47,9 +63,16 @@ class TestNodesController(test_api_base.APITestCase):
     def test_get_all(self, mock_gpl, mock_lga, mock_oga, mock_gnl):
         fake_node = FakeIronicNode()
         fake_project = FakeProject()
+        fake_offer = FakeOffer(
+            "fake-offer-uuid", start_time=datetime.min, end_time=datetime.max
+        )
+        fake_future_offer = FakeOffer(
+            "fake-future-offer-uuid", start_time=datetime.max, end_time=datetime.max
+        )
+        fake_future_lease = FakeFutureLease()
         mock_gnl.return_value = [fake_node]
-        mock_oga.return_value = []
-        mock_lga.return_value = []
+        mock_oga.return_value = [fake_offer, fake_future_offer]
+        mock_lga.return_value = [fake_future_lease]
         mock_gpl.return_value = [fake_project]
 
         data = self.get_json("/nodes")
@@ -65,6 +88,10 @@ class TestNodesController(test_api_base.APITestCase):
         self.assertEqual(data["nodes"][0]["lease_uuid"], "fake-lease-uuid")
         self.assertEqual(data["nodes"][0]["lessee"], "fake-project")
         self.assertEqual(data["nodes"][0]["properties"], {"cpu": "40"})
+        self.assertEqual(data["nodes"][0]["offer_uuid"], "fake-offer-uuid")
+        self.assertEqual(data["nodes"][0]["lease_uuid"], "fake-lease-uuid")
+        self.assertEqual(data["nodes"][0]["future_offers"], ["fake-future-offer-uuid"])
+        self.assertEqual(data["nodes"][0]["future_leases"], ["fake-future-lease-uuid"])
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.common.keystone.get_project_list")
