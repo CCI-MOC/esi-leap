@@ -1,9 +1,9 @@
-name: esi-leap
+name: Unit tests
 
 on: [push, pull_request]
 
 jobs:
-  build:
+  run-unit-tests:
 
     runs-on: ubuntu-20.04
     strategy:

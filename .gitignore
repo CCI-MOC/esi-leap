@@ -9,3 +9,4 @@ __pycache__/
 .tox/
 *.swp
 etc/esi-leap/esi-leap.conf.sample
+.coverage/
