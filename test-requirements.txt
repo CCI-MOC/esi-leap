@@ -21,3 +21,5 @@ WebTest>=2.0.27 # MIT
 bashate>=0.5.1 # Apache-2.0
 flake8-import-order>=0.13 # LGPLv3
 Pygments>=2.2.0 # BSD
+docker>=7.1.0
+requests>=2.32.0
