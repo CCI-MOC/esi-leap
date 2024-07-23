@@ -58,6 +58,7 @@ lease_policies = [
             {"path": "/leases", "method": "GET"},
             {"path": "/leases/{lease_ident}", "method": "GET"},
             {"path": "/leases/{lease_ident}", "method": "DELETE"},
+            {"path": "/leases/{lease_ident}", "method": "PATCH"},
         ],
     ),
     policy.DocumentedRuleDefault(
@@ -102,6 +103,7 @@ offer_policies = [
             {"path": "/offers", "method": "GET"},
             {"path": "/offers/{offer_ident}", "method": "GET"},
             {"path": "/offers/{offer_ident}", "method": "DELETE"},
+            {"path": "/offers/{offer_ident}/claim", "method": "POST"},
         ],
     ),
     policy.DocumentedRuleDefault(
@@ -136,12 +138,40 @@ offer_policies = [
     ),
 ]
 
+node_policies = [
+    policy.DocumentedRuleDefault(
+        "esi_leap:node:node_admin",
+        "rule:is_admin",
+        "Complete permissions over nodes",
+        [{"path": "/nodes", "method": "GET"}],
+    ),
+    policy.DocumentedRuleDefault(
+        "esi_leap:node:get_all",
+        "rule:is_admin or rule:is_owner or rule:is_lessee",
+        "Retrieve multiple nodes",
+        [{"path": "/nodes", "method": "GET"}],
+    ),
+]
+
+event_policies = [
+    policy.DocumentedRuleDefault(
+        "esi_leap:event:event_admin",
+        "rule:is_admin",
+        "Complete permissions over events",
+        [{"path": "/events", "method": "GET"}],
+    ),
+    policy.DocumentedRuleDefault(
+        "esi_leap:event:get_all",
+        "rule:is_admin or rule:is_owner or rule:is_lessee",
+        "Retrieve multiple events",
+        [{"path": "/events", "method": "GET"}],
+    ),
+]
+
 
 def list_rules():
     policies = itertools.chain(
-        default_policies,
-        lease_policies,
-        offer_policies,
+        default_policies, lease_policies, offer_policies, node_policies, event_policies
     )
     return policies
 
