@@ -173,3 +173,20 @@ def event_get_all():
 
 def event_create(values):
     return IMPL.event_create(values)
+
+
+# Console Auth Token
+def console_auth_token_create(values):
+    return IMPL.console_auth_token_create(values)
+
+
+def console_auth_token_get_by_token_hash(token_hash):
+    return IMPL.console_auth_token_get_by_token_hash(token_hash)
+
+
+def console_auth_token_destroy_by_node_uuid(node_uuid):
+    return IMPL.console_auth_token_destroy_by_node_uuid(node_uuid)
+
+
+def console_auth_token_destroy_expired():
+    return IMPL.console_auth_token_destroy_expired()

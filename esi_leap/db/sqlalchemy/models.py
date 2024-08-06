@@ -129,3 +129,15 @@ class Event(Base):
     resource_uuid = Column(String(36), nullable=True)
     lessee_id = Column(String(255), nullable=True)
     owner_id = Column(String(255), nullable=True)
+
+
+class ConsoleAuthToken(Base):
+    """Represents a console auth token."""
+
+    __tablename__ = "console_auth_tokens"
+    __table_args__ = (Index("console_auth_tokens_node_uuid_idx", "node_uuid"),)
+
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    node_uuid = Column(String(255), nullable=False)
+    token_hash = Column(String(255), nullable=False)
+    expires = Column(Integer, nullable=False)

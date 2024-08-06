@@ -1,3 +1,5 @@
+# All Rights Reserved.
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -10,12 +12,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import sys
 
-from oslo_concurrency import lockutils
+from esi_leap.common import service as esi_leap_service
+from esi_leap.console import websocketproxy
+import esi_leap.conf
 
-_prefix = "esileap"
-lock = lockutils.lock_with_prefix(_prefix)
+
+CONF = esi_leap.conf.CONF
 
 
-def get_resource_lock_name(resource_type, resource_uuid):
-    return resource_type + "-" + resource_uuid
+def main():
+    esi_leap_service.prepare_service(sys.argv)
+    websocketproxy.WebSocketProxy(
+        listen_host=CONF.serialconsoleproxy.host_address,
+        listen_port=CONF.serialconsoleproxy.port,
+        file_only=True,
+        RequestHandlerClass=websocketproxy.ProxyRequestHandler,
+    ).start_server()

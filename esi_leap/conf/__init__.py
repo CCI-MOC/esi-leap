@@ -18,6 +18,7 @@ from esi_leap.conf import keystone
 from esi_leap.conf import netconf
 from esi_leap.conf import notification
 from esi_leap.conf import pecan
+from esi_leap.conf import serialconsoleproxy
 from oslo_config import cfg
 
 CONF = cfg.CONF
@@ -31,3 +32,4 @@ keystone.register_opts(CONF)
 netconf.register_opts(CONF)
 notification.register_opts(CONF)
 pecan.register_opts(CONF)
+serialconsoleproxy.register_opts(CONF)

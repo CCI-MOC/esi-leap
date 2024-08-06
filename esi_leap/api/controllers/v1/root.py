@@ -14,6 +14,7 @@ from oslo_serialization import jsonutils
 import pecan
 from pecan import rest
 
+from esi_leap.api.controllers.v1 import console_auth_token
 from esi_leap.api.controllers.v1 import event
 from esi_leap.api.controllers.v1 import lease
 from esi_leap.api.controllers.v1 import node
@@ -25,6 +26,7 @@ class Controller(rest.RestController):
     offers = offer.OffersController()
     nodes = node.NodesController()
     events = event.EventsController()
+    console_auth_tokens = console_auth_token.ConsoleAuthTokensController()
 
     @pecan.expose(content_type="application/json")
     def index(self):
