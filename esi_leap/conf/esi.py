@@ -10,26 +10,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
-from esi_leap.conf import api
-from esi_leap.conf import dummy_node
-from esi_leap.conf import esi
-from esi_leap.conf import ironic
-from esi_leap.conf import keystone
-from esi_leap.conf import netconf
-from esi_leap.conf import notification
-from esi_leap.conf import pecan
 from oslo_config import cfg
 
-CONF = cfg.CONF
+opts = [
+    cfg.StrOpt(
+        "idp_plugin_class", default="esi_leap.common.idp.keystoneIDP.KeystoneIDP"
+    ),
+]
+
+api_group = cfg.OptGroup("esi", title="ESI Options")
 
 
-CONF.register_group(cfg.OptGroup(name="database"))
-api.register_opts(CONF)
-dummy_node.register_opts(CONF)
-ironic.register_opts(CONF)
-keystone.register_opts(CONF)
-netconf.register_opts(CONF)
-notification.register_opts(CONF)
-pecan.register_opts(CONF)
-esi.register_opts(CONF)
+def register_opts(conf):
+    conf.register_opts(opts, group=api_group)

@@ -36,7 +36,7 @@ class TestEventsController(test_api_base.APITestCase):
         super(TestEventsController, self).setUp()
 
     @mock.patch("esi_leap.api.controllers.v1.utils.policy_authorize")
-    @mock.patch("esi_leap.common.keystone.get_project_uuid_from_ident")
+    @mock.patch("esi_leap.common.idp.dummyIDP.DummyIDP.get_project_uuid_from_ident")
     @mock.patch("esi_leap.api.controllers.v1.event.get_resource_object")
     @mock.patch("esi_leap.objects.event.Event.get_all")
     def test_get_all(self, mock_ega, mock_gro, mock_gpufi, mock_pa):
@@ -55,7 +55,7 @@ class TestEventsController(test_api_base.APITestCase):
         self.assertEqual(data["events"][0]["id"], 1)
 
     @mock.patch("esi_leap.api.controllers.v1.utils.policy_authorize")
-    @mock.patch("esi_leap.common.keystone.get_project_uuid_from_ident")
+    @mock.patch("esi_leap.common.idp.dummyIDP.DummyIDP.get_project_uuid_from_ident")
     @mock.patch("esi_leap.api.controllers.v1.event.get_resource_object")
     @mock.patch("esi_leap.objects.event.Event.get_all")
     def test_get_all_not_admin(self, mock_ega, mock_gro, mock_gpufi, mock_pa):
@@ -75,7 +75,7 @@ class TestEventsController(test_api_base.APITestCase):
         self.assertEqual(data["events"][0]["id"], 1)
 
     @mock.patch("esi_leap.api.controllers.v1.utils.policy_authorize")
-    @mock.patch("esi_leap.common.keystone.get_project_uuid_from_ident")
+    @mock.patch("esi_leap.common.idp.dummyIDP.DummyIDP.get_project_uuid_from_ident")
     @mock.patch("esi_leap.api.controllers.v1.event.get_resource_object")
     @mock.patch("esi_leap.objects.event.Event.get_all")
     def test_get_all_resource_filter(self, mock_ega, mock_gro, mock_gpufi, mock_pa):

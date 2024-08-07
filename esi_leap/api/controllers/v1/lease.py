@@ -26,7 +26,7 @@ from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import constants
 from esi_leap.common import exception
 from esi_leap.common import ironic
-from esi_leap.common import keystone
+from esi_leap.common.idp import get_idp
 from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.objects import lease as lease_obj
@@ -88,7 +88,7 @@ class LeasesController(rest.RestController):
             request, "esi_leap:lease:get", lease_id
         )
 
-        return Lease(**utils.lease_get_dict_with_added_info(lease))
+        return Lease(**self._lease_get_dict_with_added_info(lease))
 
     @wsme_pecan.wsexpose(
         LeaseCollection,
@@ -119,11 +119,12 @@ class LeasesController(rest.RestController):
         request = pecan.request.context
         cdict = request.to_policy_values()
 
+        idp = get_idp()
         if project_id is not None:
-            project_id = keystone.get_project_uuid_from_ident(project_id)
+            project_id = idp.get_project_uuid_from_ident(project_id)
 
         if owner_id is not None:
-            owner_id = keystone.get_project_uuid_from_ident(owner_id)
+            owner_id = idp.get_project_uuid_from_ident(owner_id)
 
         if resource_uuid is not None:
             if resource_type is None:
@@ -156,13 +157,13 @@ class LeasesController(rest.RestController):
 
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 f1 = executor.submit(ironic.get_node_list)
-                f2 = executor.submit(keystone.get_project_list)
+                f2 = executor.submit(idp.get_project_list)
                 node_list = f1.result()
                 project_list = f2.result()
 
             leases_with_added_info = [
                 Lease(
-                    **utils.lease_get_dict_with_added_info(
+                    **self._lease_get_dict_with_added_info(
                         lease, project_list, node_list
                     )
                 )
@@ -195,8 +196,9 @@ class LeasesController(rest.RestController):
         )
         lease_dict["resource_uuid"] = resource.get_uuid()
 
+        idp = get_idp()
         if "project_id" in lease_dict:
-            lease_dict["project_id"] = keystone.get_project_uuid_from_ident(
+            lease_dict["project_id"] = idp.get_project_uuid_from_ident(
                 lease_dict["project_id"]
             )
 
@@ -231,7 +233,7 @@ class LeasesController(rest.RestController):
 
         lease = lease_obj.Lease(**lease_dict)
         lease.create(request)
-        return Lease(**utils.lease_get_dict_with_added_info(lease))
+        return Lease(**self._lease_get_dict_with_added_info(lease))
 
     @wsme_pecan.wsexpose(Lease, wtypes.text, body={wtypes.text: wtypes.text})
     def patch(self, lease_uuid, patch=None):
@@ -252,7 +254,7 @@ class LeasesController(rest.RestController):
         updates = {"end_time": new_end_time}
         lease.update(updates, request)
 
-        return Lease(**utils.lease_get_dict_with_added_info(lease))
+        return Lease(**self._lease_get_dict_with_added_info(lease))
 
     @wsme_pecan.wsexpose(Lease, wtypes.text)
     def delete(self, lease_id):
@@ -339,3 +341,16 @@ class LeasesController(rest.RestController):
                 del filters[k]
 
         return filters
+
+    @staticmethod
+    def _lease_get_dict_with_added_info(lease, project_list=None, node_list=None):
+        resource = lease.resource_object()
+
+        idp = get_idp()
+        lease_dict = lease.to_dict()
+        lease_dict["project"] = idp.get_project_name(lease.project_id, project_list)
+        lease_dict["owner"] = idp.get_project_name(lease.owner_id, project_list)
+        lease_dict["resource"] = resource.get_name(node_list)
+        lease_dict["resource_class"] = resource.get_resource_class(node_list)
+        lease_dict["resource_properties"] = resource.get_properties(node_list)
+        return lease_dict
