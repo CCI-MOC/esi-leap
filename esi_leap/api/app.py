@@ -12,6 +12,7 @@
 
 from keystonemiddleware import auth_token
 from oslo_context import context
+from esi_leap.common.health import Health
 import pecan
 from pecan import hooks
 
@@ -59,6 +60,8 @@ def setup_app(config=None):
 
     if CONF.pecan.auth_enable:
         app = auth_token.AuthProtocol(app, dict(CONF.keystone_authtoken))
+
+    app = Health(app=app, path="/")
 
     return app
 
