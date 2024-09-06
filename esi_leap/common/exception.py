@@ -200,3 +200,15 @@ class NotificationSchemaKeyError(ESILeapException):
         "required for populating notification schema key "
         '"%(key)s"'
     )
+
+
+class TokenAlreadyAuthorized(ESILeapException):
+    _msg_fmt = _("Token has already been authorized")
+
+
+class InvalidToken(ESILeapException):
+    _msg_fmt = _("Invalid token")
+
+
+class UnsupportedConsoleType(ESILeapException):
+    msg_fmt = _("Unsupported console type %(console_type)s")

@@ -12,6 +12,8 @@
 
 import datetime
 import mock
+
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
 from esi_leap.common import exception as e
@@ -217,6 +219,20 @@ test_event_3 = dict(
     resource_uuid="2222",
     lessee_id="1e5533",
     owner_id="0wn3r2",
+)
+
+test_cat_1 = dict(
+    id=1,
+    node_uuid="test-node-1",
+    token_hash="test-hash-1",
+    expires=timeutils.utcnow_ts() - 10000,
+)
+
+test_cat_2 = dict(
+    id=2,
+    node_uuid="test-node-2",
+    token_hash="test-hash-2",
+    expires=timeutils.utcnow_ts() + 10000,
 )
 
 
@@ -997,3 +1013,28 @@ class TestEventAPI(base.DBTestCase):
         events = api.event_get_all({}).all()
         assert len(events) == 1
         assert events[0].to_dict() == event.to_dict()
+
+
+class TestConsoleAuthTokenAPI(base.DBTestCase):
+    def test_console_auth_token_create_and_get(self):
+        c = api.console_auth_token_create(test_cat_1)
+        cat = api.console_auth_token_get_by_token_hash("test-hash-1")
+        assert c.to_dict() == cat.to_dict()
+
+    def test_console_auth_token_destroy_by_node_uuid(self):
+        c1 = api.console_auth_token_create(test_cat_1)
+        api.console_auth_token_create(test_cat_2)
+        api.console_auth_token_destroy_by_node_uuid("test-node-2")
+        cat1 = api.console_auth_token_get_by_token_hash("test-hash-1")
+        cat2 = api.console_auth_token_get_by_token_hash("test-hash-2")
+        assert c1.to_dict() == cat1.to_dict()
+        assert cat2 is None
+
+    def test_console_auth_token_destroy_expired(self):
+        api.console_auth_token_create(test_cat_1)
+        c2 = api.console_auth_token_create(test_cat_2)
+        api.console_auth_token_destroy_expired()
+        cat1 = api.console_auth_token_get_by_token_hash("test-hash-1")
+        cat2 = api.console_auth_token_get_by_token_hash("test-hash-2")
+        assert cat1 is None
+        assert c2.to_dict() == cat2.to_dict()

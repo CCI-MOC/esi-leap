@@ -10,12 +10,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
-from oslo_concurrency import lockutils
-
-_prefix = "esileap"
-lock = lockutils.lock_with_prefix(_prefix)
+from oslo_config import cfg
 
 
-def get_resource_lock_name(resource_type, resource_uuid):
-    return resource_type + "-" + resource_uuid
+opts = [
+    cfg.HostAddressOpt("host_address", default="0.0.0.0"),
+    cfg.PortOpt("port", default=6083),
+    cfg.IntOpt("timeout", default=-1),
+    cfg.IntOpt("token_ttl", default=600),
+]
+
+
+serialconsoleproxy_group = cfg.OptGroup(
+    "serialconsoleproxy", title="Serial Console Proxy Options"
+)
+
+
+def register_opts(conf):
+    conf.register_opts(opts, group=serialconsoleproxy_group)

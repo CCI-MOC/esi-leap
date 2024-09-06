@@ -10,12 +10,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""
+:mod:`esi_leap.console` -- Wrapper around Ironic serial console proxy
+======================================================
 
-from oslo_concurrency import lockutils
-
-_prefix = "esileap"
-lock = lockutils.lock_with_prefix(_prefix)
-
-
-def get_resource_lock_name(resource_type, resource_uuid):
-    return resource_type + "-" + resource_uuid
+.. automodule:: esi_leap.console
+   :platform: Unix
+   :synopsis: Wrapper around Ironic's serial console proxy
+"""

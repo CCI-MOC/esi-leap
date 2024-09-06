@@ -16,6 +16,7 @@ import threading
 from oslo_config import cfg
 from oslo_db.sqlalchemy import enginefacade
 from oslo_log import log as logging
+from oslo_utils import timeutils
 
 import sqlalchemy as sa
 from sqlalchemy import or_
@@ -482,3 +483,36 @@ def event_create(values):
         session.add(event_ref)
         session.flush()
         return event_ref
+
+
+# Console Auth Tokens
+
+
+def console_auth_token_create(values):
+    token_ref = models.ConsoleAuthToken()
+    token_ref.update(values)
+
+    with _session_for_write() as session:
+        session.add(token_ref)
+        session.flush()
+        return token_ref
+
+
+def console_auth_token_get_by_token_hash(token_hash):
+    query = model_query(models.ConsoleAuthToken)
+    token_ref = query.filter_by(token_hash=token_hash).one_or_none()
+    return token_ref
+
+
+def console_auth_token_destroy_by_node_uuid(node_uuid):
+    with _session_for_write() as session:
+        session.query(models.ConsoleAuthToken).filter_by(node_uuid=node_uuid).delete()
+        session.flush()
+
+
+def console_auth_token_destroy_expired():
+    with _session_for_write() as session:
+        session.query(models.ConsoleAuthToken).filter(
+            models.ConsoleAuthToken.expires <= timeutils.utcnow_ts()
+        ).delete()
+        session.flush()
