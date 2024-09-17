@@ -1,17 +1,13 @@
 from oslo_serialization import jsonutils
+from esi_leap.api.controllers import version
 
 
 def root(host_url):
     return {
         "name": "ESI Leap API",
         "description": "ESI Leap is an OpenStack service for leasing baremetal nodes, designed to run on top of multi-tenant Ironic.",
-        "versions": [
-            {
-                "id": "v1.0",
-                "status": "CURRENT",
-                "links": [{"href": "{0}/v1".format(host_url), "rel": "self"}],
-            }
-        ],
+        "default_version": version.default_version(host_url),
+        "versions": version.all_versions(host_url),
     }
 
 
