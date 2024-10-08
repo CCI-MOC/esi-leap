@@ -303,9 +303,21 @@ class OffersController(rest.RestController):
         if "end_time" not in lease_dict:
             q = offer.get_next_lease_start_time(lease_dict["start_time"])
             if q is None:
-                lease_dict["end_time"] = offer.end_time
+                max_end_time = offer.end_time
             else:
-                lease_dict["end_time"] = q.start_time
+                max_end_time = q.start_time
+            default_end_time = lease_dict["start_time"] + datetime.timedelta(
+                days=CONF.api.default_lease_time
+            )
+            end_time = min([default_end_time, max_end_time])
+            lease_dict["end_time"] = end_time
+        else:
+            utils.check_lease_length(
+                cdict,
+                lease_dict["start_time"],
+                lease_dict["end_time"],
+                CONF.api.max_lease_time,
+            )
 
         new_lease = lease_obj.Lease(**lease_dict)
         new_lease.create(request)
