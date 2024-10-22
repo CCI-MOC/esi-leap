@@ -291,13 +291,15 @@ class LeasesController(rest.RestController):
 
         filters = {
             "status": status,
-            "offer_uuid": offer_uuid,
             "start_time": start_time,
             "end_time": end_time,
             "resource_type": resource_type,
             "resource_uuid": resource_uuid,
             "time_filter_type": constants.WITHIN_TIME_FILTER,
         }
+
+        if offer_uuid is not None:
+            filters["offer_uuid"] = offer_uuid
 
         if view == "all":
             utils.policy_authorize("esi_leap:lease:lease_admin", cdict, cdict)
