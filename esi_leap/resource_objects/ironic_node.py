@@ -154,6 +154,13 @@ class IronicNode(base.ResourceObjectInterface):
                     "path": "/lessee",
                 }
             )
+        if len(self._get_node().instance_info) > 0:
+            patches.append(
+                {
+                    "op": "remove",
+                    "path": "/instance_info",
+                }
+            )
         if len(patches) > 0:
             get_ironic_client().node.update(self._uuid, patches)
         state = self._get_node().provision_state

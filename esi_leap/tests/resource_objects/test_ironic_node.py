@@ -35,6 +35,7 @@ class FakeIronicNode(object):
         self.uuid = fake_uuid
         self.resource_class = "baremetal"
         self.power_state = "off"
+        self.instance_info = {"foo": "bar"}
 
 
 class FakeLease(object):
@@ -187,13 +188,14 @@ class TestIronicNode(base.TestCase):
 
         mock_glpi.assert_called_once()
         mock_glu.assert_called_once()
-        self.assertEqual(mock_gn.call_count, 1)
+        self.assertEqual(mock_gn.call_count, 2)
         self.assertEqual(mock_client.call_count, 2)
         mock_client.return_value.node.update.assert_called_once_with(
             fake_uuid,
             [
                 {"op": "remove", "path": "/properties/lease_uuid"},
                 {"op": "remove", "path": "/lessee"},
+                {"op": "remove", "path": "/instance_info"},
             ],
         )
         mock_client.return_value.node.set_provision_state.assert_called_once_with(
