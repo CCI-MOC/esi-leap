@@ -14,6 +14,7 @@
 from esi_leap.common import statuses
 import esi_leap.conf
 from esi_leap.manager import utils
+from esi_leap.objects import console_auth_token as cat_obj
 from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
 from oslo_context import context as ctx
@@ -53,6 +54,8 @@ class ManagerService(service.Service):
         self.tg.add_timer(EVENT_INTERVAL, self._cancel_leases)
         LOG.info("Starting _expire_offers periodic job")
         self.tg.add_timer(EVENT_INTERVAL, self._expire_offers)
+        LOG.info("Starting _clean_expired_console_tokens periodic job")
+        self.tg.add_timer(EVENT_INTERVAL, self._clean_expired_console_tokens)
 
     def stop(self):
         super(ManagerService, self).stop()
@@ -136,6 +139,10 @@ class ManagerService(service.Service):
                     LOG.info("Error expiring offer: %s: %s" % (type(e).__name__, e))
                     offer.status = statuses.ERROR
                     offer.save()
+
+    def _clean_expired_console_tokens(self):
+        LOG.info("Cleaning expired console tokens")
+        cat_obj.ConsoleAuthToken.clean_expired_console_tokens()
 
 
 class ManagerEndpoint(object):

@@ -229,3 +229,12 @@ class TestService(base.TestCase):
         )
         self.assertEqual(statuses.ERROR, error_offer.status)
         mock_save.assert_called_once()
+
+    @mock.patch(
+        "esi_leap.objects.console_auth_token.ConsoleAuthToken.clean_expired_console_tokens"
+    )
+    def test__clean_expired_console_tokens(self, mock_cect):
+        s = ManagerService()
+        s._clean_expired_console_tokens()
+
+        mock_cect.assert_called_once
