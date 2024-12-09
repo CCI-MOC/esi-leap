@@ -21,7 +21,7 @@ from esi_leap.api.controllers import base
 from esi_leap.api.controllers import types
 from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
-from esi_leap.common import keystone
+from esi_leap.common import idp
 import esi_leap.conf
 from esi_leap.objects import event as event_obj
 from esi_leap.resource_objects import get_resource_object
@@ -82,9 +82,7 @@ class EventsController(rest.RestController):
             lessee_or_owner_id = cdict["project_id"]
 
         if lessee_or_owner_id is not None:
-            lessee_or_owner_id = keystone.get_project_uuid_from_ident(
-                lessee_or_owner_id
-            )
+            lessee_or_owner_id = idp.get_project_uuid_from_ident(lessee_or_owner_id)
 
         if resource_uuid is not None:
             if resource_type is None:

@@ -29,6 +29,7 @@ class APITestCase(base.DBTestCase):
         super(APITestCase, self).setUp()
 
         CONF.set_override("auth_enable", False, group="pecan")
+        CONF.set_override("idp_type", "dummy_idp", group="esi")
 
         self.app = pecan.testing.load_test_app(dict(app.get_pecan_config()))
 
