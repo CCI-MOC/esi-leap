@@ -17,6 +17,7 @@ from oslo_utils.uuidutils import is_uuid_like
 from esi_leap.common import exception
 from esi_leap.common import ironic
 import esi_leap.conf
+from esi_leap.objects import console_auth_token
 from esi_leap.resource_objects import base
 from esi_leap.resource_objects import error
 
@@ -162,7 +163,14 @@ class IronicNode(base.ResourceObjectInterface):
                 }
             )
         if len(patches) > 0:
+            # remove lease information and instance_info
             get_ironic_client().node.update(self._uuid, patches)
+
+        # disable console and any console tokens
+        get_ironic_client().node.set_console_mode(self._uuid, False)
+        console_auth_token.ConsoleAuthToken.clean_console_tokens_for_node(self._uuid)
+
+        # unprovision the node if needed
         state = self._get_node().provision_state
         if state == "active":
             get_ironic_client().node.set_provision_state(self._uuid, "deleted")
