@@ -169,12 +169,15 @@ class TestIronicNode(base.TestCase):
         )
 
     @mock.patch(
+        "esi_leap.objects.console_auth_token.ConsoleAuthToken.clean_console_tokens_for_node"
+    )
+    @mock.patch(
         "esi_leap.resource_objects.ironic_node.IronicNode." "get_lessee_project_id"
     )
     @mock.patch("esi_leap.resource_objects.ironic_node.IronicNode." "get_lease_uuid")
     @mock.patch("esi_leap.resource_objects.ironic_node.IronicNode._get_node")
     @mock.patch.object(ironic_node, "get_ironic_client", autospec=True)
-    def test_remove_lease(self, mock_client, mock_gn, mock_glu, mock_glpi):
+    def test_remove_lease(self, mock_client, mock_gn, mock_glu, mock_glpi, mock_cctfn):
         fake_get_node = FakeIronicNode()
         fake_get_node.provision_state = "active"
         fake_lease = FakeLease()
@@ -189,7 +192,7 @@ class TestIronicNode(base.TestCase):
         mock_glpi.assert_called_once()
         mock_glu.assert_called_once()
         self.assertEqual(mock_gn.call_count, 2)
-        self.assertEqual(mock_client.call_count, 2)
+        self.assertEqual(mock_client.call_count, 3)
         mock_client.return_value.node.update.assert_called_once_with(
             fake_uuid,
             [
@@ -198,6 +201,10 @@ class TestIronicNode(base.TestCase):
                 {"op": "remove", "path": "/instance_info"},
             ],
         )
+        mock_client.return_value.node.set_console_mode.assert_called_once_with(
+            fake_uuid, False
+        )
+        mock_cctfn.assert_called_once_with(fake_uuid)
         mock_client.return_value.node.set_provision_state.assert_called_once_with(
             fake_uuid, "deleted"
         )
