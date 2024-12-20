@@ -210,5 +210,9 @@ class InvalidToken(ESILeapException):
     _msg_fmt = _("Invalid token")
 
 
+class InvalidTokenTTL(ESILeapException):
+    _msg_fmt = _("Token TTL %(ttl)s invalid")
+
+
 class UnsupportedConsoleType(ESILeapException):
     msg_fmt = _("Unsupported console type %(console_type)s")

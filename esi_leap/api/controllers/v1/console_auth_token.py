@@ -44,6 +44,12 @@ class ConsoleAuthTokensController(rest.RestController):
     def post(self, new_console_auth_token):
         context = pecan.request.context
         node_uuid_or_name = new_console_auth_token["node_uuid_or_name"]
+        token_ttl = int(
+            new_console_auth_token.get("token_ttl", CONF.serialconsoleproxy.token_ttl)
+        )
+
+        if token_ttl <= 0:
+            raise exception.InvalidTokenTTL(ttl=token_ttl)
 
         # get node
         client = ironic.get_ironic_client(context)
@@ -57,7 +63,7 @@ class ConsoleAuthTokensController(rest.RestController):
 
         # create and authorize auth token
         cat = cat_obj.ConsoleAuthToken(node_uuid=node.uuid)
-        token = cat.authorize(CONF.serialconsoleproxy.token_ttl)
+        token = cat.authorize(token_ttl)
         cat_dict = {
             "node_uuid": cat.node_uuid,
             "token": token,
