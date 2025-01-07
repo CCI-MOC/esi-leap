@@ -208,6 +208,49 @@ class TestIronicNode(base.TestCase):
         mock_client.return_value.node.set_provision_state.assert_called_once_with(
             fake_uuid, "deleted"
         )
+        mock_client.return_value.node.vif_list.assert_not_called()
+
+    @mock.patch(
+        "esi_leap.objects.console_auth_token.ConsoleAuthToken.clean_console_tokens_for_node"
+    )
+    @mock.patch(
+        "esi_leap.resource_objects.ironic_node.IronicNode." "get_lessee_project_id"
+    )
+    @mock.patch("esi_leap.resource_objects.ironic_node.IronicNode." "get_lease_uuid")
+    @mock.patch("esi_leap.resource_objects.ironic_node.IronicNode._get_node")
+    @mock.patch.object(ironic_node, "get_ironic_client", autospec=True)
+    def test_remove_lease_node_available(
+        self, mock_client, mock_gn, mock_glu, mock_glpi, mock_cctfn
+    ):
+        fake_get_node = FakeIronicNode()
+        fake_get_node.provision_state = "available"
+        fake_lease = FakeLease()
+
+        mock_gn.return_value = fake_get_node
+        mock_glu.return_value = fake_lease.uuid
+        mock_glpi.return_value = fake_lease.project_id
+
+        test_ironic_node = ironic_node.IronicNode(fake_uuid)
+        test_ironic_node.remove_lease(fake_lease)
+
+        mock_glpi.assert_called_once()
+        mock_glu.assert_called_once()
+        self.assertEqual(mock_gn.call_count, 2)
+        self.assertEqual(mock_client.call_count, 3)
+        mock_client.return_value.node.update.assert_called_once_with(
+            fake_uuid,
+            [
+                {"op": "remove", "path": "/properties/lease_uuid"},
+                {"op": "remove", "path": "/lessee"},
+                {"op": "remove", "path": "/instance_info"},
+            ],
+        )
+        mock_client.return_value.node.set_console_mode.assert_called_once_with(
+            fake_uuid, False
+        )
+        mock_cctfn.assert_called_once_with(fake_uuid)
+        mock_client.return_value.node.set_provision_state.assert_not_called()
+        mock_client.return_value.node.vif_list.assert_called_once_with(fake_uuid)
 
     @mock.patch("esi_leap.resource_objects.ironic_node.IronicNode." "get_lease_uuid")
     def test_expire_lease_no_match(self, mock_glu):
