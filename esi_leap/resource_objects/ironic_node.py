@@ -170,10 +170,21 @@ class IronicNode(base.ResourceObjectInterface):
         get_ironic_client().node.set_console_mode(self._uuid, False)
         console_auth_token.ConsoleAuthToken.clean_console_tokens_for_node(self._uuid)
 
-        # unprovision the node if needed
+        # unprovision the node if needed; otherwise remove any vif attachments
         state = self._get_node().provision_state
-        if state == "active":
+        if state in [
+            "active",
+            "wait call-back",
+            "deploying",
+            "deploy failed",
+            "adopting",
+            "adopt failed",
+        ]:
             get_ironic_client().node.set_provision_state(self._uuid, "deleted")
+        else:
+            vifs = get_ironic_client().node.vif_list(self._uuid)
+            for vif in vifs:
+                get_ironic_client().node.vif_detach(self._uuid, vif.id)
 
     def _get_node(self, resource_list=None):
         try:
