@@ -12,6 +12,7 @@
 
 import http.client as http_client
 import mock
+import uuid
 from oslo_utils import uuidutils
 
 from esi_leap.common import ironic
@@ -28,6 +29,7 @@ class TestConsoleAuthTokensController(test_api_base.APITestCase):
     )
     @mock.patch.object(ironic, "get_ironic_client", autospec=True)
     def test_post(self, mock_client, mock_authorize):
+        mock_client.return_value.node.get.return_value = mock.Mock(uuid=uuid.uuid4())
         mock_authorize.return_value = "fake-token"
 
         data = {"node_uuid_or_name": self.node_uuid}

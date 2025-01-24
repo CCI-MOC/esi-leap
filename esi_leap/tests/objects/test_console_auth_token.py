@@ -12,6 +12,7 @@
 
 from datetime import datetime
 import mock
+import uuid
 
 from oslo_db.exception import DBDuplicateEntry
 from oslo_utils import uuidutils
@@ -31,7 +32,7 @@ class TestConsoleAuthTokenObject(base.DBTestCase):
 
         self.test_cat_dict = {
             "id": 1,
-            "node_uuid": "test-node",
+            "node_uuid": str(uuid.uuid4()),
             "token": self.token,
             "expires": 1,
             "created_at": self.created_at,
@@ -40,7 +41,7 @@ class TestConsoleAuthTokenObject(base.DBTestCase):
 
         self.test_authorized_cat_dict = {
             "id": 1,
-            "node_uuid": "test-node",
+            "node_uuid": str(uuid.uuid4()),
             "token_hash": self.token_hash,
             "expires": 1,
             "created_at": self.created_at,
@@ -48,7 +49,7 @@ class TestConsoleAuthTokenObject(base.DBTestCase):
         }
 
         self.test_unauthorized_cat_dict = {
-            "node_uuid": "test-node",
+            "node_uuid": str(uuid.uuid4()),
             "token": self.token,
             "expires": 1,
             "created_at": self.created_at,
