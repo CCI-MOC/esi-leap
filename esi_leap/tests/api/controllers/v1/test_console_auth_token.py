@@ -30,13 +30,43 @@ class TestConsoleAuthTokensController(test_api_base.APITestCase):
     def test_post(self, mock_client, mock_authorize):
         mock_authorize.return_value = "fake-token"
 
+        data = {"node_uuid_or_name": self.node_uuid, "token_ttl": "10"}
+
+        request = self.post_json("/console_auth_tokens", data)
+
+        mock_client.assert_called_once()
+        mock_authorize.assert_called_once_with(mock.ANY, 10)
+        self.assertEqual(http_client.CREATED, request.status_int)
+
+    @mock.patch(
+        "esi_leap.objects.console_auth_token.ConsoleAuthToken.authorize", autospec=True
+    )
+    @mock.patch.object(ironic, "get_ironic_client", autospec=True)
+    def test_post_default_ttl(self, mock_client, mock_authorize):
+        mock_authorize.return_value = "fake-token"
+
         data = {"node_uuid_or_name": self.node_uuid}
 
         request = self.post_json("/console_auth_tokens", data)
 
         mock_client.assert_called_once()
-        mock_authorize.assert_called_once()
+        mock_authorize.assert_called_once_with(mock.ANY, 600)
         self.assertEqual(http_client.CREATED, request.status_int)
+
+    @mock.patch(
+        "esi_leap.objects.console_auth_token.ConsoleAuthToken.authorize", autospec=True
+    )
+    @mock.patch.object(ironic, "get_ironic_client", autospec=True)
+    def test_post_invalid_ttl(self, mock_client, mock_authorize):
+        mock_authorize.return_value = "fake-token"
+
+        data = {"node_uuid_or_name": self.node_uuid, "token_ttl": "-1"}
+
+        request = self.post_json("/console_auth_tokens", data, expect_errors=True)
+
+        mock_client.assert_not_called()
+        mock_authorize.assert_not_called()
+        self.assertEqual(http_client.INTERNAL_SERVER_ERROR, request.status_int)
 
     @mock.patch(
         "esi_leap.objects.console_auth_token.ConsoleAuthToken.authorize", autospec=True
