@@ -59,7 +59,7 @@ class TestNodesController(test_api_base.APITestCase):
     @mock.patch("esi_leap.common.ironic.get_node_list")
     @mock.patch("esi_leap.objects.offer.Offer.get_all")
     @mock.patch("esi_leap.objects.lease.Lease.get_all")
-    @mock.patch("esi_leap.common.keystone.get_project_list")
+    @mock.patch("esi_leap.common.idp.get_project_list")
     def test_get_all(self, mock_gpl, mock_lga, mock_oga, mock_gnl):
         fake_node = FakeIronicNode()
         fake_project = FakeProject()
@@ -94,7 +94,7 @@ class TestNodesController(test_api_base.APITestCase):
         self.assertEqual(data["nodes"][0]["future_leases"], ["fake-future-lease-uuid"])
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
-    @mock.patch("esi_leap.common.keystone.get_project_list")
+    @mock.patch("esi_leap.common.idp.get_project_list")
     def test_get_all_resource_class_filter(self, mock_gpl, mock_gnl):
         fake_node = FakeIronicNode()
         fake_project = FakeProject()
@@ -109,8 +109,8 @@ class TestNodesController(test_api_base.APITestCase):
         self.assertEqual(data["nodes"][0]["resource_class"], "baremetal")
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
-    @mock.patch("esi_leap.common.keystone.get_project_list")
-    @mock.patch("esi_leap.common.keystone.get_project_uuid_from_ident")
+    @mock.patch("esi_leap.common.idp.get_project_list")
+    @mock.patch("esi_leap.common.idp.get_project_uuid_from_ident")
     def test_get_all_owner_filter(self, mock_get_project_uuid, mock_gpl, mock_gnl):
         fake_node = FakeIronicNode()
         fake_project = FakeProject()
@@ -127,8 +127,8 @@ class TestNodesController(test_api_base.APITestCase):
         self.assertEqual(data["nodes"][0]["owner"], fake_project.name)
 
     @mock.patch("esi_leap.common.ironic.get_node_list")
-    @mock.patch("esi_leap.common.keystone.get_project_list")
-    @mock.patch("esi_leap.common.keystone.get_project_uuid_from_ident")
+    @mock.patch("esi_leap.common.idp.get_project_list")
+    @mock.patch("esi_leap.common.idp.get_project_uuid_from_ident")
     def test_get_all_lesse_filter(self, mock_get_project_uuid, mock_gpl, mock_gnl):
         fake_node = FakeIronicNode()
         fake_project = FakeProject()

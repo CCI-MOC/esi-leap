@@ -501,7 +501,7 @@ class TestOfferAPI(base.DBTestCase):
             (o1.to_dict(), o2.to_dict()), (res[0].to_dict(), res[1].to_dict())
         )
 
-    @mock.patch("esi_leap.common.keystone.get_parent_project_id_tree")
+    @mock.patch("esi_leap.common.idp.get_parent_project_id_tree")
     def test_offer_get_all_lessee_filter(self, mock_gppit):
         mock_gppit.return_value = ["12345", "67890"]
 

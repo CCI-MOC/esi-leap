@@ -74,6 +74,7 @@ class DBTestCase(TestCase):
     def setUp(self):
         super(DBTestCase, self).setUp()
         CONF.set_override("connection", "sqlite://", group="database")
+        CONF.set_override("idp_type", "dummy_idp", group="esi")
 
         self.db_api = db_api.get_instance()
 
