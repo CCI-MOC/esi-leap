@@ -28,6 +28,7 @@ from esi_leap.common import exception
 from esi_leap.common import ironic
 from esi_leap.common import keystone
 from esi_leap.common import statuses
+from esi_leap.common import utils as common_utils
 import esi_leap.conf
 from esi_leap.objects import lease as lease_obj
 from esi_leap.resource_objects import get_resource_object
@@ -328,7 +329,10 @@ class LeasesController(rest.RestController):
             raise exception.InvalidTimeAPICommand(
                 resource="a lease", start_time=str(start_time), end_time=str(end_time)
             )
-        if (start_time or end_time) and (end_time <= start_time):
+        if (start_time or end_time) and (
+            common_utils.datetime_aware(end_time)
+            <= common_utils.datetime_aware(start_time)
+        ):
             raise exception.InvalidTimeAPICommand(
                 resource="a lease", start_time=str(start_time), end_time=str(end_time)
             )
