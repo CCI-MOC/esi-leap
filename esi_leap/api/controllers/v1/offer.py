@@ -28,6 +28,7 @@ from esi_leap.common import exception
 from esi_leap.common import ironic
 from esi_leap.common import keystone
 from esi_leap.common import statuses
+from esi_leap.common import utils as common_utils
 import esi_leap.conf
 from esi_leap.objects import lease as lease_obj
 from esi_leap.objects import offer as offer_obj
@@ -137,7 +138,10 @@ class OffersController(rest.RestController):
             raise exception.InvalidTimeAPICommand(
                 resource="an offer", start_time=str(start_time), end_time=str(end_time)
             )
-        if (start_time or end_time) and (end_time <= start_time):
+        if (start_time or end_time) and (
+            common_utils.datetime_aware(end_time)
+            <= common_utils.datetime_aware(start_time)
+        ):
             raise exception.InvalidTimeAPICommand(
                 resource="an offer", start_time=str(start_time), end_time=str(end_time)
             )
@@ -147,7 +151,8 @@ class OffersController(rest.RestController):
                 a_start=str(available_start_time), a_end=str(available_end_time)
             )
         if (available_start_time or available_end_time) and (
-            available_end_time <= available_start_time
+            common_utils.datetime_aware(available_end_time)
+            <= common_utils.datetime_aware(available_start_time)
         ):
             raise exception.InvalidAvailabilityAPICommand(
                 a_start=str(available_start_time), a_end=str(available_end_time)

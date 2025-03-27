@@ -25,6 +25,7 @@ from esi_leap.common import constants
 from esi_leap.common import exception
 from esi_leap.common import keystone
 from esi_leap.common import statuses
+from esi_leap.common import utils
 from esi_leap.db.sqlalchemy import models
 
 
@@ -192,7 +193,9 @@ def offer_get_next_lease_start_time(offer_uuid, start):
 
 
 def offer_verify_availability(offer_ref, start, end):
-    if start < offer_ref.start_time or end > offer_ref.end_time:
+    if utils.datetime_aware(start) < utils.datetime_aware(
+        offer_ref.start_time
+    ) or utils.datetime_aware(end) > utils.datetime_aware(offer_ref.end_time):
         raise exception.OfferNoTimeAvailabilities(
             offer_uuid=offer_ref.uuid, start_time=start, end_time=end
         )
@@ -366,7 +369,9 @@ def lease_destroy(lease_uuid):
 
 
 def lease_verify_child_availability(lease_ref, start, end):
-    if start < lease_ref.start_time or end > lease_ref.end_time:
+    if utils.datetime_aware(start) < utils.datetime_aware(
+        lease_ref.start_time
+    ) or utils.datetime_aware(end) > utils.datetime_aware(lease_ref.end_time):
         raise exception.LeaseNoTimeAvailabilities(
             lease_uuid=lease_ref.uuid, start_time=start, end_time=end
         )

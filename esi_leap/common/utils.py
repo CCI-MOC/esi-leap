@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
 
 from oslo_concurrency import lockutils
 
@@ -19,3 +20,9 @@ lock = lockutils.lock_with_prefix(_prefix)
 
 def get_resource_lock_name(resource_type, resource_uuid):
     return resource_type + "-" + resource_uuid
+
+
+def datetime_aware(dt):
+    if dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None:
+        return dt
+    return dt.replace(tzinfo=datetime.timezone.utc)
