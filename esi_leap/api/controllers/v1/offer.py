@@ -26,7 +26,7 @@ from esi_leap.api.controllers.v1 import lease
 from esi_leap.api.controllers.v1 import utils
 from esi_leap.common import exception
 from esi_leap.common import ironic
-from esi_leap.common import keystone
+from esi_leap.common import idp
 from esi_leap.common import statuses
 from esi_leap.common import utils as common_utils
 import esi_leap.conf
@@ -92,7 +92,7 @@ class OffersController(rest.RestController):
         )
         utils.check_offer_lessee(cdict, offer)
 
-        o = utils.offer_get_dict_with_added_info(offer)
+        o = self._offer_get_dict_with_added_info(offer)
 
         return Offer(**o)
 
@@ -125,7 +125,7 @@ class OffersController(rest.RestController):
         utils.policy_authorize("esi_leap:offer:get_all", cdict, cdict)
 
         if project_id is not None:
-            project_id = keystone.get_project_uuid_from_ident(project_id)
+            project_id = idp.get_project_uuid_from_ident(project_id)
 
         if resource_uuid is not None:
             if resource_type is None:
@@ -198,13 +198,13 @@ class OffersController(rest.RestController):
             node_list = None
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 f1 = executor.submit(ironic.get_node_list)
-                f2 = executor.submit(keystone.get_project_list)
+                f2 = executor.submit(idp.get_project_list)
                 node_list = f1.result()
                 project_list = f2.result()
 
             offers_with_added_info = [
                 Offer(
-                    **utils.offer_get_dict_with_added_info(o, project_list, node_list)
+                    **self._offer_get_dict_with_added_info(o, project_list, node_list)
                 )
                 for o in offers
             ]
@@ -236,7 +236,7 @@ class OffersController(rest.RestController):
         offer_dict["resource_uuid"] = resource.get_uuid()
 
         if "lessee_id" in offer_dict:
-            offer_dict["lessee_id"] = keystone.get_project_uuid_from_ident(
+            offer_dict["lessee_id"] = idp.get_project_uuid_from_ident(
                 offer_dict["lessee_id"]
             )
 
@@ -268,7 +268,7 @@ class OffersController(rest.RestController):
 
         o = offer_obj.Offer(**offer_dict)
         o.create()
-        return Offer(**utils.offer_get_dict_with_added_info(o))
+        return Offer(**self._offer_get_dict_with_added_info(o))
 
     @wsme_pecan.wsexpose(Offer, wtypes.text)
     def delete(self, offer_id):
@@ -326,4 +326,19 @@ class OffersController(rest.RestController):
 
         new_lease = lease_obj.Lease(**lease_dict)
         new_lease.create(request)
-        return lease.Lease(**utils.lease_get_dict_with_added_info(new_lease))
+        return lease.Lease(
+            **lease.LeasesController._lease_get_dict_with_added_info(new_lease)
+        )
+
+    @staticmethod
+    def _offer_get_dict_with_added_info(offer, project_list=None, node_list=None):
+        resource = offer.resource_object()
+
+        o = offer.to_dict()
+        o["availabilities"] = offer.get_availabilities()
+        o["project"] = idp.get_project_name(offer.project_id, project_list)
+        o["lessee"] = idp.get_project_name(offer.lessee_id, project_list)
+        o["resource"] = resource.get_name(node_list)
+        o["resource_class"] = resource.get_resource_class(node_list)
+        o["resource_properties"] = resource.get_properties(node_list)
+        return o

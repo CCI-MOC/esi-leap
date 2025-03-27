@@ -13,6 +13,7 @@
 
 from esi_leap.conf import api
 from esi_leap.conf import dummy_node
+from esi_leap.conf import esi
 from esi_leap.conf import ironic
 from esi_leap.conf import keystone
 from esi_leap.conf import netconf
@@ -33,3 +34,4 @@ netconf.register_opts(CONF)
 notification.register_opts(CONF)
 pecan.register_opts(CONF)
 serialconsoleproxy.register_opts(CONF)
+esi.register_opts(CONF)

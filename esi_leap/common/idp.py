@@ -10,38 +10,40 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from keystoneauth1 import loading as ks_loading
-from keystoneclient import client as keystone_client
 from oslo_utils import uuidutils
 
 from esi_leap.common import exception
 import esi_leap.conf
+from esi_leap.common.idp_clients import baseIDP
+from esi_leap.common.idp_clients import keystoneIDP  # noqa: F401
+from esi_leap.common.idp_clients import dummyIDP  # noqa: F401
 
 
 CONF = esi_leap.conf.CONF
-_cached_keystone_client = None
+IDP_TYPE_MAP = {idp.idp_type: idp for idp in baseIDP.BaseIDP.__subclasses__()}
+_cached_idp_client = None
 _cached_project_list = None
 
 
-def get_keystone_client():
-    global _cached_keystone_client
-    if _cached_keystone_client is not None:
-        return _cached_keystone_client
+def get_idp_client():
+    global _cached_idp_client
+    if _cached_idp_client is not None:
+        return _cached_idp_client
 
-    auth_plugin = ks_loading.load_auth_from_conf_options(CONF, "keystone")
-    sess = ks_loading.load_session_from_conf_options(CONF, "keystone", auth=auth_plugin)
-    cli = keystone_client.Client(session=sess)
-    _cached_keystone_client = cli
+    # Get Client config option
+    idp_type = CONF.esi.idp_type
+    cli = IDP_TYPE_MAP[idp_type]()
+    _cached_idp_client = cli
 
     return cli
 
 
 def get_parent_project_id_tree(project_id):
-    ks_client = get_keystone_client()
-    project = ks_client.projects.get(project_id)
+    idp = get_idp_client()
+    project = idp.get_projects(project_id)
     project_ids = [project.id]
     while project.parent_id is not None:
-        project = ks_client.projects.get(project.parent_id)
+        project = idp.get_projects(project.parent_id)
         project_ids.append(project.id)
     return project_ids
 
@@ -50,7 +52,7 @@ def get_project_uuid_from_ident(project_ident):
     if uuidutils.is_uuid_like(project_ident):
         return project_ident
     else:
-        projects = get_keystone_client().projects.list(name=project_ident)
+        projects = get_idp_client().list_projects(name=project_ident)
         if len(projects) > 0:
             # projects have unique names
             return projects[0].id
@@ -58,13 +60,13 @@ def get_project_uuid_from_ident(project_ident):
 
 
 def get_project_list():
-    return get_keystone_client().projects.list()
+    return get_idp_client().list_projects()
 
 
 def get_project_name(project_id, project_list=None):
     if project_id:
         if project_list is None:
-            project = get_keystone_client().projects.get(project_id)
+            project = get_idp_client().get_projects(project_id)
         else:
             project = next(
                 (p for p in project_list if getattr(p, "id") == project_id), None
