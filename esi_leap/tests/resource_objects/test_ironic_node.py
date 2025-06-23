@@ -36,6 +36,7 @@ class FakeIronicNode(object):
         self.resource_class = "baremetal"
         self.power_state = "off"
         self.instance_info = {"foo": "bar"}
+        self.extra = {"bar": "foo"}
 
 
 class FakeLease(object):
@@ -191,7 +192,7 @@ class TestIronicNode(base.TestCase):
 
         mock_glpi.assert_called_once()
         mock_glu.assert_called_once()
-        self.assertEqual(mock_gn.call_count, 2)
+        self.assertEqual(mock_gn.call_count, 3)
         self.assertEqual(mock_client.call_count, 3)
         mock_client.return_value.node.update.assert_called_once_with(
             fake_uuid,
@@ -199,6 +200,7 @@ class TestIronicNode(base.TestCase):
                 {"op": "remove", "path": "/properties/lease_uuid"},
                 {"op": "remove", "path": "/lessee"},
                 {"op": "remove", "path": "/instance_info"},
+                {"op": "remove", "path": "/extra"},
             ],
         )
         mock_client.return_value.node.set_console_mode.assert_called_once_with(
@@ -235,7 +237,7 @@ class TestIronicNode(base.TestCase):
 
         mock_glpi.assert_called_once()
         mock_glu.assert_called_once()
-        self.assertEqual(mock_gn.call_count, 2)
+        self.assertEqual(mock_gn.call_count, 3)
         self.assertEqual(mock_client.call_count, 3)
         mock_client.return_value.node.update.assert_called_once_with(
             fake_uuid,
@@ -243,6 +245,7 @@ class TestIronicNode(base.TestCase):
                 {"op": "remove", "path": "/properties/lease_uuid"},
                 {"op": "remove", "path": "/lessee"},
                 {"op": "remove", "path": "/instance_info"},
+                {"op": "remove", "path": "/extra"},
             ],
         )
         mock_client.return_value.node.set_console_mode.assert_called_once_with(

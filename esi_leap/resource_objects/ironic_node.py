@@ -162,6 +162,13 @@ class IronicNode(base.ResourceObjectInterface):
                     "path": "/instance_info",
                 }
             )
+        if len(self._get_node().extra) > 0:
+            patches.append(
+                {
+                    "op": "remove",
+                    "path": "/extra",
+                }
+            )
         if len(patches) > 0:
             # remove lease information and instance_info
             get_ironic_client().node.update(self._uuid, patches)
